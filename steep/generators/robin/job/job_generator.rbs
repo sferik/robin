@@ -1,0 +1,38 @@
+module Robin
+  module Generators
+    # rails generate robin:job NAME [option:value ...] (see
+    # steep/robin/rails/railtie.rbs on why it's not in the gem).
+    class JobGenerator < ::Rails::Generators::NamedBase
+      # The job to generate.
+      class Blueprint
+        attr_reader path: String
+        attr_reader class_name: String
+
+        # Option values as given ("5", "low"), nil for a bare name.
+        attr_reader robin_options: Hash[String, String?]
+
+        def initialize: (String name, Array[String] pairs) -> void
+
+        def queue: () -> String?
+
+        # As Ruby source: `queue: "low", retry: 5, encrypt: true`.
+        def robin_options_source: () -> String
+
+        private
+
+        def literal: (String? value) -> String
+      end
+
+      @job: Blueprint
+
+      # The option:value arguments (Thor's `argument`).
+      def options_list: () -> Array[String]
+
+      def initialize: (*untyped) -> void
+
+      def create_job: () -> String
+
+      def create_test: () -> String?
+    end
+  end
+end

@@ -1,0 +1,1030 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Cron > explains missing support, empty lists, loading and errors 1`] = `
+<div
+  class="empty"
+>
+  <svg
+    aria-hidden="true"
+    fill="none"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="miter"
+    stroke-width="1.6"
+    viewBox="0 0 20 20"
+  >
+    <path
+      d="M4 6 H16 V16 H4 Z M4 9 H16 M7 4 V7 M13 4 V7 M8 12.5 L9.5 14 L12.5 11"
+    />
+  </svg>
+  <h3>
+    No cron jobs registered
+  </h3>
+  <p>
+    Register them inside 
+    <code>
+      configure_server
+    </code>
+     with 
+    <code>
+      config.periodic { |cron| cron.register "0 * * * *", "HourlyJob" }
+    </code>
+    .
+  </p>
+</div>
+`;
+
+exports[`Cron > lists periodic jobs and the leader 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <h1>
+        Cron
+      </h1>
+      <p
+        class="subtitle"
+      >
+        Jobs pushed on a schedule by the cluster leader, currently 
+        <strong>
+          web-2
+        </strong>
+        .
+      </p>
+    </div>
+  </div>
+  <section
+    class="panel"
+  >
+    <div
+      class="table-wrap"
+    >
+      <table
+        class="table"
+      >
+        <thead>
+          <tr>
+            <th>
+              Schedule
+            </th>
+            <th>
+              Job
+            </th>
+            <th>
+              Next run
+            </th>
+            <th>
+              Last run
+            </th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a
+                class="mono"
+                href="/robin/cron/hourly"
+              >
+                0 * * * *
+              </a>
+            </td>
+            <td>
+              <span
+                class="cls"
+              >
+                <a
+                  href="/robin/metrics/jobs/SyncJob"
+                >
+                  SyncJob
+                </a>
+              </span>
+               
+              <span
+                class="dim small"
+              >
+                in default
+              </span>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:31:00.000Z"
+                title="2026-10-14 09:31:00"
+              >
+                in 1 minute
+              </time>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T08:31:00.000Z"
+                title="2026-10-14 08:31:00"
+              >
+                59 minutes ago
+              </time>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Run now
+                </button>
+                <button
+                  class="btn btn-small"
+                >
+                  Pause
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a
+                class="mono"
+                href="/robin/cron/digest%2F1"
+              >
+                0 9 * * 1-5
+              </a>
+              <span
+                class="dim small"
+              >
+                 
+                America/New_York
+              </span>
+              <div
+                class="small dim"
+              >
+                Morning digest
+              </div>
+            </td>
+            <td>
+              <span
+                class="cls"
+              >
+                <a
+                  href="/robin/metrics/jobs/Digest"
+                >
+                  Digest
+                </a>
+              </span>
+               
+              <span
+                class="dim small"
+              >
+                in mail
+              </span>
+              <div
+                class="args"
+              >
+                "weekly", 2
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge amber"
+              >
+                Paused
+              </span>
+            </td>
+            <td>
+              <span
+                class="dim"
+              >
+                –
+              </span>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Run now
+                </button>
+                <button
+                  class="btn btn-small"
+                >
+                  Resume
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+`;
+
+exports[`CronDetail > handles a job that hasn't run 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <div
+        class="crumb"
+      >
+        <a
+          href="/robin/cron"
+        >
+          Cron
+        </a>
+      </div>
+      <h1>
+        SyncJob
+      </h1>
+      <p
+        class="subtitle"
+      >
+        <span
+          class="mono"
+        >
+          0 * * * *
+        </span>
+        
+        
+      </p>
+    </div>
+    <span
+      class="spacer"
+    />
+    <div
+      class="btn-group"
+    >
+      <button
+        class="btn btn-small"
+      >
+        Run now
+      </button>
+      <button
+        class="btn btn-small"
+      >
+        Pause
+      </button>
+    </div>
+  </div>
+  <div
+    class="grid-3-1"
+  >
+    <section
+      class="panel"
+    >
+      <div
+        class="panel-head"
+      >
+        <h2>
+          Recent runs
+        </h2>
+      </div>
+      <div
+        class="empty"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="miter"
+          stroke-width="1.6"
+          viewBox="0 0 20 20"
+        >
+          <path
+            d="M4 6 H16 V16 H4 Z M4 9 H16 M7 4 V7 M13 4 V7 M8 12.5 L9.5 14 L12.5 11"
+          />
+        </svg>
+        <h3>
+          Hasn't run yet
+        </h3>
+        <p>
+          Runs show up here once the leader enqueues this job.
+        </p>
+      </div>
+    </section>
+    <section
+      class="panel panel-pad"
+      style="align-self: start;"
+    >
+      <h2>
+        Details
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Queue
+        </dt>
+        <dd>
+          <a
+            href="/robin/queues/default"
+          >
+            default
+          </a>
+        </dd>
+        <dt>
+          Arguments
+        </dt>
+        <dd
+          class="args"
+        >
+          
+        </dd>
+        <dt>
+          Next run
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:31:00.000Z"
+            title="2026-10-14 09:31:00"
+          >
+            in 1 minute
+          </time>
+        </dd>
+        <dt>
+          Last run
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T08:31:00.000Z"
+            title="2026-10-14 08:31:00"
+          >
+            59 minutes ago
+          </time>
+        </dd>
+      </dl>
+    </section>
+  </div>
+</div>
+`;
+
+exports[`CronDetail > shows a job's schedule and recent runs 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <div
+        class="crumb"
+      >
+        <a
+          href="/robin/cron"
+        >
+          Cron
+        </a>
+      </div>
+      <h1>
+        Digest
+      </h1>
+      <p
+        class="subtitle"
+      >
+        <span
+          class="mono"
+        >
+          0 9 * * 1-5
+        </span>
+         in America/New_York
+        , Morning digest
+      </p>
+    </div>
+    <span
+      class="spacer"
+    />
+    <div
+      class="btn-group"
+    >
+      <button
+        class="btn btn-small"
+      >
+        Run now
+      </button>
+      <button
+        class="btn btn-small"
+      >
+        Resume
+      </button>
+    </div>
+  </div>
+  <div
+    class="grid-3-1"
+  >
+    <section
+      class="panel"
+    >
+      <div
+        class="panel-head"
+      >
+        <h2>
+          Recent runs
+        </h2>
+      </div>
+      <div
+        class="table-wrap"
+      >
+        <table
+          class="table"
+        >
+          <thead>
+            <tr>
+              <th>
+                Enqueued
+              </th>
+              <th>
+                Job ID
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <time
+                  datetime="2026-10-13T09:30:00.000Z"
+                  title="2026-10-13 09:30:00"
+                >
+                  yesterday
+                </time>
+              </td>
+              <td>
+                <a
+                  class="mono small"
+                  href="/robin/jobs/r1"
+                >
+                  r1
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <time
+                  datetime="2026-10-12T09:30:00.000Z"
+                  title="2026-10-12 09:30:00"
+                >
+                  2 days ago
+                </time>
+              </td>
+              <td>
+                <a
+                  class="mono small"
+                  href="/robin/jobs/r%202"
+                >
+                  r 2
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section
+      class="panel panel-pad"
+      style="align-self: start;"
+    >
+      <h2>
+        Details
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Queue
+        </dt>
+        <dd>
+          <a
+            href="/robin/queues/mail"
+          >
+            mail
+          </a>
+        </dd>
+        <dt>
+          Arguments
+        </dt>
+        <dd
+          class="args"
+        >
+          "weekly", 2
+        </dd>
+        <dt>
+          Next run
+        </dt>
+        <dd>
+          Paused
+        </dd>
+        <dt>
+          Last run
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            –
+          </span>
+        </dd>
+        <dt>
+          Last job
+        </dt>
+        <dd>
+          <button
+            class="jid"
+            title="Copy job ID"
+            type="button"
+          >
+            abc
+          </button>
+        </dd>
+      </dl>
+    </section>
+  </div>
+</div>
+`;
+
+exports[`Limiters > explains missing support and empty lists 1`] = `
+<div
+  class="empty"
+>
+  <svg
+    aria-hidden="true"
+    fill="none"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="miter"
+    stroke-width="1.6"
+    viewBox="0 0 20 20"
+  >
+    <path
+      d="M3.5 13 A6.5 6.5 0 0 1 16.5 13 M10 13 L13.5 8.5"
+    />
+  </svg>
+  <h3>
+    No rate limiters yet
+  </h3>
+  <p>
+    They appear here the first time a job calls one, e.g. Robin::Limiter.concurrent("stripe", 10).
+  </p>
+</div>
+`;
+
+exports[`Limiters > lists limiters with their usage 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <h1>
+        Rate limits
+      </h1>
+      <p
+        class="subtitle"
+      >
+        Shared limits that keep jobs from overwhelming APIs and databases. Jobs over a limit are rescheduled, not failed.
+      </p>
+    </div>
+  </div>
+  <section
+    class="panel"
+  >
+    <div
+      class="table-wrap"
+    >
+      <table
+        class="table"
+      >
+        <thead>
+          <tr>
+            <th>
+              Limiter
+            </th>
+            <th>
+              Kind
+            </th>
+            <th
+              style="width: 26%;"
+            >
+              In use
+            </th>
+            <th
+              class="r"
+            >
+              Times over limit
+            </th>
+            <th>
+              Last used
+            </th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td
+              class="cls"
+            >
+              stripe
+            </td>
+            <td>
+              Concurrent
+            </td>
+            <td>
+              <div
+                aria-hidden="true"
+                class="qbar"
+              >
+                <span
+                  style="width: 100%; background: var(--ruby);"
+                />
+              </div>
+              <div
+                class="small"
+              >
+                <span
+                  class="num"
+                >
+                  10 of 10
+                </span>
+                <span
+                  class="err"
+                >
+                   
+                  at limit
+                </span>
+              </div>
+            </td>
+            <td
+              class="r"
+            >
+              4
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:29:55.000Z"
+                title="2026-10-14 09:29:55"
+              >
+                5 seconds ago
+              </time>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Reset
+                </button>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="cls"
+            >
+              geo/coder
+            </td>
+            <td>
+              Bucket
+              <span
+                class="dim"
+              >
+                 
+                per second
+              </span>
+            </td>
+            <td>
+              <div
+                aria-hidden="true"
+                class="qbar"
+              >
+                <span
+                  style="width: 24%; background: var(--egg);"
+                />
+              </div>
+              <div
+                class="small"
+              >
+                <span
+                  class="num"
+                >
+                  12 of 50
+                </span>
+              </div>
+            </td>
+            <td
+              class="r"
+            >
+              0
+            </td>
+            <td>
+              <span
+                class="dim"
+              >
+                –
+              </span>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Reset
+                </button>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="cls"
+            >
+              smtp
+            </td>
+            <td>
+              Sliding window
+              <span
+                class="dim"
+              >
+                 
+                per hour
+              </span>
+            </td>
+            <td>
+              <div
+                aria-hidden="true"
+                class="qbar"
+              >
+                <span
+                  style="width: 0%; background: var(--egg);"
+                />
+              </div>
+              <div
+                class="small"
+              >
+                <span
+                  class="num"
+                >
+                  0 of 1,000
+                </span>
+              </div>
+            </td>
+            <td
+              class="r"
+            >
+              0
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:29:00.000Z"
+                title="2026-10-14 09:29:00"
+              >
+                1 minute ago
+              </time>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Reset
+                </button>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="cls"
+            >
+              crawl
+            </td>
+            <td>
+              Leaky bucket
+              <span
+                class="dim"
+              >
+                 
+                per day
+              </span>
+            </td>
+            <td>
+              <div
+                aria-hidden="true"
+                class="qbar"
+              >
+                <span
+                  style="width: 100%; background: var(--ruby);"
+                />
+              </div>
+              <div
+                class="small"
+              >
+                <span
+                  class="num"
+                >
+                  61 of 60
+                </span>
+                <span
+                  class="err"
+                >
+                   
+                  at limit
+                </span>
+              </div>
+            </td>
+            <td
+              class="r"
+            >
+              2
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:30:00.000Z"
+                title="2026-10-14 09:30:00"
+              >
+                just now
+              </time>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Reset
+                </button>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="cls"
+            >
+              llm
+            </td>
+            <td>
+              Points
+              <span
+                class="dim"
+              >
+                 
+                per minute
+              </span>
+            </td>
+            <td>
+              <div
+                aria-hidden="true"
+                class="qbar"
+              >
+                <span
+                  style="width: 0.0011111111111111111%; background: var(--egg);"
+                />
+              </div>
+              <div
+                class="small"
+              >
+                <span
+                  class="num"
+                >
+                  1 of 90,000
+                </span>
+              </div>
+            </td>
+            <td
+              class="r"
+            >
+              0
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:30:00.000Z"
+                title="2026-10-14 09:30:00"
+              >
+                just now
+              </time>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Reset
+                </button>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="cls"
+            >
+              odd
+            </td>
+            <td>
+              custom
+              <span
+                class="dim"
+              >
+                 
+                per 2 h 0 m
+              </span>
+            </td>
+            <td>
+              <div
+                aria-hidden="true"
+                class="qbar"
+              >
+                <span
+                  style="width: 0%; background: var(--egg);"
+                />
+              </div>
+              <div
+                class="small"
+              >
+                <span
+                  class="num"
+                >
+                  0 of 5
+                </span>
+              </div>
+            </td>
+            <td
+              class="r"
+            >
+              0
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:30:00.000Z"
+                title="2026-10-14 09:30:00"
+              >
+                just now
+              </time>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Reset
+                </button>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+`;

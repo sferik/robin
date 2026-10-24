@@ -1,0 +1,630 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`JobLookup > says when the job can't be found 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <div
+        class="crumb"
+      >
+        Job lookup
+      </div>
+      <h1>
+        Job not found
+      </h1>
+      <p
+        class="subtitle mono"
+      >
+        gone
+      </p>
+    </div>
+    <span
+      class="spacer"
+    />
+  </div>
+  <section
+    class="panel"
+  >
+    <div
+      class="empty"
+    >
+      <svg
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="miter"
+        stroke-width="1.6"
+        viewBox="0 0 20 20"
+      >
+        <path
+          d="M8.5 4 A4.5 4.5 0 1 0 8.51 4 M12 12 L16 16"
+        />
+      </svg>
+      <h3>
+        No job with that ID right now
+      </h3>
+      <p>
+        It may have finished (finished jobs aren't kept), or it lives in a queue too large to search. Check the ID and try again.
+      </p>
+    </div>
+  </section>
+</div>
+`;
+
+exports[`JobLookup > shows a queued job and where else it appears 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <div
+        class="crumb"
+      >
+        Job lookup
+      </div>
+      <h1>
+        HardJob
+      </h1>
+      <p
+        class="subtitle mono"
+      >
+        j2
+      </p>
+    </div>
+    <span
+      class="spacer"
+    />
+    <button
+      class="btn"
+    >
+      Cancel job
+    </button>
+  </div>
+  <div
+    class="grid-3-1 mb"
+  >
+    <div />
+    <section
+      class="panel panel-pad"
+      style="align-self: start;"
+    >
+      <h2>
+        Details
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Job
+        </dt>
+        <dd>
+          <span
+            class="cls"
+          >
+            <a
+              href="/robin/metrics/jobs/HardJob"
+            >
+              HardJob
+            </a>
+          </span>
+        </dd>
+        <dt>
+          Job ID
+        </dt>
+        <dd>
+          <button
+            class="jid"
+            title="Copy job ID"
+            type="button"
+          >
+            j2
+          </button>
+        </dd>
+        <dt>
+          Queue
+        </dt>
+        <dd>
+          <a
+            href="/robin/queues/default"
+          >
+            default
+          </a>
+        </dd>
+        <dt>
+          Where it is
+        </dt>
+        <dd>
+          Waiting in mail
+        </dd>
+        <dt>
+          Created
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:00.000Z"
+            title="2026-10-14 09:29:00"
+          >
+            1 minute ago
+          </time>
+        </dd>
+        <dt>
+          Enqueued
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:30.000Z"
+            title="2026-10-14 09:29:30"
+          >
+            30 seconds ago
+          </time>
+        </dd>
+      </dl>
+    </section>
+  </div>
+  <div
+    class="grid-3-1 mb"
+  >
+    <div>
+      <p
+        class="mb"
+      >
+        <a
+          href="/robin/sets/retries/1-j2"
+        >
+          Open in Retries to retry, edit or delete it
+        </a>
+      </p>
+      <section
+        class="stack mt"
+      >
+        <div
+          class="error-box"
+        >
+          <span
+            class="err"
+          >
+            Boom
+          </span>
+          <span
+            class="err-msg"
+          >
+            m
+          </span>
+        </div>
+      </section>
+      <section
+        class="mt"
+      >
+        <h2>
+          Payload
+        </h2>
+        <pre
+          class="code"
+        >
+          {
+
+          
+            
+          <span
+            class="json-key"
+          >
+            "a"
+          </span>
+          : 
+          <span
+            class="json-num"
+          >
+            1
+          </span>
+          
+
+          
+          }
+        </pre>
+      </section>
+    </div>
+    <section
+      class="panel panel-pad"
+      style="align-self: start;"
+    >
+      <h2>
+        Details
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Job
+        </dt>
+        <dd>
+          <span
+            class="cls"
+          >
+            <a
+              href="/robin/metrics/jobs/HardJob"
+            >
+              HardJob
+            </a>
+          </span>
+        </dd>
+        <dt>
+          Job ID
+        </dt>
+        <dd>
+          <button
+            class="jid"
+            title="Copy job ID"
+            type="button"
+          >
+            j2
+          </button>
+        </dd>
+        <dt>
+          Queue
+        </dt>
+        <dd>
+          <a
+            href="/robin/queues/default"
+          >
+            default
+          </a>
+        </dd>
+        <dt>
+          Where it is
+        </dt>
+        <dd>
+          Retries
+        </dd>
+        <dt>
+          Next retry
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:30:01.000Z"
+            title="2026-10-14 09:30:01"
+          >
+            just now
+          </time>
+        </dd>
+        <dt>
+          Created
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:00.000Z"
+            title="2026-10-14 09:29:00"
+          >
+            1 minute ago
+          </time>
+        </dd>
+        <dt>
+          Enqueued
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:30.000Z"
+            title="2026-10-14 09:29:30"
+          >
+            30 seconds ago
+          </time>
+        </dd>
+      </dl>
+    </section>
+  </div>
+  <div
+    class="grid-3-1 mb"
+  >
+    <div />
+    <section
+      class="panel panel-pad"
+      style="align-self: start;"
+    >
+      <h2>
+        Details
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Job
+        </dt>
+        <dd>
+          <span
+            class="cls"
+          >
+            <a
+              href="/robin/metrics/jobs/HardJob"
+            >
+              HardJob
+            </a>
+          </span>
+        </dd>
+        <dt>
+          Job ID
+        </dt>
+        <dd>
+          <button
+            class="jid"
+            title="Copy job ID"
+            type="button"
+          >
+            j2
+          </button>
+        </dd>
+        <dt>
+          Queue
+        </dt>
+        <dd>
+          <a
+            href="/robin/queues/default"
+          >
+            default
+          </a>
+        </dd>
+        <dt>
+          Where it is
+        </dt>
+        <dd>
+          mystery
+        </dd>
+        <dt>
+          Created
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:00.000Z"
+            title="2026-10-14 09:29:00"
+          >
+            1 minute ago
+          </time>
+        </dd>
+        <dt>
+          Enqueued
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:30.000Z"
+            title="2026-10-14 09:29:30"
+          >
+            30 seconds ago
+          </time>
+        </dd>
+      </dl>
+    </section>
+  </div>
+  <div
+    class="grid-3-1 mb"
+  >
+    <div />
+    <section
+      class="panel panel-pad"
+      style="align-self: start;"
+    >
+      <h2>
+        Details
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Job
+        </dt>
+        <dd>
+          <span
+            class="cls"
+          >
+            <a
+              href="/robin/metrics/jobs/HardJob"
+            >
+              HardJob
+            </a>
+          </span>
+        </dd>
+        <dt>
+          Job ID
+        </dt>
+        <dd>
+          <button
+            class="jid"
+            title="Copy job ID"
+            type="button"
+          >
+            j2
+          </button>
+        </dd>
+        <dt>
+          Queue
+        </dt>
+        <dd>
+          <a
+            href="/robin/queues/default"
+          >
+            default
+          </a>
+        </dd>
+        <dt>
+          Where it is
+        </dt>
+        <dd>
+          Scheduled
+        </dd>
+        <dt>
+          Created
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:00.000Z"
+            title="2026-10-14 09:29:00"
+          >
+            1 minute ago
+          </time>
+        </dd>
+        <dt>
+          Enqueued
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:30.000Z"
+            title="2026-10-14 09:29:30"
+          >
+            30 seconds ago
+          </time>
+        </dd>
+      </dl>
+    </section>
+  </div>
+</div>
+`;
+
+exports[`JobLookup > shows a running job with its progress 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <div
+        class="crumb"
+      >
+        Job lookup
+      </div>
+      <h1>
+        HardJob
+      </h1>
+      <p
+        class="subtitle mono"
+      >
+        j 1
+      </p>
+    </div>
+    <span
+      class="spacer"
+    />
+    <button
+      class="btn"
+    >
+      Cancel job
+    </button>
+  </div>
+  <p
+    class="notice mb"
+  >
+    Cancellation was requested for this job.
+  </p>
+  <div
+    class="grid-3-1 mb"
+  >
+    <div>
+      <section
+        class="panel panel-pad mb"
+      >
+        <h2>
+          Progress
+        </h2>
+        <div
+          aria-valuemax="100"
+          aria-valuemin="0"
+          aria-valuenow="42"
+          class="progress"
+          role="progressbar"
+        >
+          <span
+            class="p-ok"
+            style="width: 42%;"
+          />
+        </div>
+        <div
+          class="progress-label"
+        >
+          <span>
+            Row 42
+          </span>
+          <span
+            class="num"
+          >
+            42%
+          </span>
+        </div>
+      </section>
+    </div>
+    <section
+      class="panel panel-pad"
+      style="align-self: start;"
+    >
+      <h2>
+        Details
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Job
+        </dt>
+        <dd>
+          <span
+            class="cls"
+          >
+            <a
+              href="/robin/metrics/jobs/HardJob"
+            >
+              HardJob
+            </a>
+          </span>
+        </dd>
+        <dt>
+          Job ID
+        </dt>
+        <dd>
+          <button
+            class="jid"
+            title="Copy job ID"
+            type="button"
+          >
+            j 1
+          </button>
+        </dd>
+        <dt>
+          Queue
+        </dt>
+        <dd>
+          <a
+            href="/robin/queues/default"
+          >
+            default
+          </a>
+        </dd>
+        <dt>
+          Where it is
+        </dt>
+        <dd>
+          Running on web-1:9:aa
+        </dd>
+        <dt>
+          Created
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:00.000Z"
+            title="2026-10-14 09:29:00"
+          >
+            1 minute ago
+          </time>
+        </dd>
+        <dt>
+          Enqueued
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:30.000Z"
+            title="2026-10-14 09:29:30"
+          >
+            30 seconds ago
+          </time>
+        </dd>
+      </dl>
+    </section>
+  </div>
+</div>
+`;

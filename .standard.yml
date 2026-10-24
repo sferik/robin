@@ -1,0 +1,8 @@
+ruby_version: 3.4
+plugins:
+  - standard-performance
+ignore:
+  - "lib/robin/fetcher.rb":
+      - Lint/NonLocalExitFromIterator
+  - "lib/robin/iterable_job.rb":
+      - Lint/NonLocalExitFromIterator

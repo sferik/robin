@@ -1,0 +1,30 @@
+module Robin
+  # A tiny HTTP endpoint a server opens for liveness and readiness probes.
+  class HealthServer
+    REASONS: Hash[Integer, String]
+
+    READ_TIMEOUT: Integer
+
+    REQUEST_LIMIT: Integer
+
+    @launcher: Launcher
+    @server: TCPServer
+    @thread: Thread
+
+    # The port listened on (assigned by the OS when given 0).
+    attr_reader port: Integer
+
+    def initialize: (Launcher launcher, port: Integer, ?bind: String) -> void
+
+    def stop: () -> void
+
+    # The HTTP response for a Launcher#health report.
+    def self.response: (Hash[String, untyped] health) -> String
+
+    private
+
+    def serve: () -> nil
+
+    def answer: (TCPSocket client) -> void
+  end
+end

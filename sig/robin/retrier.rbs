@@ -1,0 +1,72 @@
+module Robin
+  # Decides what happens to a job that raised: schedule a retry with
+  # exponential backoff, move it to the dead set, or discard it.
+  class Retrier
+    # What #handle did with a failed job.
+    type outcome = :retry | :dead | :discard
+
+    MAX_MESSAGE_BYTES: Integer
+
+    MAX_DELAY: Integer
+
+    BACKTRACE_PREFIX: String
+
+    # Fields a failure adds to a job before it's written back to Redis.
+    FAILURE_FIELDS: Array[String]
+
+    # Backtrace lines, compressed (base64 of deflated JSON); [] stays [].
+    def self.pack_backtrace: (Array[String] lines) -> (String | Array[String])
+
+    # A stored error_backtrace (compressed, or a plain array) as lines.
+    def self.unpack_backtrace: (String | Array[String] | nil value) -> Array[String]?
+
+    # Default backoff (seconds) before retry number +failures+.
+    def self.default_delay: (Integer failures) -> Integer
+
+    # A custom delay pushed up to 10% (at most 10s) later.
+    def self.jitter: (Numeric seconds) -> Numeric
+
+    # An exception's message as valid UTF-8, even when reading it raises.
+    def self.message_of: (Exception exception) -> String
+
+    attr_reader config: Config
+
+    def initialize: (Config config) -> void
+
+    # How many times the job may be retried.
+    def max_retries: (job_hash payload) -> (Integer | Float)
+
+    # Records the failure and acknowledges the unit of work.
+    def handle: (Fetcher::UnitOfWork unit, job_hash payload, Class job_class, Exception exception, ?batch_failure: Batch::error_info?) -> outcome
+
+    # Moves a job to the dead set (or discards it, if its hook asks).
+    def die: (Fetcher::UnitOfWork? unit, job_hash payload, Class job_class, Exception exception) -> (:dead | :discard)
+
+    private
+
+    def discard: (Fetcher::UnitOfWork? unit, job_hash payload, Exception exception) -> :discard
+
+    def terminal: (job_hash payload, Exception exception) { (Redis::Pipeline tx) -> void } -> void
+
+    def discard_requested?: (Class job_class, job_hash payload, Exception exception) -> bool
+
+    def stored: (job_hash payload) -> job_hash
+
+    def out_of_time?: (job_hash payload, Integer at) -> boolish
+
+    def retry_delay: (Class job_class, Integer failures, Exception exception, job_hash payload) -> (Numeric | :discard | :kill)
+
+    # The class whose retry hooks apply (one that may be a Robin::Job).
+    def hook_class: (Class job_class, job_hash payload) -> untyped
+
+    def custom_delay: (^(Integer, Exception, job_hash) -> untyped block, Integer failures, Exception exception, job_hash payload) -> (Numeric | :discard | :kill | nil)
+
+    def backtrace_of: (Exception exception, Integer lines) -> Array[String]
+
+    def clean: (Array[String]? backtrace) -> Array[String]?
+
+    def backtrace_lines: (job_hash payload) -> Integer?
+
+    def truncate: (String message) -> String
+  end
+end

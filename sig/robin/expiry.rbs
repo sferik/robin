@@ -1,0 +1,17 @@
+module Robin
+  # Expiring jobs: work that's worthless after a deadline (expires_in).
+  module Expiry
+    # Whether the job's "expires_at" (epoch ms) has passed.
+    def self.expired?: (job_hash payload, ?Integer now) -> bool
+
+    # Skips expired jobs (they count as done).
+    class ServerMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (untyped job, job_hash payload, String queue) -> bool
+
+      def call: (untyped job, job_hash payload, String queue) { () -> untyped } -> untyped
+    end
+  end
+end

@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Serves the dashboard at http://localhost:9292 (PORT to change it).
+require_relative "setup"
+
+port = ENV.fetch("PORT", "9292")
+puts "Dashboard: http://localhost:#{port}/"
+exec(Gem.bin_path("rackup", "rackup"), "config.ru", "-s", "puma", "-o", "127.0.0.1", "-p", port, "-q")

@@ -1,0 +1,36 @@
+schedule robin     180039 jobs/s moved, all moved after 1.64s
+schedule sidekiq     3083 jobs/s moved, all moved after 34.61s
+schedule sidekiq     3083 jobs/s moved, all moved after 37.32s
+schedule robin     169122 jobs/s moved, all moved after 1.44s
+schedule robin     170382 jobs/s moved, all moved after 1.45s
+schedule sidekiq     3082 jobs/s moved, all moved after 32.68s
+retry    robin     149576 jobs/s moved, all moved after 1.32s
+retry    sidekiq     3076 jobs/s moved, all moved after 34.36s
+retry    sidekiq     3035 jobs/s moved, all moved after 37.54s
+retry    robin     149031 jobs/s moved, all moved after 0.94s
+retry    robin     147350 jobs/s moved, all moved after 0.96s
+retry    sidekiq     3078 jobs/s moved, all moved after 36.00s
+ruby 4.0.7 (2026-09-15 revision 229531a6cf) +YJIT +PRISM [arm64-darwin27]
+Scheduled jobs coming due: 100000 jobs due at once, 10 threads, POLL=1.0s, jobs run, median of 3
+
+| system | set | jobs | first job moved | move rate (jobs/s) | all moved | all run | Redis CPU/job (moving) | Redis commands/job (moving) |
+|---|---|--:|--:|--:|--:|--:|--:|--:|
+| Robin 0.1.0 (NativeRESP parser) | schedule | 100000 | 0.862 s | 170382 | 1.449 s | 2.121 s | 6.2 µs | 3.27 |
+| Sidekiq 8.1.7 (hiredis driver) | schedule | 100000 | 2.177 s | 3083 | 34.613 s | 34.614 s | 256.4 µs | 6.03 |
+| Robin 0.1.0 (NativeRESP parser) | retry | 100000 | 0.28 s | 149031 | 0.959 s | 1.638 s | 7.0 µs | 3.28 |
+| Sidekiq 8.1.7 (hiredis driver) | retry | 100000 | 3.502 s | 3076 | 35.995 s | 35.996 s | 255.7 µs | 6.03 |
+
+Raw results:
+
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","set":"schedule","count":100000,"threads":10,"poll":1.0,"push_secs":0.419,"first_move_secs":1.081,"all_moved_secs":1.637,"moved_per_sec":180039,"all_done_secs":2.295,"redis_cpu_us_per_job":6.3,"redis_commands_per_job":3.27}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (hiredis driver)","set":"schedule","count":100000,"threads":10,"poll":1.0,"push_secs":0.59,"first_move_secs":2.177,"all_moved_secs":34.613,"moved_per_sec":3083,"all_done_secs":34.614,"redis_cpu_us_per_job":256.4,"redis_commands_per_job":6.03}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (hiredis driver)","set":"schedule","count":100000,"threads":10,"poll":1.0,"push_secs":0.588,"first_move_secs":4.887,"all_moved_secs":37.321,"moved_per_sec":3083,"all_done_secs":37.321,"redis_cpu_us_per_job":257.9,"redis_commands_per_job":6.03}
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","set":"schedule","count":100000,"threads":10,"poll":1.0,"push_secs":0.414,"first_move_secs":0.848,"all_moved_secs":1.439,"moved_per_sec":169122,"all_done_secs":2.087,"redis_cpu_us_per_job":6.1,"redis_commands_per_job":3.27}
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","set":"schedule","count":100000,"threads":10,"poll":1.0,"push_secs":0.424,"first_move_secs":0.862,"all_moved_secs":1.449,"moved_per_sec":170382,"all_done_secs":2.121,"redis_cpu_us_per_job":6.2,"redis_commands_per_job":3.28}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (hiredis driver)","set":"schedule","count":100000,"threads":10,"poll":1.0,"push_secs":0.584,"first_move_secs":0.235,"all_moved_secs":32.681,"moved_per_sec":3082,"all_done_secs":32.682,"redis_cpu_us_per_job":256.4,"redis_commands_per_job":6.03}
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","set":"retry","count":100000,"threads":10,"poll":1.0,"push_secs":0.396,"first_move_secs":0.648,"all_moved_secs":1.317,"moved_per_sec":149576,"all_done_secs":1.982,"redis_cpu_us_per_job":7.2,"redis_commands_per_job":3.28}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (hiredis driver)","set":"retry","count":100000,"threads":10,"poll":1.0,"push_secs":0.598,"first_move_secs":1.855,"all_moved_secs":34.363,"moved_per_sec":3076,"all_done_secs":34.364,"redis_cpu_us_per_job":254.6,"redis_commands_per_job":6.03}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (hiredis driver)","set":"retry","count":100000,"threads":10,"poll":1.0,"push_secs":0.585,"first_move_secs":4.597,"all_moved_secs":37.542,"moved_per_sec":3035,"all_done_secs":37.542,"redis_cpu_us_per_job":259.9,"redis_commands_per_job":6.03}
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","set":"retry","count":100000,"threads":10,"poll":1.0,"push_secs":0.443,"first_move_secs":0.272,"all_moved_secs":0.943,"moved_per_sec":149031,"all_done_secs":1.63,"redis_cpu_us_per_job":6.9,"redis_commands_per_job":3.28}
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","set":"retry","count":100000,"threads":10,"poll":1.0,"push_secs":0.425,"first_move_secs":0.28,"all_moved_secs":0.959,"moved_per_sec":147350,"all_done_secs":1.638,"redis_cpu_us_per_job":7.0,"redis_commands_per_job":3.29}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (hiredis driver)","set":"retry","count":100000,"threads":10,"poll":1.0,"push_secs":0.602,"first_move_secs":3.502,"all_moved_secs":35.995,"moved_per_sec":3078,"all_done_secs":35.996,"redis_cpu_us_per_job":255.7,"redis_commands_per_job":6.03}

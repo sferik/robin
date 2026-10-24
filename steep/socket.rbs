@@ -1,0 +1,11 @@
+# Overloads the socket library's RBS lacks (or Steep can't match): what
+# Robin calls. For this check only, so not in the gem.
+class TCPServer
+  def initialize: (String host, Integer port) -> void
+                | ...
+end
+
+class Socket
+  def self.open: [T] (Symbol | Integer domain, Symbol | Integer socktype, ?Integer protocol) { (Socket sock) -> T } -> T
+               | ...
+end

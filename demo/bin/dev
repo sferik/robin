@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Runs the whole demo: a Robin server (bin/work), the dashboard (bin/web)
+# and a steady trickle of new jobs (bin/load). Ctrl-C stops all three.
+# Arguments go to bin/work, e.g. bin/dev -c 20.
+bin = __dir__
+children = {
+  "work" => spawn(File.join(bin, "work"), *ARGV),
+  "web" => spawn(File.join(bin, "web")),
+  "load" => spawn(File.join(bin, "load"), out: File::NULL)
+}
+
+stop = lambda do |_signal|
+  children.each_value do |pid|
+    Process.kill("TERM", pid)
+  rescue Errno::ESRCH
+    nil
+  end
+end
+trap("INT", &stop)
+trap("TERM", &stop)
+
+# When one exits, stop the others.
+pid, status = Process.wait2
+name = children.key(pid)
+warn "bin/#{name} exited (#{status.exitstatus || status.termsig}); stopping the rest" unless status.success? || status.signaled?
+stop.call(nil)
+Process.waitall

@@ -1,0 +1,125 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.ruby }}
+    runs-on: ubuntu-latest
+    # The development versions (Ruby's, JRuby's and TruffleRuby's) get an
+    # early look, but can't fail the build: their steps may fail
+    # (continue-on-error on each, not the job, so the job still passes,
+    # with a warning, rather than showing as a failed check).
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.4", "4.0", "ruby-head", "jruby-10.0", "jruby-10.1", "jruby-head", "truffleruby-head"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/redis
+      # JRuby compiles the Java extension, which needs a JDK 21.
+      - uses: actions/setup-java@v6
+        if: startsWith(matrix.ruby, 'jruby')
+        with:
+          distribution: temurin
+          java-version: "21"
+      - id: ruby
+        uses: ruby/setup-ruby@v1
+        continue-on-error: ${{ endsWith(matrix.ruby, '-head') }}
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - id: compile
+        name: Compile the C (or, on JRuby, Java) extension
+        if: steps.ruby.outcome == 'success'
+        continue-on-error: ${{ endsWith(matrix.ruby, '-head') }}
+        run: bundle exec rake compile
+      - id: tests
+        name: Run tests
+        if: steps.compile.outcome == 'success'
+        continue-on-error: ${{ endsWith(matrix.ruby, '-head') }}
+        run: bundle exec rake test
+      - name: Note an advisory failure
+        if: steps.ruby.outcome == 'failure' || steps.compile.outcome == 'failure' || steps.tests.outcome == 'failure'
+        run: echo "::warning title=${{ matrix.ruby }} (advisory)::The tests failed on ${{ matrix.ruby }}, a development version"
+
+  # The Rails integration against every Rails release line still getting
+  # patches (gemfiles/rails_*/Gemfile pin each one's latest release). The
+  # coverage job measures it with the rest.
+  rails:
+    name: Rails ${{ matrix.rails }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rails: ["7.2", "8.0", "8.1"]
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/rails_${{ matrix.rails }}/Gemfile
+      COVERAGE: "false"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/redis
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec rake compile
+      - name: Run the Rails integration's tests
+        run: bundle exec rake test:rails
+
+  # Every Redis from the oldest Robin runs on (6.2) to the latest, plus the
+  # Redis alternatives Robin supports. (The jobs above use the latest Redis.)
+  servers:
+    name: ${{ matrix.server }} ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { server: redis, version: "6.2" }
+          - { server: redis, version: "7.2" }
+          - { server: redis, version: "7.4" }
+          - { server: redis, version: "8.2" }
+          - { server: redis, version: "8.10" }
+          - { server: valkey, version: "9.1" }
+          - { server: dragonfly, version: "v2.0.2" }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/redis
+        with:
+          server: ${{ matrix.server }}
+          version: ${{ matrix.version }}
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec rake compile
+      - run: bundle exec rake test
+
+  coverage:
+    name: Coverage (100% line, branch and method)
+    runs-on: ubuntu-latest
+    env:
+      COVERAGE_STRICT: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/redis
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec rake compile
+      # SimpleCov fails the run if any criterion drops below 100%.
+      - run: bundle exec rake test
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage
+          path: |
+            coverage/

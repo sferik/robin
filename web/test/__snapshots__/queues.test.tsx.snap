@@ -1,0 +1,472 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`QueueDetail > shows a page of jobs 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <div
+        class="crumb"
+      >
+        <a
+          href="/robin/queues"
+        >
+          Queues
+        </a>
+      </div>
+      <h1>
+        default
+      </h1>
+      <p
+        class="subtitle"
+      >
+        3
+         jobs waiting. Oldest has waited 
+        <span
+          class="lat-warn"
+          title="Jobs are waiting more than 30 seconds"
+        >
+          45 s slow
+        </span>
+        .
+         
+      </p>
+    </div>
+    <span
+      class="spacer"
+    />
+    <div
+      class="btn-group"
+    >
+      <button
+        class="btn"
+      >
+        Pause queue
+      </button>
+      <button
+        class="btn btn-danger"
+      >
+        Clear queue
+      </button>
+    </div>
+  </div>
+  <section
+    class="panel"
+  >
+    <div
+      class="bulkbar"
+    >
+      <span
+        class="sel"
+      >
+        Select jobs to act on them
+      </span>
+      <span
+        class="spacer"
+      />
+      <button
+        class="btn btn-small btn-danger"
+        disabled=""
+      >
+        Delete
+      </button>
+    </div>
+    <div
+      class="table-wrap"
+    >
+      <table
+        class="table"
+      >
+        <thead>
+          <tr>
+            <th
+              class="check"
+            >
+              <input
+                aria-label="Select all on this page"
+                type="checkbox"
+              />
+            </th>
+            <th>
+              Job
+            </th>
+            <th>
+              Arguments
+            </th>
+            <th>
+              Enqueued
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td
+              class="check"
+            >
+              <input
+                aria-label="Select a1"
+                type="checkbox"
+              />
+            </td>
+            <td>
+              <span
+                class="cls"
+              >
+                <a
+                  href="/robin/metrics/jobs/HardJob"
+                >
+                  HardJob
+                </a>
+              </span>
+               
+              <span
+                class="tag"
+              >
+                x
+              </span>
+              <div>
+                <button
+                  class="jid"
+                  title="Copy job ID"
+                  type="button"
+                >
+                  a1
+                </button>
+              </div>
+            </td>
+            <td
+              class="args"
+            >
+              1, "two"
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:29:30.000Z"
+                title="2026-10-14 09:29:30"
+              >
+                30 seconds ago
+              </time>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="check"
+            >
+              <input
+                aria-label="Select b2"
+                type="checkbox"
+              />
+            </td>
+            <td>
+              <span
+                class="cls"
+              >
+                <a
+                  href="/robin/metrics/jobs/HardJob"
+                >
+                  HardJob
+                </a>
+                <span
+                  class="dim small"
+                  style="font-weight: 400;"
+                >
+                   
+                  via Wrapper
+                </span>
+              </span>
+               
+              <div>
+                <button
+                  class="jid"
+                  title="Copy job ID"
+                  type="button"
+                >
+                  b2
+                </button>
+              </div>
+            </td>
+            <td
+              class="args"
+            >
+              <span
+                class="badge"
+              >
+                Encrypted
+              </span>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T07:30:00.000Z"
+                title="2026-10-14 07:30:00"
+              >
+                2 hours ago
+              </time>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <nav
+      aria-label="Pagination"
+      class="pager"
+    >
+      <span
+        class="num"
+      >
+        1–2 of 3
+      </span>
+      <span
+        class="spacer"
+      />
+      <button
+        class="btn btn-small"
+        disabled=""
+      >
+        Previous
+      </button>
+      <span
+        class="num"
+      >
+        Page 1 of 2
+      </span>
+      <button
+        class="btn btn-small"
+      >
+        Next
+      </button>
+    </nav>
+  </section>
+</div>
+`;
+
+exports[`QueueDetail > shows empty, loading and error states 1`] = `
+<section
+  class="panel"
+>
+  <div
+    class="empty"
+  >
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="miter"
+      stroke-width="1.6"
+      viewBox="0 0 20 20"
+    >
+      <path
+        d="M4 10.5 L8 14.5 L16 5.5"
+      />
+    </svg>
+    <h3>
+      q is empty
+    </h3>
+    <p>
+      Every job pushed here has been picked up.
+    </p>
+  </div>
+</section>
+`;
+
+exports[`QueueList > lists queues with live sizes 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <h1>
+        Queues
+      </h1>
+      <p
+        class="subtitle"
+      >
+        153 jobs waiting across 2 queues.
+      </p>
+    </div>
+  </div>
+  <section
+    class="panel"
+  >
+    <div
+      class="table-wrap"
+    >
+      <table
+        class="table"
+      >
+        <thead>
+          <tr>
+            <th>
+              Queue
+            </th>
+            <th
+              class="r"
+            >
+              Waiting
+            </th>
+            <th
+              class="r"
+            >
+              Latency
+            </th>
+            <th>
+              Status
+            </th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td
+              class="cls"
+            >
+              <a
+                href="/robin/queues/default"
+              >
+                default
+              </a>
+            </td>
+            <td
+              class="r"
+            >
+              152
+            </td>
+            <td
+              class="r"
+            >
+              <span
+                class="lat-ok"
+              >
+                26 s
+              </span>
+            </td>
+            <td>
+              <span
+                class="dim"
+              >
+                Running
+              </span>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Pause
+                </button>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Clear
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class="cls"
+            >
+              <a
+                href="/robin/queues/mail%20ers"
+              >
+                mail ers
+              </a>
+            </td>
+            <td
+              class="r"
+            >
+              1
+            </td>
+            <td
+              class="r"
+            >
+              <span
+                class="lat-warn"
+                title="Jobs are waiting more than 30 seconds"
+              >
+                1 m 59 s slow
+              </span>
+            </td>
+            <td>
+              <span
+                class="badge amber"
+              >
+                Paused
+              </span>
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <button
+                  class="btn btn-small"
+                >
+                  Resume
+                </button>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Clear
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+`;
+
+exports[`QueueList > shows empty, loading and error states 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <h1>
+        Queues
+      </h1>
+      <p
+        class="subtitle"
+      >
+        0 jobs waiting across 0 queues.
+      </p>
+    </div>
+  </div>
+  <section
+    class="panel"
+  >
+    <div
+      class="empty"
+    >
+      <svg
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="miter"
+        stroke-width="1.6"
+        viewBox="0 0 20 20"
+      >
+        <path
+          d="M4 5 H16 M4 10 H16 M4 15 H11"
+        />
+      </svg>
+      <h3>
+        No queues yet
+      </h3>
+      <p>
+        A queue appears as soon as a job is pushed to it.
+      </p>
+    </div>
+  </section>
+</div>
+`;
