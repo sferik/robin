@@ -1,0 +1,10 @@
+module Robin
+  module Rails
+    # Boots a Rails application directory for `bundle exec robin` (see
+    # Robin::CLI.app_loaders).
+    module AppLoader
+      # Whether +dir+ was a Rails app, booted.
+      def self.call: (String dir) -> bool
+    end
+  end
+end

@@ -1,0 +1,140 @@
+module Robin
+  # The Robin dashboard: a Rack app serving a single-page UI and the JSON
+  # API behind it.
+  class Web
+    # A Rack env.
+    type env = Hash[String, untyped]
+
+    # What the dashboard uses of a Rack::Request (Robin doesn't depend on
+    # Rack, so its signatures can't name it).
+    interface _Request
+      def head?: () -> bool
+
+      def request_method: () -> String
+
+      def path_info: () -> String
+
+      # The query parameters.
+      def GET: () -> Hash[String, untyped]
+
+      def get_header: (String name) -> untyped
+
+      def base_url: () -> String
+
+      # The request's body (rack.input), if it has one.
+      def body: () -> _Reader?
+    end
+
+    interface _Reader
+      def read: () -> String?
+    end
+
+    # A Rack response: status, headers and body.
+    type response = [Integer, Hash[String, String], _Each[String]]
+
+    # Robin::Web.authorize's block: truthy to allow +action+ on +resource+
+    # (any value: only its truthiness counts).
+    type authorizer = ^(env env, Symbol action, String? resource) -> untyped
+
+    # A Robin::Web.job_info block: the row's text (anything with #to_s), a
+    # Hash with :text and :href, or nil to leave the row out.
+    type job_info_row = ^(job_hash job) -> untyped
+
+    DIST: String
+
+    ASSETS_PATH: Regexp
+
+    self.@title: String
+    self.@brand_color: String?
+    self.@read_only: bool
+    self.@stream_interval: Numeric
+    self.@stream_lifetime: Numeric
+    self.@live_updates: :poll | :stream
+    self.@assets_path: String?
+    self.@clusters: Hash[String, Config]?
+    self.@authorizer: authorizer?
+    self.@extensions: Hash[String, singleton(Extension)]?
+    self.@job_info_rows: Hash[String, job_info_row]?
+    self.@app: Web?
+
+    def self.title: () -> String
+
+    def self.title=: (String) -> String
+
+    # The dashboard's accent color (a CSS color), or nil for the default.
+    def self.brand_color: () -> String?
+
+    def self.brand_color=: (String?) -> String?
+
+    def self.read_only: () -> bool
+
+    def self.read_only=: (bool) -> bool
+
+    # Seconds between live updates.
+    def self.stream_interval: () -> Numeric
+
+    def self.stream_interval=: (Numeric) -> Numeric
+
+    # Seconds a stream stays open before the browser reconnects.
+    def self.stream_lifetime: () -> Numeric
+
+    def self.stream_lifetime=: (Numeric) -> Numeric
+
+    # :poll (default) or :stream.
+    def self.live_updates: () -> (:poll | :stream)
+
+    def self.live_updates=: (:poll | :stream) -> (:poll | :stream)
+
+    # Where browsers load the dashboard's assets from: an http(s) URL or a
+    # path on this host, ending in "/"; nil serves them from the dashboard.
+    def self.assets_path: () -> String?
+
+    def self.assets_path=: (_ToS? value) -> void
+
+    # Named Robin configs, one per Redis cluster.
+    def self.clusters: () -> Hash[String, Config]
+
+    def self.clusters=: (Hash[String | Symbol, Config] hash) -> void
+
+    # Registers an authorization callback.
+    def self.authorize: () { (env env, Symbol action, String? resource) -> untyped } -> authorizer
+
+    def self.authorizer: () -> authorizer?
+
+    # Adds a page of your own (a Robin::Web::Extension subclass).
+    def self.register: (singleton(Extension) extension) -> singleton(Extension)
+
+    # Registered extensions by slug.
+    def self.extensions: () -> Hash[String, singleton(Extension)]
+
+    # Adds a row to every job's detail page.
+    def self.job_info: (_ToS label) { (job_hash job) -> untyped } -> job_info_row
+
+    # The job_info blocks by label.
+    def self.job_info_rows: () -> Hash[String, job_info_row]
+
+    def self.call: (env env) -> response
+
+    def self.app: () -> Web
+
+    # Restores default settings (used by tests).
+    def self.reset!: () -> void
+
+    @router: Router
+    @static: Static
+
+    def initialize: () -> void
+
+    def call: (env env) -> response
+
+    # GET /health: pings every cluster's Redis.
+    def health: () -> response
+
+    # GET /extensions/<slug>/<file>: a file from an extension's assets.
+    def extension_asset: (env env, String path) -> response
+
+    private
+
+    def monotonic_ms: () -> Float
+  end
+end

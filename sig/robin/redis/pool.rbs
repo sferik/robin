@@ -1,0 +1,89 @@
+module Robin
+  module Redis
+    # A small, thread-safe connection pool. Nested #with calls from the same
+    # thread reuse the connection that's already checked out.
+    class Pool
+      class TimeoutError < Robin::Redis::TimeoutError
+      end
+
+      # The pool's bookkeeping: how many more connections may be checked
+      # out, and the idle ones.
+      interface _Slots
+        # An idle connection, :create (a slot to fill with a new one), or
+        # nil after waiting +timeout+ seconds for either.
+        def take: (seconds timeout) -> (Connection | :create | nil)
+
+        # Returns a connection, idle since +since+ (monotonic seconds).
+        def put: (Connection conn, seconds since) -> void
+
+        # Frees a slot taken with :create but never filled.
+        def release: () -> void
+
+        # Makes +count+ more connections available.
+        def add: (Integer count) -> void
+
+        # Removes and returns the connections idle since before +cutoff+.
+        def reap: (seconds cutoff) -> Array[Connection]
+
+        # Removes and returns every idle connection.
+        def drain: () -> Array[Connection]
+      end
+
+      class Slots
+        include _Slots
+
+        @mutex: Thread::Mutex
+        @cond: Thread::ConditionVariable
+        @free: Integer
+        @idle: Array[[Connection, seconds]]
+
+        def initialize: (Integer size) -> void
+      end
+
+      # The extension's slots where there are some (JRuby), else Slots.
+      def self.slots_class: (?singleton(Redis) redis) -> (singleton(Slots) | singleton(NativeSlots))
+
+      SLOTS: singleton(Slots) | singleton(NativeSlots)
+
+      @factory: ^() -> Connection
+      @slots: _Slots
+      @key: Symbol
+      @pid: Integer
+      @reset: Thread::Mutex
+
+      attr_reader size: Integer
+      attr_reader timeout: seconds
+      attr_reader idle_timeout: seconds?
+
+      def initialize: (?size: Integer, ?timeout: seconds, ?idle_timeout: seconds?) { () -> Connection } -> void
+
+      # Checks out a connection for the block (this thread's, if it has one).
+      def with: [T] () { (Connection conn) -> T } -> T
+
+      def call: (*untyped args) -> reply
+
+      def pipelined: () { (Pipeline pipe) -> void } -> Array[reply]
+
+      def multi: () { (Pipeline pipe) -> void } -> Array[reply]
+
+      def evalsha: (Script script, ?Array[untyped] keys, ?Array[untyped] argv) -> reply
+
+      def blocking_call: (seconds timeout, *untyped args) -> reply
+
+      def shutdown: () -> void
+
+      # Grows the pool to +size+ connections; returns the pool's size.
+      def grow: (Integer size) -> Integer
+
+      private
+
+      def checkout: () -> Connection
+
+      def checkin: (Connection conn) -> void
+
+      def monotonic: () -> Float
+
+      def reset_after_fork: () -> void
+    end
+  end
+end

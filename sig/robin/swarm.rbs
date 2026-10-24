@@ -1,0 +1,133 @@
+module Robin
+  # Runs several Robin processes on one machine from a single command
+  # (`robin swarm`).
+  class Swarm
+    READY_TIMEOUT: Integer
+
+    MIN_UPTIME: Integer
+
+    MAX_DELAY: Integer
+
+    SIGNALS: Array[String]
+
+    EXE: String
+
+    LIB: String
+
+    # A child process: its pid, index (0...n), when it started (monotonic
+    # seconds), and whether it's being replaced.
+    class Child < Struct[Integer | Float | bool]
+      attr_accessor pid: Integer
+      attr_accessor index: Integer
+      attr_accessor started_at: Float
+      attr_accessor retiring: bool
+
+      def self.new: (Integer pid, Integer index, Float started_at, bool retiring) -> instance
+    end
+
+    # Operating-system primitives, separated so the supervisor logic can be
+    # tested without real processes.
+    class OS
+      SIGNAL_BUFFER: Integer
+
+      def fork?: () -> bool
+
+      def fork: () { () -> void } -> Integer
+
+      def spawn: (Hash[String, String] env, *String command) -> Integer
+
+      # Tidies the heap so forked children share more memory.
+      def warmup: () -> void
+
+      def kill: (Integer pid, String | Integer signal) -> Integer?
+
+      # [pid, status] of an exited child, or nil.
+      def wait: (?block: bool) -> [Integer, Process::Status]?
+
+      def now: () -> Float
+
+      def sleep: (seconds seconds) -> Integer
+
+      # Routes +signals+ into a pipe; returns its reading end.
+      def trap_signals: (Array[String] signals) -> IO
+
+      def reset_signals: (Array[String] signals) -> void
+
+      # Signals received within +timeout+ seconds.
+      def read_signals: (IO reader, seconds timeout) -> Array[String]
+
+      def finish_child: () -> bot
+
+      private
+
+      def wait2: (bool block) -> [Integer, Process::Status]?
+
+      def notify: (IO writer, String signal) -> void
+    end
+
+    # Stops this process when +parent+ goes away.
+    def self.watch_parent: (Integer parent, ?os: OS, ?interval: seconds) -> Thread
+
+    # Children for a count setting: a whole number, or a decimal per core.
+    def self.process_count: (String | Integer | Float | nil value, ?Integer cores) -> Integer
+
+    # Watches the swarm parent named in ROBIN_SWARM_PARENT, if it is ours.
+    def self.watch_parent_from_env: (?_Env env, ?os: OS) -> Thread?
+
+    @cli: CLI
+    @config: Config
+    @os: OS
+    @crashes: Hash[Integer, Integer]
+    @restarts: Hash[Integer, Float]
+    # nil until #run.
+    @signals: IO
+    @stopping: bool?
+
+    # Running children by pid.
+    attr_reader children: Hash[Integer, Child]
+
+    attr_reader count: Integer
+
+    # "fork" or "spawn".
+    attr_reader mode: String
+
+    def initialize: (CLI cli, ?os: OS) -> void
+
+    def run: () -> void
+
+    def handle: (String signal) -> void
+
+    def shutdown: () -> void
+
+    def rolling_restart: () -> void
+
+    # The options a spawned child needs to run like this process.
+    def child_arguments: () -> Array[String]
+
+    def child_command: () -> Array[String]
+
+    def child_env: (Integer index) -> Hash[String, String]
+
+    def start_child: (Integer index) -> Child
+
+    # Runs inside a forked child.
+    def child_main: (Integer index) -> bot
+
+    # Collects exited children and schedules replacements.
+    def reap: (?block: bool) -> void
+
+    def start_due_restarts: () -> void
+
+    private
+
+    def logger: () -> Logger
+
+    def ready?: (Child child) -> bool
+
+    def stop_child: (Child child) -> void
+
+    def wait_for: (?seconds seconds, ?poll: seconds) { () -> boolish } -> bool
+
+    def signal_children: (String signal) -> void
+  end
+end

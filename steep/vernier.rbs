@@ -1,0 +1,16 @@
+# What Robin uses of Vernier (an optional gem, with no RBS of its own), for
+# the profiler. For this check only, so not in the gem.
+module Vernier
+  class Collector
+    def initialize: (Symbol mode, Hash[Symbol, untyped] options) -> void
+
+    def start: () -> void
+
+    def stop: () -> Result
+  end
+
+  class Result
+    # The profile in the Firefox Profiler format (JSON).
+    def to_gecko: () -> String
+  end
+end

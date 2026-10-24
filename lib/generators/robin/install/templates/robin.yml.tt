@@ -1,0 +1,25 @@
+# Settings for `bundle exec robin`; command-line options win over these.
+# The file is ERB, and a section named after the environment (RAILS_ENV)
+# overrides the top-level values.
+
+# Worker threads per process.
+concurrency: <%%= ENV.fetch("ROBIN_CONCURRENCY", 5) %>
+
+# Seconds running jobs get to finish when the process stops.
+timeout: 25
+
+# Queues in strict priority order. Use "name,weight" entries (e.g.
+# "critical,3") to check queues in proportion to their weights instead.
+queues:
+  - critical
+  - default
+  - low
+
+# Capsules run some queues on their own threads, e.g. one at a time:
+# capsules:
+#   serial:
+#     concurrency: 1
+#     queues: [ledger]
+
+production:
+  concurrency: <%%= ENV.fetch("ROBIN_CONCURRENCY", 10) %>

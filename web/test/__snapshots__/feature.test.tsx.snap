@@ -1,0 +1,33 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FeatureMissing > explains the missing feature 1`] = `
+<div>
+  <section
+    class="panel"
+  >
+    <div
+      class="empty"
+    >
+      <svg
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="miter"
+        stroke-width="1.6"
+        viewBox="0 0 20 20"
+      >
+        <path
+          d="M6 4 H14 L17 8 L10 16 L3 8 Z M3 8 H17 M8 4 L10 8 L12 4 M10 8 V16"
+        />
+      </svg>
+      <h3>
+        Batches aren't available on this server
+      </h3>
+      <p>
+        Upgrade Robin.
+      </p>
+    </div>
+  </section>
+</div>
+`;

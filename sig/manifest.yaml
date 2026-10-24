@@ -1,0 +1,9 @@
+# The standard libraries Robin's signatures use, which `rbs collection`
+# loads along with them.
+dependencies:
+  - name: logger
+  - name: monitor
+  - name: net-http
+  - name: openssl
+  - name: socket
+  - name: uri

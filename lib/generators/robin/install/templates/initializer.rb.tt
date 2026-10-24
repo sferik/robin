@@ -1,0 +1,31 @@
+# frozen_string_literal: true
+
+require "robin/web"
+
+# Every process: the web app, consoles and `bundle exec robin`.
+Robin.configure do |config|
+  # Robin reads ROBIN_REDIS_URL or REDIS_URL by default.
+  # config.redis = {url: "redis://localhost:6379/0"}
+
+  # Raise (the default), :warn or false when job arguments aren't JSON-native.
+  # config.strict_args = :raise
+end
+
+# Only inside `bundle exec robin`.
+Robin.configure_server do |config|
+  # config.on(:startup) { Rails.logger.info("Robin started") }
+  # config.death_handlers << ->(job, exception) { Rails.logger.error("#{job["class"]} died: #{exception}") }
+end
+
+# Who may use the dashboard mounted in config/routes.rb. Reading is allowed
+# here and changes need an admin; adapt it to your authentication.
+# Robin::Web.authorize do |env, action, _resource|
+#   user = env["warden"]&.user
+#   action == :read || user&.admin?
+# end
+
+# Rails settings go in config/application.rb:
+#
+#   config.active_job.queue_adapter = :robin  # run ActiveJob jobs on Robin
+#   config.robin.report_errors = true         # report errors to Rails.error (default)
+#   config.robin.transactional_push = true    # push jobs after transactions commit

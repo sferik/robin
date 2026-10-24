@@ -1,0 +1,116 @@
+# Robin: fast, reliable background jobs for Ruby.
+module Robin
+  # A job as Robin stores it: a JSON object, string keys ("class", "args",
+  # "jid", "queue", "created_at"...). Its values are whatever JSON holds
+  # (and, before a push is normalized, whatever the caller passed).
+  type job_hash = Hash[String, untyped]
+
+  # A value parsed from JSON, or one that's about to be generated as JSON:
+  # anything JSON can hold.
+  type json = untyped
+
+  # A job's class as a push or a periodic job names it: the class itself,
+  # or its name.
+  type job_class = Class | String
+
+  # The environment's variables: ENV, or a Hash standing in for it.
+  interface _Env
+    def []: (String name) -> String?
+  end
+
+  NAME: String
+
+  JID_BATCH: Integer
+
+  # A thread's random hex digits for job ids, and how far it has used them.
+  class JidBatch < Struct[String | Integer]
+    attr_accessor hex: String
+    attr_accessor offset: Integer
+    attr_accessor pid: Integer
+
+    def self.new: (String hex, Integer offset, Integer pid) -> instance
+  end
+
+  class Error < StandardError
+  end
+
+  # Raised by a job to stop immediately without retrying.
+  class Discard < Error
+  end
+
+  # Raised inside worker threads when the server's shutdown timeout elapses.
+  class Shutdown < Interrupt
+  end
+
+  self.@config: Config?
+  self.@server: true?
+
+  def self.config: () -> Config
+
+  def self.config=: (Config) -> Config
+
+  # Loads every autoloaded part of Robin up front (except Robin::Testing).
+  def self.eager_load!: () -> void
+
+  # Configure Robin for every process (client and server).
+  def self.configure: [T] () { (Config config) -> T } -> T
+
+  # Configure Robin only inside a job-processing server.
+  def self.configure_server: [T] () { (Config config) -> T } -> T?
+
+  # Configure Robin only inside non-server processes (web, console, rake).
+  def self.configure_client: [T] () { (Config config) -> T } -> T?
+
+  def self.server?: () -> bool
+
+  def self.server!: () -> true
+
+  # Runs a Robin server inside the current process (e.g. alongside Puma).
+  def self.configure_embed: () ?{ (Config config) -> void } -> Embedded
+
+  def self.redis: [T] () { (Redis::Connection conn) -> T } -> T
+
+  def self.hostname: (?env: _Env) -> String
+
+  def self.logger: () -> Logger
+
+  def self.dump_json: (json obj) -> String
+
+  def self.load_json: (String str) -> json
+
+  # The job as it was stored in Redis, before middleware or the job itself
+  # changed anything.
+  def self.pristine: (job_hash payload) -> job_hash
+
+  # Whether +exception+ is Robin::Shutdown or was caused by it.
+  def self.shutdown?: (Exception? exception) -> bool
+
+  # Marks +payload+ as parsed from +raw+ (see #pristine).
+  def self.remember_raw: [T < Object] (T payload, String raw) -> T
+
+  # Returns +string+ as valid UTF-8.
+  def self.utf8: (String string) -> String
+
+  # Epoch milliseconds (wall clock).
+  def self.now_ms: () -> Integer
+
+  def self.epoch_seconds: (Integer | Float ms) -> Float
+
+  def self.epoch_ms: (Integer | Float | Rational | String seconds) -> Integer
+
+  # The class a job shows as.
+  def self.display_class: (job_hash payload) -> String
+
+  # A job's epoch-ms timestamp as epoch ms (also from epoch seconds).
+  def self.ms_of: (Integer | Float time) -> (Integer | Float)
+               | (nil time) -> nil
+
+  # A job id: 24 random hex digits.
+  def self.generate_jid: () -> String
+
+  # Is this process currently holding cluster leadership?
+  def self.leader?: () -> bool
+
+  # Requests cancellation of jobs (one or more jids).
+  def self.cancel!: (*String jids, ?ttl: Integer) -> void
+end

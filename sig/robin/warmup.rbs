@@ -1,0 +1,44 @@
+module Robin
+  # Warms up the JIT before a server starts (see Config#jit_warmup).
+  module Warmup
+    ROUNDS: Integer
+
+    JOBS: Integer
+
+    ARGS: Array[untyped]
+
+    # A connection that never connects: it encodes each round trip's
+    # commands and answers every one with +reply+.
+    class Connection < Redis::Connection
+      @reply: String
+
+      def initialize: (String reply) -> void
+
+      private
+
+      def roundtrip: (Array[Redis::command] commands, seconds _read_timeout) -> Array[Redis::reply]
+    end
+
+    # A pool of the one connection, for client middleware.
+    class Pool < Struct[Connection]
+      attr_accessor connection: Connection
+
+      def self.new: (Connection connection) -> instance
+
+      def with: [T] () { (Connection conn) -> T } -> T
+    end
+
+    def self.run: (Config config, ?rounds: Integer) -> void
+
+    # A copy of +chain+ with only Robin's own middleware.
+    def self.own: (Middleware::Chain chain) -> Middleware::Chain
+
+    private def self.job: (Client client) -> job_hash
+
+    private def self.push_bulk: (Client client, Connection conn) -> void
+
+    private def self.push: (Client client, Connection conn) -> void
+
+    private def self.fetch_and_run: (Connection fetches, Middleware::Chain server, Connection conn) -> void
+  end
+end

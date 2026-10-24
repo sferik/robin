@@ -1,0 +1,317 @@
+module Robin
+  # Distributed rate limiting, usable from jobs or any other Ruby code.
+  module Limiter
+    # An interval: :second, :minute, :hour or :day (or as a String), a
+    # number of seconds, or nil.
+    type interval = :second | :minute | :hour | :day | String | Integer | Float | nil
+
+    # What #within_limit does when it can't get capacity in time.
+    type policy = :raise | :skip
+
+    # A limiter's +backoff:+: the seconds to wait before running a
+    # rate-limited job again, or nil for the default.
+    interface _Backoff
+      def call: (Integer count, OverLimit error, job_hash payload) -> seconds?
+
+      include _Object
+    end
+
+    # A limiter's +backoff:+ (see Config#rate_limit_backoff).
+    type backoff = ^(Integer count, OverLimit error, job_hash payload) -> seconds? | _Backoff
+
+    # The options every kind of limiter takes.
+    type options = { ?wait_timeout: seconds, ?reschedule: Integer?, ?backoff: backoff?, ?policy: policy, ?config: Config? }
+
+    # Raised by #within_limit when capacity didn't free up in time.
+    class OverLimit < Robin::Error
+      attr_reader limiter: Base
+
+      # Seconds until the limiter expects capacity, when it can tell.
+      attr_reader retry_after: Float?
+
+      def initialize: (Base limiter, ?Float? retry_after) -> void
+    end
+
+    COUNT_OVER: String
+
+    # A limiter's acquiring script, from +body+.
+    def self.acquiring: (String body) -> Redis::Script
+
+    INTERVALS: Hash[Symbol, Integer]
+    TYPES: Hash[String, String]
+    META_TTL: Integer
+    REGISTER_EVERY: Integer
+
+    # {[pool id, meta key] => [[type, limit, interval], monotonic time]}.
+    self.@registered: Hash[[Integer, String], [[String, Integer, Integer | Float | nil], Float]]
+
+    def self.registered: () -> Hash[[Integer, String], [[String, Integer, Integer | Float | nil], Float]]
+
+    # Sends every limiter call this thread makes inside the block to +pool+.
+    def self.via: [T] (Redis::Pool? pool) { () -> T } -> T
+
+    # The pool set by an enclosing Limiter.via block, if any.
+    def self.current_pool: () -> Redis::Pool?
+
+    # At most +size+ holders at once.
+    def self.concurrent: (_ToS name, Integer | String size, ?wait_timeout: seconds, ?lock_timeout: seconds, ?reschedule: Integer?, ?backoff: backoff?, ?policy: policy, ?config: Config?) -> Concurrent
+
+    # +count+ uses per calendar +interval+.
+    def self.bucket: (_ToS name, Integer | String count, interval interval, ?wait_timeout: seconds, ?reschedule: Integer?, ?backoff: backoff?, ?policy: policy, ?config: Config?) -> Bucket
+
+    # At most +count+ uses in any rolling +interval+.
+    def self.window: (_ToS name, Integer | String count, interval interval, ?wait_timeout: seconds, ?reschedule: Integer?, ?backoff: backoff?, ?policy: policy, ?config: Config?) -> Window
+
+    # Bursts up to +size+, draining at size/interval per second.
+    def self.leaky: (_ToS name, Integer | String size, interval interval, ?wait_timeout: seconds, ?reschedule: Integer?, ?backoff: backoff?, ?policy: policy, ?config: Config?) -> Leaky
+
+    # A token bucket of +points+, refilled over +interval+.
+    def self.points: (_ToS name, Integer | String points, interval interval, ?wait_timeout: seconds, ?reschedule: Integer?, ?backoff: backoff?, ?policy: policy, ?config: Config?) -> Points
+
+    # A limiter that never limits.
+    def self.unlimited: (?_ToS name) -> Unlimited
+
+    # Seconds for an interval, or nil.
+    def self.seconds: (interval interval) -> (Integer | Float | nil)
+
+    # A limiter as Limiter.list shows it: "name", "type", "limit",
+    # "interval", "used", "over_limit_count", "last_used_at".
+    type listing = Hash[String, untyped]
+
+    # Every limiter used in the last 30 days, with current usage.
+    def self.list: (?config: Config) -> Array[listing]
+
+    # Clears a limiter's state and over-limit counter.
+    def self.reset!: (String name, ?config: Config) -> true
+
+    # Forgets a limiter: its state and its definition.
+    def self.delete!: (String name, ?config: Config) -> true
+
+    private def self.clear: (String name, Config config) { (Redis::Pipeline p, bool known) -> void } -> void
+
+    private def self.from_meta: (String name, Hash[String, String] meta, Config config) -> Base?
+
+    private def self.interval_from: (Hash[String, String] meta) -> Float?
+
+    # What every limiter (but Unlimited) shares.
+    class Base
+      POLICIES: Array[Symbol]
+
+      @config: Config?
+
+      attr_reader name: String
+      attr_reader limit: Integer
+
+      # Seconds (nil for limiters without an interval).
+      attr_reader interval: Integer | Float | nil
+
+      # Milliseconds (nil until a subclass checks its interval).
+      attr_reader interval_ms: Integer?
+
+      attr_reader wait_timeout: Float
+
+      # How many times a job is rescheduled before OverLimit fails it.
+      attr_reader reschedule: Integer?
+
+      attr_reader backoff: backoff?
+
+      attr_reader policy: policy
+
+      def initialize: (_ToS name, Integer | String limit, interval interval, ?wait_timeout: seconds, ?reschedule: Integer | String | nil, ?backoff: backoff?, ?policy: policy, ?config: Config?) -> void
+
+      def config: () -> Config
+
+      # "concurrent", "bucket", "window", "leaky" or "points".
+      def type: () -> String
+
+      # Runs the block once capacity is available; returns what it returns
+      # (nil, without running it, when skipping).
+      def within_limit: [T] (**Integer | Float opts) { (self limiter) -> T } -> T?
+
+      def over_limit!: () -> Redis::reply
+
+      def reset_state: () -> Redis::reply
+
+      # The command #reset_state sends.
+      def reset_command: () -> Redis::command
+
+      # The command reading what #used reports.
+      def used_command: () -> Redis::command
+
+      # How many uses are counted now.
+      def used: () -> Integer
+
+      # What the reply to #used_command means.
+      def used_from: (Redis::reply reply) -> Integer
+
+      def to_h: () -> Hash[String, untyped]
+
+      private
+
+      def meta_key: () -> String
+
+      def state_key: () -> String
+
+      def now_ms: () -> Integer
+
+      def release: (bool | String token) -> void
+
+      # Takes capacity: [took it?, wait (ms)]. (Concurrent's returns its
+      # token or false, which unpack the same way, with no wait.)
+      def acquire: (wait: [Float, Float], **untyped) -> [bool | String, Integer?]
+
+      # [took capacity?, wait (ms)] for a script's reply.
+      def outcome: (Integer wait) -> [bool, Integer]
+
+      def wait_for_capacity: (Hash[Symbol, Integer | Float] opts) -> (bool | String | nil)
+
+      def register: () -> void
+
+      def monotonic: () -> Float
+
+      def pool: () -> Redis::Pool
+
+      def redis: [T] () { (Redis::Connection conn) -> T } -> T
+    end
+
+    # Lets one call count as several uses (+used:+).
+    module Uses : Base
+      def within_limit: [T] (?used: Integer) { (Base limiter) -> T } -> T?
+    end
+
+    # At most +size+ holders at once, each leasing its slot for
+    # +lock_timeout+ seconds.
+    class Concurrent < Base
+      ACQUIRE: Redis::Script
+
+      attr_reader lock_timeout: Float
+      attr_reader lock_timeout_ms: Integer
+
+      # Other options: see Base#initialize.
+      def initialize: (_ToS name, Integer | String size, ?interval _interval, ?lock_timeout: seconds, **untyped options) -> void
+
+      def within_limit: [T] () { (self limiter) -> T } -> T?
+
+      private
+
+      def acquire: (wait: [Float, Float], **untyped) -> (String | false)
+
+      def release: (String token) -> void
+    end
+
+    # +limit+ uses per calendar interval.
+    class Bucket < Base
+      include Uses
+
+      ACQUIRE: Redis::Script
+
+      def initialize: (_ToS name, Integer | String limit, interval interval, **untyped options) -> void
+
+      # Milliseconds (every limiter of this kind has an interval).
+      def interval_ms: () -> Integer
+
+      def within_limit: [T] (?used: Integer) { (self limiter) -> T } -> T?
+
+      private
+
+      def bucket_key: (Integer now) -> String
+
+      def acquire: (used: Integer, wait: [Float, Float]) -> [bool, Integer]
+    end
+
+    # At most +limit+ uses in any rolling +interval+.
+    class Window < Base
+      include Uses
+
+      ACQUIRE: Redis::Script
+
+      def initialize: (_ToS name, Integer | String limit, interval interval, **untyped options) -> void
+
+      # Milliseconds (every limiter of this kind has an interval).
+      def interval_ms: () -> Integer
+
+      def within_limit: [T] (?used: Integer) { (self limiter) -> T } -> T?
+
+      private
+
+      def acquire: (used: Integer, wait: [Float, Float]) -> [bool, Integer]
+    end
+
+    # Capacity +limit+, draining at limit/interval per second.
+    class Leaky < Base
+      ACQUIRE: Redis::Script
+
+      def initialize: (_ToS name, Integer | String limit, interval interval, **untyped options) -> void
+
+      # Milliseconds (every limiter of this kind has an interval).
+      def interval_ms: () -> Integer
+
+      def within_limit: [T] () { (self limiter) -> T } -> T?
+
+      def used_from: (Array[String?] reply) -> Integer
+
+      private
+
+      def acquire: (wait: [Float, Float], **untyped) -> [bool, Integer]
+    end
+
+    # A token bucket of +limit+ points, refilled over +interval+.
+    class Points < Base
+      ACQUIRE: Redis::Script
+      ADJUST: Redis::Script
+
+      def initialize: (_ToS name, Integer | String limit, interval interval, **untyped options) -> void
+
+      # Milliseconds (every limiter of this kind has an interval).
+      def interval_ms: () -> Integer
+
+      def within_limit: [T] (?points: Integer | Float) { (self limiter) -> T } -> T?
+
+      # Spends (positive) or returns (negative) points; returns the points
+      # now available.
+      def adjust: (Integer | Float points) -> Float
+
+      def refund: (Integer | Float points) -> Float
+
+      def used_from: (Array[String?] reply) -> Integer
+
+      private
+
+      def acquire: (points: Integer | Float, wait: [Float, Float]) -> [bool, Integer]
+    end
+
+    # A limiter that never limits (and never touches Redis).
+    class Unlimited
+      attr_reader name: String
+
+      def initialize: (_ToS name) -> void
+
+      def type: () -> String
+
+      def within_limit: [T] (**Integer | Float) { (self limiter) -> T } -> T
+
+      def used: () -> Integer
+
+      def adjust: (Integer | Float _points) -> Float
+
+      def refund: (Integer | Float _points) -> Float
+
+      def to_h: () -> Hash[String, untyped]
+    end
+
+    # Reschedules jobs whose limiter is over its limit instead of failing
+    # them.
+    class ServerMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def call: (untyped job, job_hash payload, String queue) { () -> untyped } -> untyped
+
+      private
+
+      def custom_delay: (OverLimit error, Integer count, job_hash payload) -> Numeric?
+
+      def default_delay: (OverLimit error, Integer count, job_hash payload) -> Float
+    end
+  end
+end

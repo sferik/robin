@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Deletes the demo's data and creates it afresh:
+#
+# 1. a first wave of jobs actually runs (in this process, for up to 20
+#    seconds), so the dashboard has history: processed and failed totals,
+#    metrics, retries, dead jobs, finished batches, rate-limited jobs,
+#    unique and debounced jobs;
+# 2. then a backlog is left waiting for bin/work: full queues, a batch in
+#    progress, scheduled jobs, a paused queue and a cancelled job.
+#
+# Run it again whenever you like; it always starts from scratch.
+require_relative "setup"
+require_relative "../app"
+load File.expand_path("reset", __dir__)
+
+def say(message) = puts("  #{message}")
+
+if Robin::ProcessSet.new.any?
+  abort "Demo processes are running (bin/work or bin/dev). Stop them first, then run bin/seed again."
+end
+
+puts "Seeding #{Demo::REDIS_URL} (keys #{Demo::PREFIX}*)"
+say "deleted #{Demo.reset} old keys"
+Robin.logger.level = :error # the first wave's failures are on purpose
+
+Robin::Deploy.mark!("v1.0", at: Time.now - 3600)
+
+# -- 1. history -----------------------------------------------------------------
+
+40.times { |i| WelcomeEmail.perform_async(1000 + i) }
+40.times { |i| FlakyWebhook.perform_async("https://hooks.example.com/#{i % 4}", "order.paid") }
+3.times { |i| ImportLegacyCsv.perform_async("legacy/customers-#{2019 + i}.csv") }
+3.times { |i| SyncCrm.perform_async(500 + i) }
+6.times { |i| ResizeImage.perform_async(i, [320, 640, 1280].sample) }
+4.times { CrunchNumbers.perform_async(300_000) }
+Demo.import("customers.csv", 150) # row 97 fails: the batch completes, but doesn't succeed
+Demo.import("orders.csv", 60, owner_id: 2) # succeeds
+3.times { RebuildSearchIndex.perform_async("products") } # two are dropped as duplicates
+5.times { SyncContact.perform_async(42) } # one runs, 10s after the last
+6.times { |i| ChargeCard.perform_async(700 + i, rand(500..9_900)) }
+20.times { |i| GeocodeAddress.perform_async("#{i + 1} Main St") } # over the limit: some are rescheduled
+ExportOrders.perform_async(1, 100)
+10.times { |i| PostLedgerEntry.perform_async(i + 1, rand(100..10_000)) }
+
+say "running the first wave of jobs..."
+server = Robin.configure_embed do |config|
+  config.concurrency = 10
+  config.queues = %w[critical default mailers media reports low ledger]
+  config.timeout = 2
+end.run
+deadline = Time.now + 20
+sleep 0.5 until Robin::Queue.all.sum(&:size).zero? || Time.now > deadline
+sleep 1 # let the last jobs finish
+server.stop
+stats = Robin::Stats.new
+say "#{stats.processed} processed, #{stats.failed} failed, #{stats.retry_size} retrying, #{stats.dead_size} dead"
+
+# -- 2. the backlog ---------------------------------------------------------------
+
+Robin::Deploy.mark!("v1.1")
+WelcomeEmail.perform_bulk((1..200).zip)
+FlakyWebhook.perform_bulk((1..100).map { |i| ["https://hooks.example.com/#{i % 4}", "order.shipped"] })
+ResizeImage.perform_bulk((1..30).map { |id| [id, 640] })
+CrunchNumbers.perform_bulk([[3_000_000]] * 10)
+PostLedgerEntry.perform_bulk((1..50).map { |id| [id, rand(100..10_000)] })
+ExportOrders.perform_async(2, 2_000)
+Demo.import("everything.csv", 500, owner_id: 3)
+8.times { |i| ChargeCard.perform_async(800 + i, rand(500..9_900)) }
+cancelled = ResizeImage.perform_async(9_999, 4_096)
+Robin.cancel!(cancelled)
+say "queued #{Robin::Queue.all.sum(&:size)} jobs, including a 500-row import batch"
+
+50.times { |i| WelcomeEmail.perform_in(rand(60..3_600), 5_000 + i) }
+5.times { |i| FlashSale.perform_in(30 * (i + 1), "SKU-#{i}") }
+DigestEmail.perform_at(Time.now + 86_400, "weekly")
+say "scheduled #{Robin::ScheduledSet.new.size} jobs"
+
+10.times { PruneSessions.perform_async }
+Robin::Queue.new("low").pause!
+say "paused the \"low\" queue (unpause it on the Queues page)"
+puts "Done. Start the demo with bin/dev, or bin/work and bin/web."

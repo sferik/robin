@@ -1,0 +1,24 @@
+module Robin
+  # Deploy markers, drawn on the dashboard's metrics charts.
+  module Deploy
+    DEDUP_SECONDS: Integer
+
+    MAX_LABEL: Integer
+
+    MARK: Redis::Script
+
+    # Records a deploy at +at+. Returns false when +label+ was already
+    # marked in the last hour, true otherwise.
+    def self.mark!: (?_ToS? label, ?at: Time, ?config: Config) -> bool
+
+    # Deploys from +from+ to +to+, oldest first: {"at" => epoch ms,
+    # "label" => String or nil}.
+    def self.list: (from: Time, ?to: Time, ?config: Config) -> Array[Hash[String, untyped]]
+
+    def self.key: (Config config) -> String
+
+    private def self.ms: (Time time) -> Integer
+
+    private def self.dedup_key: (Config config, String label) -> String
+  end
+end

@@ -1,0 +1,37 @@
+latency 0ms, 10 threads, robin    117858 jobs/s
+latency 0ms, 10 threads, sidekiq   23647 jobs/s
+latency 0ms, 10 threads, sidekiq   23859 jobs/s
+latency 0ms, 10 threads, robin    119603 jobs/s
+latency 0ms, 10 threads, robin    120508 jobs/s
+latency 0ms, 10 threads, sidekiq   22911 jobs/s
+latency 0ms, 25 threads, robin    120647 jobs/s
+latency 0ms, 25 threads, sidekiq   29845 jobs/s
+latency 0ms, 25 threads, sidekiq   27569 jobs/s
+latency 0ms, 25 threads, robin    120269 jobs/s
+latency 0ms, 25 threads, robin    121283 jobs/s
+latency 0ms, 25 threads, sidekiq   29578 jobs/s
+latency 1ms, 10 threads, robin    105791 jobs/s
+latency 1ms, 10 threads, sidekiq   11431 jobs/s
+latency 1ms, 10 threads, sidekiq   11421 jobs/s
+latency 1ms, 10 threads, robin    100940 jobs/s
+latency 1ms, 10 threads, robin    100645 jobs/s
+latency 1ms, 10 threads, sidekiq   10330 jobs/s
+latency 1ms, 25 threads, robin    109599 jobs/s
+latency 1ms, 25 threads, sidekiq   15402 jobs/s
+latency 1ms, 25 threads, sidekiq   15336 jobs/s
+latency 1ms, 25 threads, robin    108284 jobs/s
+latency 1ms, 25 threads, robin    107880 jobs/s
+latency 1ms, 25 threads, sidekiq   15131 jobs/s
+ruby 3.4.11 (2026-09-23 revision 592f1ffdb3) +YJIT +PRISM [arm64-darwin27]
+500000 jobs per run, median of 3
+
+| system | latency (each way) | threads | processed jobs/s | pushed jobs/s | Ruby CPU/job | Redis CPU/job | Redis commands/job | RSS growth |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| Robin 0.1.0 (NativeRESP parser) | 0 ms | 10 | 119603 | 354610 | 8.9 µs | 7.8 µs | 1.3 | 7 MB |
+| Sidekiq 8.1.7 (hiredis driver) | 0 ms | 10 | 23647 | 296736 | 40.2 µs | 40.7 µs | 1.0 | 6 MB |
+| Robin 0.1.0 (NativeRESP parser) | 0 ms | 25 | 120647 | 354610 | 8.9 µs | 7.7 µs | 1.3 | 8 MB |
+| Sidekiq 8.1.7 (hiredis driver) | 0 ms | 25 | 29578 | 296384 | 31.3 µs | 32.4 µs | 1.0 | 7 MB |
+| Robin 0.1.0 (NativeRESP parser) | 1 ms | 10 | 100940 | 243309 | 9.6 µs | 8.9 µs | 1.3 | 7 MB |
+| Sidekiq 8.1.7 (hiredis driver) | 1 ms | 10 | 11421 | 227894 | 42.0 µs | 70.9 µs | 1.0 | 6 MB |
+| Robin 0.1.0 (NativeRESP parser) | 1 ms | 25 | 108284 | 240732 | 10.0 µs | 8.6 µs | 1.3 | 8 MB |
+| Sidekiq 8.1.7 (hiredis driver) | 1 ms | 25 | 15336 | 210172 | 65.6 µs | 61.3 µs | 1.0 | 7 MB |

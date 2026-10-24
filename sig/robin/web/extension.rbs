@@ -1,0 +1,106 @@
+module Robin
+  class Web
+    # A page of your own in the dashboard (see lib/robin/web/extension.rb).
+    class Extension
+      # An action's block: the message to show (a String; anything else
+      # shows "Done"). It runs on an instance of the extension.
+      type action = ^(Request request) [self: Extension] -> untyped
+
+      # A data block: its value (anything JSON can hold) is the response.
+      type data_source = ^(Request request) [self: Extension] -> json
+
+      SLUG: Regexp
+
+      # What blocks, actions and data blocks get: the dashboard request.
+      class Request < Struct[untyped]
+        attr_accessor config: Config
+
+        # The query parameters.
+        attr_accessor params: Hash[String, untyped]
+
+        attr_accessor env: env
+
+        # The dashboard's language ("en", "pt-BR"...).
+        attr_accessor locale: String
+
+        # An action's JSON body.
+        attr_accessor body: Hash[String, json]
+
+        attr_accessor extension: singleton(Extension)?
+
+        def self.new: (Config config, Hash[String, untyped] params, env env, String locale, Hash[String, json] body, singleton(Extension)? extension) -> instance
+
+        # +text+ in the dashboard's language, with {name} placeholders
+        # filled from +values+.
+        def t: (String text, **_ToS values) -> String
+      end
+
+      # Each is nil until set (never set back to nil).
+      self.@slug: String
+      self.@title: String
+      self.@actions: Hash[String, action]?
+      self.@data_sources: Hash[String, data_source]?
+      self.@assets: String
+      self.@script: String
+      self.@stylesheet: String
+      self.@translations: String
+      self.@messages: Hash[String, Hash[String, String]]
+
+      # The page's slug (in its URL); sets it with +value+.
+      def self.slug: (?String | Symbol | nil value) -> String
+
+      # The page's title (its tab); sets it with +value+.
+      def self.title: (?String | Symbol | nil value) -> String
+
+      # Adds an action (a button's) the block runs.
+      def self.action: (_ToS name) { (Request request) [self: Extension] -> untyped } -> action
+
+      def self.actions: () -> Hash[String, action]
+
+      # A JSON endpoint for the page's script; the block's value is the
+      # response.
+      def self.data: (_ToS name) { (Request request) [self: Extension] -> json } -> data_source
+
+      def self.data_sources: () -> Hash[String, data_source]
+
+      # The directory the page's files are served from; sets it with +dir+.
+      def self.assets: (?String? dir) -> String?
+
+      # The page's JavaScript module, relative to +assets+.
+      def self.script: (?String? path) -> String?
+
+      # The page's stylesheet, relative to +assets+.
+      def self.stylesheet: (?String? path) -> String?
+
+      # The directory of <language>.yml translation files.
+      def self.translations: (?String? dir) -> (String | Hash[String, Hash[String, String]] | nil)
+
+      # English text => translation for +locale+, or nil.
+      def self.messages: (String? locale) -> Hash[String, String]?
+
+      # The full path of an asset, or nil when there's no such file.
+      def self.asset_file: (String path) -> String?
+
+      def self.to_h: () -> Hash[String, untyped]
+
+      private
+
+      def self.asset_setting: (Symbol name, String? path) -> String?
+
+      def self.titles: () -> Hash[String, String]
+
+      def self.load_messages: (String file) -> Hash[String, String]
+
+      public
+
+      # The page's blocks; override this.
+      def blocks: (Request request) -> Array[Hash[Symbol | String, json]]
+
+      # Runs an action; returns the message to show.
+      def run: (String name, Request request) -> String
+
+      # Runs a data block; returns its value.
+      def fetch: (String name, Request request) -> json
+    end
+  end
+end
