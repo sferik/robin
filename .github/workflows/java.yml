@@ -23,7 +23,7 @@ jobs:
           - { name: "Mutation coverage (100%)", task: "java:mutation" }
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
