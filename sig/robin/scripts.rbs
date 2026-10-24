@@ -1,0 +1,36 @@
+module Robin
+  # The Lua scripts Robin runs in Redis.
+  module Scripts
+    FETCH: Redis::Script
+
+    ENQUEUE_DUE: Redis::Script
+
+    RECOVER: Redis::Script
+
+    FORGET: Redis::Script
+
+    PRUNE: Redis::Script
+
+    QUEUE_SAMPLES: Redis::Script
+
+    REQUEUE_ONE: Redis::Script
+
+    LEASE: Redis::Script
+
+    RELEASE: Redis::Script
+
+    FIND_JID: Redis::Script
+
+    DELETE_CLASS: Redis::Script
+
+    STATS: Redis::Script
+
+    MEMBER_HASHES: Redis::Script
+
+    # The hash of each member of +set+, in one round trip: [member, hash]
+    # pairs, by member.
+    def self.member_hashes: (Config config, String set, String prefix, ?String suffix) -> Array[[String, Hash[String, String]]]
+
+    HMAX: Redis::Script
+  end
+end

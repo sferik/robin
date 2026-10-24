@@ -1,0 +1,39 @@
+module Robin
+  # Measures GVL contention (with the C extension's Robin::NativeGVL).
+  class GVL
+    # What GVL needs of Robin::NativeGVL.
+    interface _Native
+      def start: () -> void
+
+      def stop: () -> void
+
+      def wait_ns: () -> Integer
+    end
+
+    # Robin::NativeGVL, where the C extension defines it.
+    def self.native: () -> (Object & _Native)?
+
+    @native: (Object & _Native)?
+    @threads: ^() -> Integer
+    # nil until #start.
+    @last: [Integer, Integer]
+
+    def initialize: (?(Object & _Native)? native, ?threads: ^() -> Integer) -> void
+
+    def available?: () -> bool
+
+    # Starts measuring; #sample then reports from here.
+    def start: () -> void
+
+    def stop: () -> void
+
+    # The contention since the last sample (or #start), as a percentage, or
+    # nil when it isn't measuring.
+    def sample: () -> Float?
+
+    private
+
+    # Nanoseconds waited so far, and now (monotonic nanoseconds).
+    def reading: () -> [Integer, Integer]
+  end
+end

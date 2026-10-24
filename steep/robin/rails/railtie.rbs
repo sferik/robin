@@ -1,0 +1,20 @@
+# Robin's own classes that subclass Rails' or Puma's (or take their
+# objects), here and in steep/robin, steep/active_job, steep/generators and
+# steep/puma/plugin: their signatures name Rails' and Puma's types, so
+# they're for this check only, not in the gem (where checking against them
+# would need Rails' and Puma's RBS).
+module Robin
+  module Rails
+    # Wires Robin into a Rails app.
+    class Railtie < ::Rails::Railtie
+      # Configures Robin for the booted app.
+      def self.integrate: (::Rails::Application app, ?config: Config) -> void
+
+      # Runs each job inside the app's reloader (and so its executor).
+      def self.job_wrapper: (::Rails::Application app) -> ^(job_hash payload) { () -> void } -> void
+
+      # Tags what the job logs with its class and jid, when the logger can.
+      def self.tagged: [T] (job_hash payload) { () -> T } -> T
+    end
+  end
+end

@@ -1,0 +1,189 @@
+module Robin
+  class Web
+    # JSON endpoint handlers. One instance per request; each handler returns
+    # the Rack response.
+    class API
+      SETS: Hash[String, singleton(ScheduledSet) | singleton(RetrySet) | singleton(DeadSet)]
+
+      SET_ACTIONS: Hash[String, :retry | :delete | :kill]
+
+      SIGNALS: Hash[String, :quiet! | :stop! | :dump_threads]
+
+      MAX_CONCURRENCY: Integer
+
+      FEATURES: Hash[String, bool]
+
+      # Integer query parameters: name => [default, minimum, maximum].
+      INT_PARAMS: Hash[String, [Integer, Integer, Integer]]
+
+      INFO_FIELDS: Array[String]
+
+      SEARCH_LIMIT: Integer
+
+      INFO_LINK: Regexp
+
+      FAILURE_FIELDS: Array[String]
+
+      def self.json: (Integer status, json body) -> response
+
+      # Redis's INFO reply as a Hash.
+      def self.parse_info: (String raw) -> Hash[String, String]
+
+      @env: env
+      @request: _Request
+      @cluster: String?
+      @params: Hash[String, untyped]
+      @body: Hash[String, json]?
+
+      attr_reader config: Config
+
+      def initialize: (env env, _Request request, String? cluster, Hash[String, untyped] params) -> void
+
+      # Raises a 403 HttpError unless the request may do +action+.
+      def authorize!: (Symbol action, String resource) -> void
+
+      def session: () -> response
+
+      def dashboard: () -> response
+
+      def stats: () -> response
+
+      # Server-sent events.
+      def stream: () -> response
+
+      def live_stats: () -> Hash[String, untyped]
+
+      def info: () -> response
+
+      def queues: () -> response
+
+      def queue: () -> response
+
+      def pause_queue: () -> response
+
+      def unpause_queue: () -> response
+
+      def clear_queue: () -> response
+
+      def delete_queue_jobs: () -> response
+
+      def delete_queue_class: () -> response
+
+      def busy: () -> response
+
+      def signal_process: () -> response
+
+      def resize_process: () -> response
+
+      def signal_all_processes: () -> response
+
+      def set: () -> response
+
+      def set_entry: () -> response
+
+      def set_bulk: () -> response
+
+      def set_all: () -> response
+
+      def edit_entry: () -> response
+
+      def find_job: () -> response
+
+      def cancel_job: () -> response
+
+      def metrics: () -> response
+
+      def metrics_history: () -> response
+
+      def metrics_queues: () -> response
+
+      def metrics_job: () -> response
+
+      # Deploys in the last +seconds+.
+      def deploys: (Integer seconds) -> Array[Hash[String, json]]
+
+      def batches: () -> response
+
+      def batch: () -> response
+
+      def cancel_batch: () -> response
+
+      def delete_batch: () -> response
+
+      def limiters: () -> response
+
+      def reset_limiter: () -> response
+
+      def delete_limiter: () -> response
+
+      def cron: () -> response
+
+      def cron_entry: () -> response
+
+      def cron_enqueue: () -> response
+
+      def cron_pause: () -> response
+
+      def cron_unpause: () -> response
+
+      def profiles: () -> response
+
+      # The profile itself, as a download.
+      def profile_data: () -> response
+
+      def delete_profile: () -> response
+
+      def extension_page: () -> response
+
+      def extension_data: () -> response
+
+      def extension_action: () -> response
+
+      private
+
+      def ok: (json body) -> response
+
+      def stats_event: () -> String
+
+      def extension!: () -> singleton(Extension)
+
+      def extension_request: (singleton(Extension) extension, ?Hash[String, json] body) -> Extension::Request
+
+      # Runs the block; an extension that raises is reported, as a 500.
+      def guarded: [T] (singleton(Extension) extension, String what) { () -> T } -> T
+
+      # The request's JSON body (an object).
+      def body: () -> Hash[String, json]
+
+      def int_param: (String name) -> Integer
+
+      # [page, per page]
+      def paging: () -> [Integer, Integer]
+
+      def named_queue: () -> Queue
+
+      def job_set: () -> JobSet
+
+      def find_entry!: () -> SortedEntry
+
+      def set_action!: () -> (:retry | :delete | :kill)
+
+      def live_process: () -> ProcessRecord
+
+      def signal_method: () -> (:quiet! | :stop! | :dump_threads)
+
+      # Applies +action+ to +entries+ of +set+; returns how many.
+      def apply: (JobSet set, Array[SortedEntry] entries, :retry | :delete | :kill action) -> Integer
+
+      # The queues' rows, in one round trip.
+      def queue_rows: (Hash[String, Integer] sizes) -> Array[Hash[String, untyped]]
+
+      def job_json: (JobRecord record, ?full: bool) -> Hash[String, json]
+
+      # The Robin::Web.job_info rows for a job.
+      def job_info: (job_hash item) -> Array[Hash[String, String]]
+
+      def info_row: (String label, untyped value) -> Hash[String, String]
+    end
+  end
+end

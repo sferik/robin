@@ -1,0 +1,31 @@
+name: Mutant
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  mutant:
+    name: Mutation coverage (100%)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/redis
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec rake compile
+      # Pull requests only mutate code they touch; pushes to main run everything.
+      - name: Mutant (changed subjects)
+        if: github.event_name == 'pull_request'
+        run: bundle exec mutant run --since origin/${{ github.base_ref }}
+      - name: Mutant (all subjects)
+        if: github.event_name != 'pull_request'
+        run: bundle exec mutant run

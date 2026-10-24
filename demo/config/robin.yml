@@ -1,0 +1,16 @@
+# Read by bin/work (bundle exec robin -C config/robin.yml).
+concurrency: 8
+# Weighted: "critical" is checked three times as often as "low".
+queues:
+  - [critical, 3]
+  - [default, 2]
+  - [mailers, 2]
+  - [media, 1]
+  - [reports, 1]
+  - [low, 1]
+timeout: 10
+capsules:
+  # One thread of its own, so ledger jobs run strictly one at a time.
+  serial:
+    concurrency: 1
+    queues: [ledger]

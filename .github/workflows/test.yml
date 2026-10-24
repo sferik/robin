@@ -1,0 +1,113 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.ruby }}
+    runs-on: ubuntu-latest
+    # Ruby's development version and TruffleRuby get an early look, but
+    # can't fail the build.
+    continue-on-error: ${{ matrix.ruby == 'head' || startsWith(matrix.ruby, 'truffleruby') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.4", "4.0", "head", "jruby-10.1", "truffleruby-40.0"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/redis
+      # JRuby compiles the Java extension, which needs a JDK 21.
+      - uses: actions/setup-java@v4
+        if: startsWith(matrix.ruby, 'jruby')
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Compile the C (or, on JRuby, Java) extension
+        run: bundle exec rake compile
+      - name: Run tests
+        run: bundle exec rake test
+
+  # The Rails integration against every Rails release line still getting
+  # patches (gemfiles/rails_*/Gemfile pin each one's latest release). The
+  # coverage job measures it with the rest.
+  rails:
+    name: Rails ${{ matrix.rails }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rails: ["7.2", "8.0", "8.1"]
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/rails_${{ matrix.rails }}/Gemfile
+      COVERAGE: "false"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/redis
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec rake compile
+      - name: Run the Rails integration's tests
+        run: bundle exec rake test:rails
+
+  # Every Redis from the oldest Robin runs on (6.2) to the latest, plus the
+  # Redis alternatives Robin supports. (The jobs above use the latest Redis.)
+  servers:
+    name: ${{ matrix.server }} ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { server: redis, version: "6.2" }
+          - { server: redis, version: "7.2" }
+          - { server: redis, version: "7.4" }
+          - { server: redis, version: "8.2" }
+          - { server: redis, version: "8.10" }
+          - { server: valkey, version: "9.1" }
+          - { server: dragonfly, version: "v2.0.2" }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/redis
+        with:
+          server: ${{ matrix.server }}
+          version: ${{ matrix.version }}
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec rake compile
+      - run: bundle exec rake test
+
+  coverage:
+    name: Coverage (100% line, branch and method)
+    runs-on: ubuntu-latest
+    env:
+      COVERAGE_STRICT: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/redis
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec rake compile
+      # SimpleCov fails the run if any criterion drops below 100%.
+      - run: bundle exec rake test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: |
+            coverage/

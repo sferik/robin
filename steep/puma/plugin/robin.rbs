@@ -1,0 +1,48 @@
+module Puma
+  # Runs an embedded Robin server in every Puma process that serves
+  # requests (see steep/robin/rails/railtie.rbs on why it's not in the gem).
+  class RobinPlugin < Plugin
+    # Server states Puma::Server reports when it stops accepting requests.
+    STOPPING: Array[Symbol]
+
+    # Puma::DSL methods.
+    module DSL
+      @options: Hash[Symbol, untyped]
+
+      # Registers a block run with Robin's config before the server starts.
+      def robin_config: () { (Robin::Config config) -> void } -> Array[^(Robin::Config config) -> void]
+    end
+
+    # nil until #start.
+    @launcher: Launcher
+    # nil until the first state change.
+    @pid: Integer
+    @robin: Robin::Embedded?
+    @configured: bool?
+    @stopper: Thread?
+
+    def start: (Launcher launcher) -> void
+
+    # Puma's server is :booting, :running, stopping (STOPPING) or :done.
+    def changed: (Symbol state) -> void
+
+    private
+
+    def forget_parent: () -> void
+
+    def run: () -> void
+
+    # Stops the server in the background; returns the thread doing it.
+    def stop: () -> Thread?
+
+    def stop_now: (Robin::Embedded robin) -> void
+
+    def warn_about_timeout: () -> void
+
+    def warn_about_master: () -> void
+
+    def log: (String message) -> void
+
+    def log_error: (String what, Exception error) -> void
+  end
+end

@@ -1,0 +1,39 @@
+name: Frontend mutation testing
+
+on:
+  push:
+    paths:
+      - "web/**"
+      - ".github/workflows/frontend-mutation.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - ".github/workflows/frontend-mutation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - name: Stryker (fails below a 100% mutation score)
+        run: bun run test:mutation
+      - name: Upload the mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-mutation-report
+          path: web/reports/mutation/

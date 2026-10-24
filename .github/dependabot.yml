@@ -1,0 +1,24 @@
+version: 2
+
+updates:
+  # The actions every workflow uses, and the composite actions in
+  # .github/actions/.
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/*
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+
+  # The main Gemfile, and each Rails version's (gemfiles/rails_*/Gemfile,
+  # run by CI's "rails" job).
+  - package-ecosystem: bundler
+    directories:
+      - /
+      - /gemfiles/*
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7

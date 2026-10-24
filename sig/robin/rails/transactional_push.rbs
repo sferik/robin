@@ -1,0 +1,16 @@
+module Robin
+  module Rails
+    # A Config#push_deferrer holding jobs pushed inside Active Record
+    # transactions until they all commit.
+    module TransactionalPush
+      # The fiber-local key of [the transaction, the deliveries waiting on it].
+      WAITING: Symbol
+
+      # Whether it took over delivery (false without Active Record 7.2+).
+      def self.call: (Array[job_hash] _payloads) { () -> void } -> bool
+
+      # The innermost open transaction on the primary database, if any.
+      private def self.current_transaction: () -> untyped
+    end
+  end
+end

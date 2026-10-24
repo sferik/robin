@@ -1,0 +1,84 @@
+name: Push gems to RubyGems
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    if: github.repository == 'sferik/robin'
+    runs-on: ubuntu-latest
+    environment:
+      name: rubygems.org
+      url: https://rubygems.org/gems/robin
+    permissions:
+      contents: write
+      id-token: write
+
+    # Two robin gems: the default one (its C extension compiles on
+    # install) and the java-platform one, built under JRuby with the
+    # compiled Java extension inside.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ruby: ruby
+            platform: ""
+          - ruby: jruby
+            platform: java
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v4
+        if: matrix.platform == 'java'
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - uses: rubygems/configure-rubygems-credentials@v2.1.0
+      - name: Update RubyGems
+        run: gem update --system
+      - name: Compile the Java extension
+        if: matrix.platform == 'java'
+        run: bundle exec rake java:compile
+      - name: Build gems
+        run: |
+          gem build robin.gemspec
+        env:
+          ROBIN_PLATFORM: ${{ matrix.platform }}
+      # Sigstore signing runs under CRuby 3.4: sigstore-ruby doesn't work with
+      # JRuby's OpenSSL, and fails on Ruby 4.0.
+      - name: Set up CRuby for signing
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+      - name: Sign gems with Sigstore
+        run: |
+          for gem in robin-*.gem; do
+            gem exec sigstore-cli sign "$gem" --bundle "${gem%.gem}.gem.sigstore.json"
+          done
+      - name: Push gems
+        run: |
+          for gem in robin-*.gem; do
+            gem push "$gem" --attestation "${gem%.gem}.gem.sigstore.json" || {
+              echo "gem push failed — checking if already published"
+              gem exec rubygems-await "$gem" && echo "Already published, continuing" || exit 1
+            }
+          done
+      - name: Wait for release
+        run: gem exec rubygems-await robin-*.gem
+      - name: Create GitHub release
+        if: matrix.ruby == 'ruby'
+        run: |
+          tag_name="$(git describe --tags --abbrev=0)"
+          gh release view "${tag_name}" >/dev/null 2>&1 || \
+            gh release create "${tag_name}" --verify-tag --generate-notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

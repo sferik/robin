@@ -1,0 +1,173 @@
+module Robin
+  # A time to run a job at: a delay in seconds, epoch seconds or
+  # milliseconds, a Time, or anything with #to_time (a Date) or #to_f (an
+  # ActiveSupport::Duration).
+  type time = Numeric | Time | _ToTime | _ToF
+
+  interface _ToTime
+    def to_time: () -> Time
+  end
+
+  interface _ToF
+    def to_f: () -> Float
+  end
+
+  # Include in a class to make it a Robin job:
+  #
+  #   class Thumbnail
+  #     include Robin::Job
+  #     extend Robin::Job::ClassMethods # in your RBS: include adds it
+  #     robin_options queue: "media", retry: 10
+  #
+  #     def perform(image_id, size) = ...
+  #   end
+  module Job
+    # Raised inside a job that runs past its +timeout+.
+    class Timeout < Exception
+    end
+
+    # A Robin::Job::ClassMethods#robin_retry_in block: seconds, :discard,
+    # :kill, or nil for the default backoff.
+    type retry_in = ^(Integer count, Exception error, job_hash payload) -> (seconds | :discard | :kill | nil)
+
+    # A Robin::Job::ClassMethods#robin_retries_exhausted block.
+    type retries_exhausted = ^(job_hash payload, Exception error) -> void
+
+    interface _InclusionCheck
+      def call: (Module base) -> void
+    end
+
+    self.@inclusion_checks: Array[_InclusionCheck]
+
+    # Callables run with each class about to include Robin::Job; one raises
+    # to reject the class.
+    def self.inclusion_checks: () -> Array[_InclusionCheck]
+
+    def self.append_features: (Module base) -> void
+
+    # Option hashes use string keys, and symbol values become strings.
+    def self.stringify: (Hash[Symbol | String, untyped] hash) -> Hash[String, untyped]
+
+    @interrupt_requested: bool?
+
+    # The job's id (set before #perform runs).
+    attr_accessor jid: String?
+
+    # The job as it was fetched (set before #perform runs).
+    attr_accessor payload: job_hash?
+
+    attr_accessor interrupt_requested: bool?
+
+    def logger: () -> Logger
+
+    def queue: () -> String?
+
+    def batch: () -> Batch?
+
+    def bid: () -> String?
+
+    # How many times this job has failed before.
+    def failures: () -> Integer
+
+    # The capsule running the job, or nil outside a server's workers.
+    def capsule: () -> Capsule?
+
+    # True once someone cancelled the job (or its batch).
+    def cancelled?: () -> bool
+
+    # Reports progress (0-100, or nil) with an optional message.
+    def progress!: (Integer | Float | nil percent, ?String? message, **untyped meta) -> void
+
+    # True while the server is shutting down.
+    def interrupted?: () -> bool
+
+    # What ClassMethods needs of the class it extends.
+    interface _JobClass
+      def name: () -> String?
+
+      # A job class's superclass may be a job class too.
+      def superclass: () -> untyped
+
+      def new: () -> untyped
+    end
+
+    # Class methods a job class gets (MyJob.perform_async...).
+    module ClassMethods : _JobClass
+      RESERVED: Array[String]
+
+      @robin_options: job_hash?
+      @robin_retry_in: retry_in?
+      @robin_retries_exhausted: retries_exhausted?
+
+      # Sets (with +opts+) and returns the class's options, string keys.
+      def robin_options: (?Hash[Symbol | String, untyped]? opts) -> job_hash
+
+      # Custom retry delay: the block receives (count, exception, payload)
+      # and returns seconds, :discard, :kill, or nil for the default.
+      def robin_retry_in: () { (Integer count, Exception error, job_hash payload) -> (seconds | :discard | :kill | nil) } -> retry_in
+
+      def robin_retry_in_block: () -> retry_in?
+
+      # Called when a job runs out of retries, with (payload, exception).
+      def robin_retries_exhausted: () { (job_hash payload, Exception error) -> void } -> retries_exhausted
+
+      def robin_retries_exhausted_block: () -> retries_exhausted?
+
+      # Per-push overrides: queue:, wait:, wait_until:, sync:, pool: and
+      # any robin_options.
+      def set: (Hash[Symbol | String, untyped] options) -> Setter
+
+      # Pushes the job; returns its jid, or nil if middleware stopped it.
+      def perform_async: (*untyped args) -> String?
+
+      def perform_in: (time interval, *untyped args) -> String?
+
+      def perform_at: (time time, *untyped args) -> String?
+
+      # Pushes a job per argument list; returns their jids.
+      def perform_bulk: (Array[Array[untyped]] args_list, ?batch_size: Integer, ?spread_interval: seconds?) -> Array[String?]
+
+      # Runs the job now, in this thread; returns what #perform returns.
+      def perform_inline: (*untyped args) -> untyped
+
+      def client_push: (job_hash item) -> String?
+
+      def robin_config: () -> Config
+
+      private
+
+      def validate_options!: (job_hash opts) -> void
+    end
+
+    DEFAULT_OPTIONS: job_hash
+
+    BULK_BATCH_SIZE: Integer
+
+    # Holds per-push overrides: MyJob.set(queue: "critical").perform_async
+    class Setter
+      @klass: ClassMethods
+      @options: job_hash
+      @pool: Redis::Pool?
+
+      def initialize: (ClassMethods klass, Hash[Symbol | String, untyped] options) -> void
+
+      def set: (Hash[Symbol | String, untyped] options) -> self
+
+      def perform_async: (*untyped args) -> untyped
+
+      def perform_in: (time interval, *untyped args) -> String?
+
+      def perform_at: (time interval, *untyped args) -> String?
+
+      def perform_bulk: (Array[Array[untyped]] args_list, ?batch_size: Integer, ?spread_interval: seconds?) -> Array[String?]
+
+      def perform_inline: (*untyped args) -> untyped
+
+      private
+
+      def via_pool: [T] () { () -> T } -> T
+
+      def item: (Array[untyped]? args) -> job_hash
+    end
+  end
+end

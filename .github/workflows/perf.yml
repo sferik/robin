@@ -1,0 +1,60 @@
+name: Performance
+
+# Robin may never get slower (see CONTRIBUTING.md). Duel measures every
+# pull request against where it left main, and every push to main against
+# the commit before it, and fails if it's slower at any benchmark in
+# duel/. Each night it measures main against the last release
+# too: slowdowns each too small to fail a change add up there.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perf-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  perf:
+    name: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'Since the last release' || 'Performance' }} (${{ matrix.jit }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # CRuby with YJIT and without, and JRuby (where the Java extension
+        # is measured; its JIT makes timings noisier, so small timing
+        # regressions there go unsettled, but its counts are exact).
+        jit: [yjit, interpreter, jruby]
+    env:
+      RUBY_YJIT_ENABLE: ${{ matrix.jit == 'yjit' && '1' || '0' }}
+      # A pull request: where it left main (Duel's default). A push: the
+      # commit before it. Nightly: the newest release tag.
+      DUEL_BASE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'last-release' || github.event_name == 'push' && github.event.before || '' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the baseline is checked out from history, tags included
+      # Each version of Robin gets a Redis server of its own.
+      - name: Install redis-server
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq redis-server
+          sudo systemctl stop redis-server
+      - uses: actions/setup-java@v4
+        if: matrix.jit == 'jruby'
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.jit == 'jruby' && 'jruby-10.1' || '3.4' }}
+          bundler-cache: true
+      - name: Compare against the baseline
+        run: bundle exec duel

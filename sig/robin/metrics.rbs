@@ -1,0 +1,122 @@
+module Robin
+  # Per-job-class execution metrics.
+  module Metrics
+    # One class's counts since the last drain: successes, failures, total
+    # milliseconds of the successful runs, and runs per histogram bucket.
+    type counts = {s: Integer, f: Integer, ms: Float, hist: Hash[Integer, Integer]}
+
+    # Each job class's counts, by its (display) name.
+    type jobs = Hash[String, counts]
+
+    # What Collector#drain returns: per-class counts, processed, failed.
+    type drained = [jobs, Integer, Integer]
+
+    # A queue's size and latency (seconds), as sampled.
+    type queue_sample = {size: Integer, latency: Float}
+
+    # Upper bounds (ms) of the histogram buckets; the last is open-ended.
+    BUCKETS: Array[Integer | Float]
+
+    MINUTE_TTL: Integer
+
+    DAILY_TOTALS_TTL: Integer
+
+    # The histogram bucket of a run of +ms+ milliseconds.
+    def self.bucket_for: (Integer | Float ms) -> Integer
+
+    def self.minute_stamp: (Time time) -> String
+
+    def self.hour_stamp: (Time time) -> String
+
+    # Records queue sizes and latencies (leader only, once a minute).
+    def self.sample_queues: (Config config, Redis::Connection conn, ?Time time) -> void
+
+    # Records counts per thread, in stripes, and drains them together.
+    class Collector
+      # One thread's counts.
+      class Stripe
+        @mutex: Thread::Mutex
+        @jobs: jobs
+        @processed: Integer
+        @failed: Integer
+
+        attr_reader thread: Thread
+
+        def initialize: (Thread thread) -> void
+
+        def record: (String klass, Integer | Float ms, bool ok) -> void
+
+        # Adds counts drained earlier.
+        def add: (drained drained) -> void
+
+        def drain: () -> drained
+
+        private
+
+        def reset: () -> void
+      end
+
+      def self.entry: (jobs jobs, String klass) -> counts
+
+      # Adds +from+'s per-class counts to +into+'s.
+      def self.merge: (jobs into, jobs from) -> void
+
+      @mutex: Thread::Mutex
+      @stripes: Array[Stripe]
+      @key: Symbol
+
+      def initialize: () -> void
+
+      def record: (String klass, Integer | Float ms, bool ok) -> void
+
+      # [per-class counts, processed, failed] since the last drain.
+      def drain: () -> drained
+
+      # Puts drained data back (used when a flush fails).
+      def restore: (drained drained) -> void
+
+      # Writes what was recorded since the last flush in one pipeline.
+      def flush: (Config config, Redis::Connection conn, ?Time time) -> void
+
+      # Queues the commands writing what was recorded since the last flush
+      # on +pipe+; returns what they write.
+      def queue: (Config config, Redis::Pipeline pipe, ?Time time) -> drained
+
+      # Reports queued metrics to StatsD once they're written.
+      def flushed: (Config config, drained drained) -> void
+
+      private
+
+      def stripe: () -> Stripe
+
+      def write: (Config config, Redis::Pipeline p, Time time, drained drained) -> void
+    end
+
+    # Query helpers for the web UI and API. Their results are JSON for the
+    # dashboard.
+    class Query
+      GRANULARITIES: Hash[Symbol, [Integer, String, Symbol]]
+
+      @config: Config
+
+      def initialize: (?Config config) -> void
+
+      # {"classes" => per-class totals, "series" => per-minute points}.
+      def recent: (?minutes: Integer, ?now: Time) -> Hash[String, untyped]
+
+      # The same, hourly.
+      def history: (?hours: Integer, ?now: Time) -> Hash[String, untyped]
+
+      # Queue size/latency maxima per minute or hour: {"t" => stamp,
+      # "queues" => {queue => {"size" => n, "latency" => n}}} each.
+      def queue_history: (?granularity: Symbol, ?points: Integer, ?now: Time) -> Array[Hash[String, untyped]]
+
+      # Latency histogram for one class: {"le" => bound or nil, "count" => n} each.
+      def histogram: (String klass, ?minutes: Integer, ?now: Time) -> Array[Hash[String, Integer | Float | nil]]
+
+      private
+
+      def summarize: (Array[String] stamps, Array[Redis::reply] rows) -> Hash[String, untyped]
+    end
+  end
+end

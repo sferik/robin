@@ -1,0 +1,47 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ruby:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: RuboCop
+        run: bundle exec rubocop
+      - name: Standard
+        run: bundle exec standardrb
+      - name: Build the gem
+        run: |
+          gem build robin.gemspec
+
+  # The RBS signatures (sig/) and Steep's strict check of lib/ against them
+  # (rake steep). Steep runs on CRuby only.
+  types:
+    name: Types (Ruby ${{ matrix.ruby }})
+    runs-on: ubuntu-latest
+    # Ruby's development version gets an early look, but can't fail the
+    # build.
+    continue-on-error: ${{ matrix.ruby == 'head' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.4", "4.0", "head"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: RBS and Steep
+        run: bundle exec rake steep

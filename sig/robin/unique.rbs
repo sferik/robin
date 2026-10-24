@@ -1,0 +1,72 @@
+module Robin
+  # Unique jobs: suppress pushes of a job identical (same class, queue and
+  # arguments) to one that's still pending (robin_options unique_for:).
+  module Unique
+    # A lock for a job: [digest, lock key, won?].
+    type claim = [String, String, boolish]
+
+    # Where a lock is released: a connection (which replies), or a
+    # pipeline or transaction to queue it in.
+    type redis = Redis::Connection | Redis::Pipeline
+
+    CLAIMS: Symbol
+
+    # The lock digest of a job's class name, queue and (unique) arguments.
+    def self.digest: (String klass_name, String queue, Array[untyped] args) -> String
+
+    # Hashes become key-sorted pairs (string keys).
+    def self.canonical: (untyped obj) -> untyped
+
+    def self.lock_key: (Config config, String digest) -> String
+
+    # Does a job take a lock when it's pushed?
+    def self.lockable?: (job_hash payload) -> boolish
+
+    # Runs the block (a bulk push of +payloads+) with their unique locks
+    # taken beforehand, when +chain+ starts with ClientMiddleware.
+    def self.claiming: [T] (Middleware::Chain chain, Array[job_hash] payloads) { () -> T } -> T
+
+    # Is a lock currently held for these arguments?
+    def self.locked?: (String klass_name, Array[untyped] args, ?queue: String, ?config: Config) -> bool
+
+    def self.release: (Config config, job_hash payload) -> Redis::reply
+
+    # Releases +payload+'s lock, if it has one and still holds it.
+    def self.eval_release: (redis redis, Config config, job_hash payload) -> Redis::reply
+
+    private def self.compare_and_delete: (redis redis, String key, String owner) -> Redis::reply
+
+    private def self.constant: (String name) -> untyped
+
+    class ClientMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (String job_class, job_hash payload, String queue, Redis::Pool redis) -> boolish
+
+      def call: (String job_class, job_hash payload, String queue, Redis::Pool redis) { () -> job_hash? } -> job_hash?
+
+      # Takes the locks of +payloads+ in one round trip; returns {payload
+      # => claim}, by identity.
+      def claim_all: (Array[job_hash] payloads) -> Hash[job_hash, claim]
+
+      private
+
+      def claim: (String job_class, job_hash payload, String queue) -> claim
+
+      # [digest, lock key, expiry (epoch ms)] for a job.
+      def lock_for: (String job_class, job_hash payload, String queue) -> [String, String, Integer]
+
+      def set_command: (job_hash payload, String key, Integer expires_at) -> Redis::command
+    end
+
+    class ServerMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (untyped job, job_hash payload, String queue) -> bool
+
+      def call: (untyped job, job_hash payload, String queue) { () -> untyped } -> untyped
+    end
+  end
+end

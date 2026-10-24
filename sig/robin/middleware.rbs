@@ -1,0 +1,106 @@
+module Robin
+  # Middleware wraps job pushes (client side) and job execution (server
+  # side), Rack style. A middleware is a class; the chain builds it (with
+  # the arguments given to Chain#add) and calls it:
+  #
+  #   Client: call(job_class, payload, queue, redis) { ... } (see _Client)
+  #   Server: call(job, payload, queue) { ... } (see _Server)
+  module Middleware
+    # A client middleware: yields to push the job (return what the block
+    # returns), or returns nil instead to stop the push. +job_class+ is the
+    # job's class name and +redis+ the pool the job goes to.
+    interface _Client
+      def call: (String job_class, job_hash payload, String queue, Redis::Pool redis) { () -> job_hash? } -> job_hash?
+    end
+
+    # A server middleware: yields to run the job. +job+ is the job's
+    # instance (nil for a job whose class isn't a Robin::Job).
+    interface _Server
+      def call: (untyped job, job_hash payload, String queue) { () -> untyped } -> untyped
+    end
+
+    # Any middleware: what the chain calls, with the arguments it was invoked
+    # with.
+    interface _Middleware
+      def call: (*untyped args) { () -> untyped } -> untyped
+    end
+
+    # Gives a middleware the Robin config (set as it's built).
+    module ConfigAware
+      attr_accessor config: Config
+
+      def redis: [T] () { (Redis::Connection conn) -> T } -> T
+
+      def logger: () -> Logger
+    end
+
+    # One instance serves every job (on every thread).
+    module Stateless
+    end
+
+    class Entry
+      # A middleware class may define +applies?+, so it's duck typed here.
+      @klass: untyped
+      @config: Config
+      @args: Array[untyped]
+      @stateless: bool
+      @filtered: bool
+      @instance: _Middleware?
+
+      # The middleware's class. One that defines +applies?+ (a class method
+      # taking +call+'s arguments) is skipped for jobs it returns false for.
+      def klass: () -> Class
+
+      def initialize: (Config config, Class klass, Array[untyped] args) -> void
+
+      def applies?: (Array[untyped] args) -> bool
+
+      # The instance to call.
+      def build: () -> _Middleware
+
+      private
+
+      def instantiate: () -> _Middleware
+    end
+
+    class Chain
+      include Enumerable[Entry]
+
+      @config: Config
+
+      def initialize: (Config config) -> void
+
+      # Frozen: change the chain with its methods.
+      attr_reader entries: Array[Entry]
+
+      def each: () { (Entry entry) -> void } -> Array[Entry]
+
+      def add: (Class klass, *untyped args) -> self
+
+      def prepend: (Class klass, *untyped args) -> self
+
+      def insert_before: (Class target, Class klass, *untyped args) -> self
+
+      def insert_after: (Class target, Class klass, *untyped args) -> self
+
+      def remove: (Class klass) -> self
+
+      def exists?: (Class klass) -> bool
+
+      def empty?: () -> bool
+
+      def clear: () -> self
+
+      # Invokes the chain around the block, outermost middleware first;
+      # returns the block's value, or what a middleware that halted the
+      # chain returned.
+      def invoke: (*untyped args) { () -> untyped } -> untyped
+
+      private
+
+      def call_from: (Array[Entry] entries, Integer index, Array[untyped] args, ^() -> untyped block) -> untyped
+
+      def without: (Class klass) -> Array[Entry]
+    end
+  end
+end
