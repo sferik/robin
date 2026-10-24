@@ -29,7 +29,7 @@ jobs:
         with:
           # Pinned so the rebuilt bundle matches the committed one byte for byte.
           bun-version: 1.3.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: bun install --frozen-lockfile
