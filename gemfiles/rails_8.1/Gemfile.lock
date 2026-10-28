@@ -100,7 +100,7 @@ GEM
       minitest-strict (>= 1.0)
     minitest-strict (1.0.1)
       minitest (>= 5.21, < 7)
-    mutant (0.17.0)
+    mutant (0.17.1)
       diff-lcs (>= 1.6, < 3)
       irb (~> 1.15)
       parser (~> 3.3.10)
@@ -108,9 +108,9 @@ GEM
       securerandom (>= 0.3)
       sorbet-runtime (~> 0.6.0)
       unparser (>= 0.8.2, < 0.10)
-    mutant-minitest (0.17.0)
+    mutant-minitest (0.17.1)
       minitest (>= 5.11, < 7)
-      mutant (= 0.17.0)
+      mutant (= 0.17.1)
       mutex_m (~> 0.2)
     mutex_m (0.3.0)
     nio4r (2.7.5)
@@ -145,7 +145,7 @@ GEM
     opentelemetry-semantic_conventions (1.44.0)
       opentelemetry-api (~> 1.0)
     parallel (2.3.0)
-    parser (3.3.12.0)
+    parser (3.3.13.0)
       ast (~> 2.4.1)
       racc
     pp (0.6.4)
@@ -223,7 +223,7 @@ GEM
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
     simplecov (1.3.2)
-    sorbet-runtime (0.6.13571)
+    sorbet-runtime (0.6.13599)
     stackprof (0.2.28)
     standard (1.57.0)
       language_server-protocol (~> 3.17.0.2)
@@ -360,8 +360,8 @@ CHECKSUMS
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
   minitest-memory (1.1.1) sha256=45629f007ae4b06e30d75a0328581cb31f75bd5d38cfe3ce9aa9b00ceddb5dfa
   minitest-strict (1.0.1) sha256=5bf179ed48c21013575cc00506be3fd6ceec8529636ce6897468f9574004ae06
-  mutant (0.17.0) sha256=07d2e154367c349f9591a53f23af08c059cbe297c95dcf593f181c27cfdde909
-  mutant-minitest (0.17.0) sha256=f4e82f5efe26e8b3eebf4932483672108560099cc41f14b779503f68375e7f02
+  mutant (0.17.1) sha256=24c7ceecae0b4efe550ab88ff06017a93828c73cd9569bda1b2689575b120e6c
+  mutant-minitest (0.17.1) sha256=53b71286b28019b64d3c565680244ce8dc3aa9095d1aa4ea4faee235ddea8a78
   mutex_m (0.3.0) sha256=cfcb04ac16b69c4813777022fdceda24e9f798e48092a2b817eb4c0a782b0751
   nio4r (2.7.5) sha256=6c90168e48fb5f8e768419c93abb94ba2b892a1d0602cb06eef16d8b7df1dca1
   nokogiri (1.19.4-aarch64-linux-gnu) sha256=1269fb644a6de405057a53dd5c762b1209b43ca7424f839454d3dbc677c31a8f
@@ -378,7 +378,7 @@ CHECKSUMS
   opentelemetry-sdk (1.13.1) sha256=91c9cc315ac7ef30243549eeff8b27cd0d39bd02bdf9c9ae481ab96a1cec6754
   opentelemetry-semantic_conventions (1.44.0) sha256=b09b8793422f13b01c08f7a6f29b5f511f47f37bcdb57c0513465a0464168513
   parallel (2.3.0) sha256=f75a3e904101ce6a1ccb6b8dc800cbafd42166d83330192438dcf29395167a6f
-  parser (3.3.12.0) sha256=21a6d7f755d5a24dfbdc6e6b772e4e879a52e7631a88bc5a3a134606052c9828
+  parser (3.3.13.0) sha256=e02f9b63c2fe05b0c68f692ba4df89b3cb113b663964f75d988fbebfd6c3deca
   pp (0.6.4) sha256=dfcb0fce700c41456265922884f9fe195d7fbb0674a3578e6c0f69588e82b570
   prettyprint (0.2.1) sha256=d555d57ea6d7cf001d4774b693546a6bd88bec1e778ddffb5c60b68ceec4b7d4
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
@@ -408,7 +408,7 @@ CHECKSUMS
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   simplecov (1.3.2) sha256=2a22ec1759f1b8db60881a2e038758956fc69ef93ed669be0bde0678de6d0e85
-  sorbet-runtime (0.6.13571) sha256=deddfa1e22d7caf4e2ba697eb2907c7a04a1192e7483270e5556a2ef13ea7d21
+  sorbet-runtime (0.6.13599) sha256=6e3035627c35b5393f580e5534a61435caefb0fdd44bc3deb93c773ff4412620
   stackprof (0.2.28) sha256=4ec2ace02f386012b40ca20ef80c030ad711831f59511da12e83b34efb0f9a04
   standard (1.57.0) sha256=4a65ea92421fbaf77fb54da91e16093cf79b335b8f62c35aaa3dd714c8592858
   standard-custom (1.0.2) sha256=424adc84179a074f1a2a309bb9cf7cd6bfdb2b6541f20c6bf9436c0ba22a652b
