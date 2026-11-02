@@ -1,0 +1,44 @@
+module Robin
+  module Rails
+    # Carries ActiveSupport::CurrentAttributes (named by class) from where a
+    # job is pushed into the job.
+    module CurrentAttributes
+      # Class names: one, or several.
+      type names = String | Symbol | Array[String | Symbol]
+
+      # The job field holding the attributes of the class at +index+.
+      def self.key_at: (Integer index) -> String
+
+      # [field, class name] for each configured class.
+      def self.fields: (names names) -> Array[[String, String]]
+
+      # Client middleware: saves the attributes into jobs being pushed.
+      class Save
+        include Robin::Middleware::Stateless
+
+        @fields: Array[[String, String]]
+
+        def initialize: (names names) -> void
+
+        def call: (String _job_class, job_hash payload, String _queue, Redis::Pool _redis) { () -> job_hash? } -> job_hash?
+      end
+
+      # Server middleware: sets the saved attributes while a job runs.
+      class Load
+        include Robin::Middleware::Stateless
+
+        @fields: Array[[String, String]]
+
+        def initialize: (names names) -> void
+
+        def call: (untyped _job, job_hash payload, String _queue) { () -> untyped } -> untyped
+
+        private
+
+        def set: (Array[[String, String]] fields, job_hash payload) { () -> untyped } -> untyped
+      end
+
+      def self.install: (Config config, names names) -> void
+    end
+  end
+end

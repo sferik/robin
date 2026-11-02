@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Deletes the demo's data: every key starting with Demo::PREFIX in
+# REDIS_URL. Nothing else in that Redis is touched.
+require_relative "setup"
+require_relative "../app"
+
+module Demo
+  def self.reset
+    deleted = 0
+    Robin.redis do |conn|
+      cursor = "0"
+      loop do
+        cursor, keys = conn.call("SCAN", cursor, "MATCH", "#{PREFIX}*", "COUNT", 1000)
+        deleted += conn.call("UNLINK", *keys) unless keys.empty?
+        break if cursor == "0"
+      end
+    end
+    deleted
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  if Robin::ProcessSet.new.any?
+    warn "Note: demo processes are still running (bin/work or bin/dev); they'll re-create some keys."
+  end
+  puts "Deleted #{Demo.reset} demo keys (#{Demo::PREFIX}*) from #{Demo::REDIS_URL}."
+end

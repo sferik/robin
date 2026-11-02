@@ -1,0 +1,134 @@
+module Robin
+  # Reliable fetch: jobs move atomically from their queue into an in-flight
+  # key of their process, and leave it once they finish.
+  class Fetcher
+    # A fetched job.
+    class UnitOfWork
+      # The queue the job came from.
+      attr_reader queue: String
+
+      # The job's JSON, as fetched.
+      attr_reader raw: String
+
+      attr_reader fetcher: Fetcher
+
+      # The job's in-flight key.
+      attr_reader key: String
+
+      def initialize: (String queue, String raw, Fetcher fetcher, String key) -> void
+
+      # Removes the job from its in-flight key, right away or as part of
+      # +conn+ (a pipeline or transaction).
+      def acknowledge: (?Redis::_Caller? conn) -> void
+
+      # Puts the job back on the front of its queue.
+      def requeue: () -> nil
+    end
+
+    STALE: Integer
+
+    ACK_WAIT: Float
+
+    LARGE: Integer
+
+    self.@minted: Integer
+    self.@minting: Thread::Mutex
+
+    # A number for a new in-flight key, unique within the process.
+    def self.mint: () -> Integer
+
+    @paused_key: String
+    @lock: Thread::Mutex
+    @buffer: Array[[UnitOfWork, Float]]
+    @acks: Array[String]
+    @sending: Hash[Thread, Array[String]]
+    @free: Array[String]
+    @filling: Hash[Thread, Array[String]]
+    @lost: Hash[String, true]
+    @large: bool
+    @wanting: Integer
+    @idle: Hash[Thread, true]
+    @ack_queued: bool?
+
+    attr_reader config: Config
+    attr_reader capsule: Capsule
+    attr_reader inflight_key: String
+
+    # The paused queues, as the last heartbeat read them.
+    attr_accessor paused: Array[String]
+
+    # A queue the fetcher puts itself on when acknowledgements are left
+    # waiting (the launcher's, which sends them).
+    attr_accessor acker: Thread::Queue[Fetcher?]
+
+    def initialize: (Capsule capsule, String identity) -> void
+
+    # The next job, or nil after waiting briefly with no work available.
+    # +ack+ is the in-flight key of the worker's last finished job.
+    def fetch: (?Integer slot, ?ack: String?) -> UnitOfWork?
+
+    # Takes (for the heartbeat to hand back) the jobs fetched for other
+    # workers that are from a paused queue or have waited too long.
+    def stale: (Array[String] paused) -> Array[UnitOfWork]
+
+    # Frees the keys of jobs handed back.
+    def freed: (Array[UnitOfWork] units) -> void
+
+    # Acknowledges the finished jobs waiting for a round trip, if any.
+    def send_acks: () -> void
+
+    # In-flight keys this fetcher is responsible for.
+    def held: () -> Array[String]
+
+    # Lets go of +key+ (found unheld on two sweeps); false if it's held now.
+    def forget: (String key) -> bool
+
+    # Queues on +conn+ the removal of the job in +key+.
+    def retire: (Redis::_Caller conn, String key) -> void
+
+    # Puts jobs back on the front of their queues and frees their keys.
+    def put_back: (Redis::Connection conn, Array[UnitOfWork] units) -> nil
+
+    # Puts the jobs fetched but not handed out back on their queues, and
+    # acknowledges the finished ones.
+    def release: () -> void
+
+    # Queues on +tx+ the moves of +units+ back onto their queues.
+    def hand_back: (Redis::Pipeline tx, Array[UnitOfWork] units) -> void
+
+    # Acknowledges the finished jobs in +keys+, then frees the keys.
+    def acknowledge: (Redis::Connection conn, Array[String] keys) -> void
+
+    private
+
+    def wake_acker: () -> void
+
+    def take_acks: () -> Array[String]
+
+    def keep: (Array[UnitOfWork] units) -> void
+
+    def reserve: (Integer count) -> [Array[String], Array[String]]
+
+    def settle: (Array[String]? unused) -> void
+
+    def free: (Array[String] keys) -> void
+
+    def free_keys: (Array[String] keys) -> void
+
+    def holding: () -> Array[String]
+
+    def take: (Array[String] order, Array[String] acks, Array[String] keys, Array[String] minted) -> [Array[UnitOfWork], Array[String]]
+
+    def take_from: (Redis::Connection conn, String queue, Array[String] acks, Array[String] keys, Array[String] minted) -> [Array[UnitOfWork], Array[String]]
+
+    def register: (Redis::Pipeline pipe, Array[String] minted) -> void
+
+    def received: (Redis::Connection conn, String queue, Redis::reply paused, Array[String?] raws, Array[String] keys) -> [Array[UnitOfWork], Array[String]]
+
+    def wait: (Integer slot, Array[String] order) -> UnitOfWork?
+
+    def send_back: (Redis::Connection conn, Array[UnitOfWork] units) -> void
+
+    def monotonic: () -> Float
+  end
+end

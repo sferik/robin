@@ -1,0 +1,26 @@
+# Bundler, builds and packages
+/.bundle/
+pkg/
+tmp/
+*.gem
+
+# Compiled extensions (built by `rake compile`)
+*.bundle
+*.so
+*.o
+*.jar
+Makefile
+mkmf.log
+
+# Test, coverage and mutation testing output
+coverage/
+.mutant/
+/web/reports/
+/web/.stryker-tmp/
+
+# Dependencies
+/web/node_modules/
+
+# Local tools and OS files
+/.claude/
+.DS_Store

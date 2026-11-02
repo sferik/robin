@@ -1,0 +1,86 @@
+name: Start Redis
+description: >-
+  Start Redis, Valkey or Dragonfly in Docker, listening on a Unix socket
+  (avoids exhausting TCP ports under parallel test runs). On macOS, where
+  the runners have no Docker, Homebrew's latest Redis, on a Unix socket too.
+  On Windows, which has no Redis, Memurai (a Redis for Windows), over TCP.
+inputs:
+  server:
+    description: redis, valkey or dragonfly
+    default: redis
+  version:
+    description: The server's image tag (on Linux only)
+    default: "8.10"
+runs:
+  using: composite
+  steps:
+    - if: runner.os != 'Linux' && inputs.server != 'redis'
+      shell: bash
+      run: echo "only Redis runs on ${{ runner.os }}, not ${{ inputs.server }}" >&2; exit 1
+    - if: runner.os == 'Linux'
+      shell: bash
+      env:
+        SERVER: ${{ inputs.server }}
+        VERSION: ${{ inputs.version }}
+      run: |
+        mkdir -p /tmp/redis && chmod 777 /tmp/redis
+        socket=/tmp/redis/redis.sock
+        rm -f "$socket"
+        case "$SERVER" in
+          redis | valkey)
+            image="$SERVER:$VERSION"
+            [ "$SERVER" = valkey ] && image="valkey/valkey:$VERSION"
+            args=("$SERVER-server" --port 0 --unixsocket "$socket" --unixsocketperm 777
+              --save "" --appendonly no --maxclients 20000)
+            ;;
+          dragonfly)
+            image="docker.dragonflydb.io/dragonflydb/dragonfly:$VERSION"
+            # Robin's Lua scripts build some key names from the key prefix.
+            args=(--unixsocket="$socket" --unixsocketperm=777 --dbfilename= --maxclients=20000
+              --default_lua_flags=allow-undeclared-keys)
+            ;;
+          *) echo "unknown server: $SERVER" >&2; exit 1 ;;
+        esac
+        docker run -d --name redis --ulimit memlock=-1 -v /tmp/redis:/tmp/redis "$image" "${args[@]}"
+        ready=false
+        for i in $(seq 1 50); do
+          if python3 - "$socket" 2>/dev/null <<'PY'; then ready=true; break; fi
+        import socket, sys
+        s = socket.socket(socket.AF_UNIX)
+        s.connect(sys.argv[1])
+        s.sendall(b"PING\r\n")
+        sys.exit(0 if s.recv(16).startswith(b"+PONG") else 1)
+        PY
+          sleep 0.2
+        done
+        docker logs redis 2>&1 | tail -5
+        if [ "$ready" != true ]; then echo "$SERVER $VERSION didn't answer on $socket" >&2; exit 1; fi
+        echo "ROBIN_TEST_REDIS_URL=unix://$socket?db=15" >> "$GITHUB_ENV"
+    - if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        mkdir -p /tmp/redis
+        socket=/tmp/redis/redis.sock
+        rm -f "$socket"
+        brew install --quiet redis
+        redis-server --daemonize yes --port 0 --unixsocket "$socket" --unixsocketperm 777 \
+          --save "" --appendonly no --maxclients 20000 --logfile /tmp/redis/redis.log
+        for i in $(seq 1 50); do
+          if [ "$(redis-cli -s "$socket" ping 2>/dev/null)" = PONG ]; then break; fi
+          sleep 0.2
+        done
+        tail -5 /tmp/redis/redis.log
+        [ "$(redis-cli -s "$socket" ping)" = PONG ] || { echo "Redis didn't answer on $socket" >&2; exit 1; }
+        echo "ROBIN_TEST_REDIS_URL=unix://$socket?db=15" >> "$GITHUB_ENV"
+    # Memurai installs as a service, already listening on 127.0.0.1:6379.
+    - if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        choco install memurai-developer --no-progress -y
+        cli="/c/Program Files/Memurai/memurai-cli.exe"
+        for i in $(seq 1 50); do
+          if [ "$("$cli" ping 2>/dev/null | tr -d '\r')" = PONG ]; then break; fi
+          sleep 0.2
+        done
+        [ "$("$cli" ping | tr -d '\r')" = PONG ] || { echo "Memurai didn't answer on 127.0.0.1:6379" >&2; exit 1; }
+        echo "ROBIN_TEST_REDIS_URL=redis://127.0.0.1:6379/15" >> "$GITHUB_ENV"

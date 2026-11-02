@@ -1,0 +1,55 @@
+module Robin
+  # Pausing one job class across every queue (see Robin::JobClass).
+  class JobClass
+    type listing = {"name" => String, "parked" => Integer}
+
+    # Parks a fetched job if its class is still paused.
+    PARK: Redis::Script
+
+    # Moves parked jobs back onto the front of their queues.
+    UNPARK: Redis::Script
+
+    # The paused classes and their parked counts.
+    LIST: Redis::Script
+
+    # Each config's local copy of the paused classes, by its object_id.
+    self.@cache: Hash[Integer, Set[String]]
+
+    # The paused classes' names, sorted.
+    def self.paused: (?config: Config) -> Array[String]
+
+    # Each paused class: its name and how many of its jobs are parked.
+    def self.list: (?config: Config) -> Array[listing]
+
+    # The command that reads the paused classes.
+    def self.listing: (Config config) -> Redis::command
+
+    # Replaces the local copy of the paused classes.
+    def self.store: (Config config, Array[String] names) -> Set[String]
+
+    # The job's class (or the one it wraps) this process last saw paused.
+    def self.paused_class: (Config config, Hash[String, untyped] payload) -> String?
+
+    # Parks a fetched job of a paused class; whether it did.
+    def self.park: (Config config, Fetcher::UnitOfWork unit, String name) -> bool
+
+    # Notes a pause or unpause made by this process in its local copy.
+    def self.noted: (Config config, String name, bool paused) -> Set[String]?
+
+    attr_reader name: String
+
+    @config: Config
+
+    def initialize: (Module | String | Symbol klass, ?config: Config) -> void
+
+    def paused?: () -> bool
+
+    # How many of its jobs are parked.
+    def parked: () -> Integer
+
+    def pause!: () -> true
+
+    # Unpauses the class and puts its parked jobs back; how many.
+    def unpause!: (?chunk: Integer) -> Integer
+  end
+end

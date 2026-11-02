@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Keeps pushing a realistic mix of jobs, about RATE per second (default 5),
+# so the dashboard always has something going on. Ctrl-C stops it.
+require_relative "setup"
+require_relative "../app"
+
+rate = Float(ENV.fetch("RATE", "5"))
+puts "Pushing about #{rate} jobs/s to #{Demo::REDIS_URL}; Ctrl-C to stop"
+trap("INT") { exit }
+trap("TERM") { exit }
+
+MIX = [
+  [30, -> { WelcomeEmail.perform_async(rand(1..100_000)) }],
+  [20, -> { FlakyWebhook.perform_async("https://hooks.example.com/#{rand(4)}", %w[order.paid order.shipped].sample) }],
+  [10, -> { ResizeImage.perform_async(rand(1..100_000), [320, 640, 1280].sample) }],
+  [10, -> { GeocodeAddress.perform_async("#{rand(1..999)} Main St") }],
+  [8, -> { ChargeCard.perform_async(rand(1..1_000), rand(500..9_900)) }],
+  [6, -> { PostLedgerEntry.perform_async(rand(1..100_000), rand(100..10_000)) }],
+  [5, -> { SyncContact.perform_async(rand(1..5)) }],
+  [4, -> { RebuildSearchIndex.perform_async(%w[products customers].sample) }],
+  [3, -> { CrunchNumbers.perform_async(1_000_000) }],
+  [2, -> { WelcomeEmail.perform_in(rand(10..600), rand(1..100_000)) }],
+  [1, -> { SyncCrm.perform_async(rand(1..1_000)) }],
+  [1, -> { Demo.import("upload-#{rand(1_000)}.csv", rand(20..120), owner_id: rand(1..9)) }],
+  [1, -> { ExportOrders.perform_async(rand(1..9), rand(100..400)) }]
+].freeze
+WEIGHTS = MIX.sum(&:first)
+
+def pick
+  roll = rand(WEIGHTS)
+  MIX.each do |weight, push|
+    return push if (roll -= weight).negative?
+  end
+end
+
+pushed = 0
+loop do
+  pick.call
+  pushed += 1
+  print "\rpushed #{pushed}" if (pushed % 10).zero?
+  sleep(rand * 2 / rate)
+end

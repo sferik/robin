@@ -1,0 +1,26 @@
+module ActiveJob
+  module QueueAdapters
+    # The ActiveJob adapter, selected with queue_adapter = :robin (see
+    # steep/robin/rails/railtie.rbs on why it's not in the gem).
+    class RobinAdapter < AbstractAdapter
+      @stopping: bool?
+
+      # Returns the job's jid (nil if middleware stopped the push).
+      def enqueue: (::ActiveJob::Base job) -> String?
+
+      # +timestamp+: epoch seconds.
+      def enqueue_at: (::ActiveJob::Base job, Robin::time? timestamp) -> String?
+
+      # Returns how many jobs were enqueued.
+      def enqueue_all: (Array[::ActiveJob::Base] jobs) -> Integer
+
+      def stopping=: (bool) -> bool
+
+      def stopping?: () -> bool
+
+      private
+
+      def payload: (::ActiveJob::Base job, Robin::time? timestamp) -> Robin::job_hash
+    end
+  end
+end

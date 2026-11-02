@@ -1,0 +1,341 @@
+module Robin
+  # Seconds: a duration or interval, whole or fractional.
+  type seconds = Integer | Float
+
+  # The callables a config holds (retry_backoff, push_deferrer...) are a
+  # lambda (or proc) or any object with a #call like the interface's. The
+  # interfaces include _Object, so such a value can be tested like any
+  # object's.
+  interface _Object
+    def !: () -> bool
+
+    def nil?: () -> bool
+
+    def respond_to?: (Symbol name, ?bool include_all) -> bool
+  end
+
+  # Called with each error Robin reports: the error, a Hash about where it
+  # happened (:context, and :job, :queue... when there's one), and the config.
+  interface _ErrorHandler
+    def call: (Exception error, Hash[Symbol, untyped] context, Config config) -> void
+  end
+
+  # Called with each job that's out of retries (or killed): its payload and
+  # the error (nil when it was killed from the dashboard or the API).
+  interface _DeathHandler
+    def call: (job_hash payload, Exception? error) -> void
+  end
+
+  # Called with each job recovered from a crashed process, and whether it
+  # was a poison pill moved to the dead set.
+  interface _RecoveryHandler
+    def call: (job_hash payload, bool poison) -> void
+  end
+
+  # Called with each of Robin's events (see Robin::Events).
+  interface _EventHandler
+    def call: (String name, Hash[Symbol, untyped] payload) -> void
+  end
+
+  # Config#retry_backoff: the seconds before a failed job's retry.
+  interface _RetryBackoff
+    def call: (Integer failures, Exception error, job_hash payload, Numeric? custom) -> Numeric
+
+    include _Object
+  end
+
+  type retry_backoff = ^(Integer failures, Exception error, job_hash payload, Numeric? custom) -> Numeric | _RetryBackoff
+
+  # Config#rate_limit_backoff: the seconds before a rate-limited job runs
+  # again, or nil for the default.
+  interface _RateLimitBackoff
+    def call: (Integer count, Limiter::OverLimit error, job_hash payload) -> seconds?
+
+    include _Object
+  end
+
+  type rate_limit_backoff = ^(Integer count, Limiter::OverLimit error, job_hash payload) -> seconds? | _RateLimitBackoff
+
+  # Config#backtrace_cleaner: the backtrace lines to keep.
+  interface _BacktraceCleaner
+    def call: (Array[String] lines) -> Array[String]
+
+    include _Object
+  end
+
+  type backtrace_cleaner = ^(Array[String] lines) -> Array[String] | _BacktraceCleaner
+
+  # Config#push_deferrer: truthy when it took over delivering the payloads
+  # (calling the block later, or right away).
+  interface _PushDeferrer
+    def call: (Array[job_hash] payloads) { () -> void } -> boolish
+
+    include _Object
+  end
+
+  type push_deferrer = ^(Array[job_hash] payloads) { () -> void } -> boolish | _PushDeferrer
+
+  # Config#job_wrapper: runs the job (the block) inside something, such as
+  # the Rails executor.
+  interface _JobWrapper
+    def call: (job_hash payload) { () -> void } -> void
+
+    include _Object
+  end
+
+  type job_wrapper = ^(job_hash payload) { () -> void } -> void | _JobWrapper
+
+  # A group of worker threads with its own queues and concurrency.
+  class Capsule
+    @name: String
+    @config: Config
+    @workers: Hash[Symbol, Integer]
+    @weights: Hash[String, Integer]
+    @strict: bool
+    @expanded: Array[String]
+
+    attr_reader name: String
+    attr_reader config: Config
+
+    # Each queue's weight (0 for strict priority).
+    attr_reader weights: Hash[String, Integer]
+
+    # The capsule whose worker is running this thread's code, if any.
+    def self.current: () -> Capsule?
+
+    def initialize: (String name, Config config) -> void
+
+    # How many workers the capsule runs.
+    def concurrency: () -> Integer
+
+    def concurrency=: (Integer count) -> Integer
+
+    # A running capsule's new worker count (see Manager#resize).
+    def resized: (Integer count) -> Integer
+
+    # Plain names ("critical"), weighted names ("critical,3"), or
+    # [name, weight] pairs.
+    def queues=: (String | Symbol | Array[String | Symbol | [String | Symbol, Integer | String]] list) -> void
+
+    def queues: () -> Array[String]
+
+    def strict?: () -> bool
+
+    # Queue names in the order they should be checked for the next fetch.
+    def queue_order: () -> Array[String]
+
+    def freeze: () -> self
+  end
+
+  class Config
+    DEFAULT_ERROR_HANDLER: ^(Exception ex, Hash[Symbol, untyped] context, Config config) -> void
+
+    CONNECTION_DEFAULTS: Hash[Symbol, String]
+
+    JIT_WARMUP: bool
+
+    LIFECYCLE_EVENTS: Array[Symbol]
+
+    JID_INDEX_TTL: Integer
+
+    SHARED_KEYS: Array[String]
+
+    @redis_options: Hash[Symbol, untyped]
+    @capsules: Hash[String, Capsule]
+    @client_chain: Middleware::Chain
+    @server_chain: Middleware::Chain
+    @logger: Logger?
+    @redis_pool: Redis::Pool?
+    @housekeeping_pool: Redis::Pool?
+    @batch_status_class: singleton(Batch::Status)?
+    @internal_key_prefix: String?
+
+    # Seconds a stopping server waits for running jobs (default 25).
+    attr_accessor timeout: seconds
+
+    # Seconds between checks for scheduled jobs and retries due (default 5).
+    attr_accessor poll_interval: seconds
+
+    attr_accessor max_retries: Integer
+
+    attr_accessor dead_max_jobs: Integer
+
+    # Seconds a job stays in the dead set.
+    attr_accessor dead_timeout: Integer
+
+    # What a push with arguments that aren't JSON-native does: raise
+    # (:raise, the default), log a warning (:warn), or nothing (false/nil).
+    attr_accessor strict_args: :raise | :warn | false | nil
+
+    attr_accessor key_prefix: String
+
+    attr_accessor tag: String?
+
+    attr_accessor labels: Array[String]
+
+    attr_accessor environment: String
+
+    attr_accessor heartbeat_interval: seconds
+
+    attr_accessor process_ttl: Integer
+
+    attr_accessor max_recoveries: Integer
+
+    attr_accessor backtrace_lines: Integer
+
+    # {version => key}: the newest version encrypts.
+    attr_accessor encryption_keys: Hash[Integer, String]?
+
+    attr_accessor max_rate_limit_retries: Integer
+
+    attr_accessor statsd: Statsd?
+
+    attr_accessor memory_limit_mb: Integer?
+
+    attr_accessor metrics_retention_days: Integer
+
+    # true, or the buffer's size (see Robin::ReliablePush).
+    attr_accessor reliable_push: bool | Integer
+
+    attr_accessor shutdown_requeue: bool
+
+    attr_accessor job_wrapper: job_wrapper?
+
+    attr_accessor health_bind: String
+
+    attr_accessor rate_limit_backoff: rate_limit_backoff?
+
+    attr_writer batch_status_class: singleton(Batch::Status)?
+
+    # The class of the batch status batch callbacks get.
+    def batch_status_class: () -> singleton(Batch::Status)
+
+    attr_accessor leader_candidate: bool
+
+    attr_reader recovery_handlers: Array[_RecoveryHandler]
+
+    attr_reader event_handlers: Array[_EventHandler]
+
+    attr_accessor gvl_monitoring: bool
+
+    attr_accessor retry_backoff: retry_backoff?
+
+    # false, or the fewest jobs that must have finished since the last
+    # collection.
+    @idle_gc: Integer | bool
+
+    def idle_gc: () -> (Integer | false)
+
+    def idle_gc=: (bool | Integer | nil least) -> void
+
+    attr_accessor jit_warmup: bool
+
+    attr_accessor fetch_timeout: seconds
+
+    attr_reader fetch_batch: Integer
+
+    def fetch_batch=: (Integer | String count) -> void
+
+    attr_accessor max_iteration_runtime: seconds?
+
+    attr_accessor backtrace_cleaner: backtrace_cleaner?
+
+    # Seconds the jid index remembers a job's queue, or nil (off).
+    @jid_index: Integer | bool | nil
+
+    def jid_index: () -> (Integer | false | nil)
+
+    def jid_index=: (bool | Integer | String | nil value) -> void
+
+    attr_reader health_port: Integer?
+
+    def health_port=: (Integer | String | nil port) -> void
+
+    attr_accessor push_deferrer: push_deferrer?
+
+    def logger=: (Logger logger) -> Logger
+
+    attr_writer redis_pool: Redis::Pool?
+
+    attr_reader capsules: Hash[String, Capsule]
+
+    attr_reader error_handlers: Array[_ErrorHandler]
+
+    attr_reader death_handlers: Array[_DeathHandler]
+
+    attr_reader lifecycle: Hash[Symbol, Array[^() -> void]]
+
+    attr_reader periodic_blocks: Array[^(Periodic::Registry cron) -> void]
+
+    def initialize: () -> void
+
+    # Built-in middleware powering per-job options.
+    def install_default_middleware: () -> Middleware::Chain
+
+    def default_capsule: () -> Capsule
+
+    def concurrency: () -> Integer
+
+    def concurrency=: (Integer n) -> void
+
+    def queues: () -> Array[String]
+
+    def queues=: (String | Symbol | Array[String | Symbol | [String | Symbol, Integer | String]] list) -> void
+
+    def capsule: (String | Symbol name) ?{ (Capsule cap) -> void } -> Capsule
+
+    def total_concurrency: () -> Integer
+
+    # Called when a server boots: capsules can't change afterwards.
+    def freeze_capsules!: () -> Hash[String, Capsule]
+
+    # Redis options (see Robin::Redis::Connection), plus :pool_size,
+    # :pool_timeout and :idle_timeout for the pool.
+    def redis=: (Hash[Symbol | String, untyped] options) -> void
+
+    attr_reader redis_options: Hash[Symbol, untyped]
+
+    # The shared connection pool.
+    def redis_pool: () -> Redis::Pool
+
+    # Makes the shared pool big enough for +workers+ worker threads.
+    def fit_redis_pool: (Integer workers) -> bool
+
+    # A small pool reserved for a server's own housekeeping.
+    def housekeeping_pool: () -> Redis::Pool
+
+    def redis: [T] () { (Redis::Connection conn) -> T } -> T
+
+    attr_writer internal_key_prefix: String?
+
+    def internal_key_prefix: () -> String
+
+    def key: (*String | Symbol | Integer | nil parts) -> String
+
+    def process_key: (String identity) -> String
+
+    def logger: () -> Logger
+
+    def client_middleware: () ?{ (Middleware::Chain chain) -> void } -> Middleware::Chain
+
+    def server_middleware: () ?{ (Middleware::Chain chain) -> void } -> Middleware::Chain
+
+    # Registers a lifecycle callback: :startup, :quiet, :shutdown, :leader,
+    # :follower, :heartbeat, :exit or :fork.
+    def on: (Symbol event) { () -> void } -> Array[^() -> void]
+
+    # Runs the callbacks for +event+.
+    def fire_event: (Symbol event, ?reverse: bool, ?reraise: bool) -> void
+
+    # Registers periodic (cron) jobs.
+    def periodic: () { (Periodic::Registry cron) -> void } -> Array[^(Periodic::Registry cron) -> void]
+
+    def handle_exception: (Exception ex, ?Hash[Symbol, untyped] context) -> void
+
+    def inspect: () -> String
+
+    private
+
+    def default_pool_size: (Integer workers) -> Integer
+  end
+end

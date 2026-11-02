@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+<% module_namespacing do -%>
+class <%= @job.class_name %>
+  include Robin::Job
+
+  robin_options <%= @job.robin_options_source %>
+
+  def perform(*args)
+    # Do something later
+  end
+end
+<% end -%>

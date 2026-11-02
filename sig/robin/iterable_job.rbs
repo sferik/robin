@@ -1,0 +1,99 @@
+module Robin
+  # Long-running jobs that survive deploys and restarts: define
+  # +build_enumerator+ and +each_iteration+ instead of +perform+.
+  module IterableJob : Job, IterableJob::_Iteration
+    # What an iterable job class defines.
+    interface _Iteration
+      # An Enumerator of [item, cursor] pairs, starting after +cursor+ (nil
+      # on the first run); nil when there's nothing to do.
+      def build_enumerator: (*untyped args, cursor: untyped) -> Enumerator[[untyped, untyped], untyped]?
+
+      # Works on one item; +args+ are the job's arguments.
+      def each_iteration: (untyped item, *untyped args) -> void
+    end
+
+    CHECKPOINT_SECONDS: Integer
+
+    STATE_TTL: Integer
+
+    def self.included: (Module base) -> void
+
+    module ClassMethods : Module
+      # Rejects a +perform+ of its own.
+      def method_added: (Symbol name) -> void
+    end
+
+    @cursor: untyped
+    @iterations: Integer
+    @current_object: untyped
+
+    # The last finished item's cursor (any JSON-native value).
+    attr_reader cursor: untyped
+
+    # How many items are finished.
+    attr_reader iterations: Integer
+
+    # The item being (or last) worked on.
+    attr_reader current_object: untyped
+
+    # An iterable job's class is a job class.
+    def class: () -> Job::ClassMethods
+
+    # The job as fetched: IterableJob only reads it while it runs, once
+    # it's set.
+    def payload: () -> job_hash
+
+    def perform: (*untyped args) -> void
+
+    # Runs each iteration (the block): override to wrap them.
+    def around_iteration: () { () -> void } -> void
+
+    def on_start: () -> void
+
+    def on_resume: () -> void
+
+    def on_cancel: () -> void
+
+    def on_stop: () -> void
+
+    def on_complete: () -> void
+
+    # Iterates an array; the cursor is the index.
+    def array_enumerator: [T] (Array[T] array, cursor: Integer?) -> Enumerator[[T, Integer], void]
+
+    # Iterates Active Record records in primary-key order; the cursor is the
+    # last finished record's id.
+    def active_record_records_enumerator: (untyped relation, cursor: untyped, ?batch_size: Integer) -> Enumerator[[untyped, untyped], void]
+
+    # Like active_record_records_enumerator, but yields whole batches.
+    def active_record_batches_enumerator: (untyped relation, cursor: untyped, ?batch_size: Integer) -> Enumerator[[Array[untyped], untyped], void]
+
+    # Iterates a CSV (or any enumerable of rows); the cursor is the row index.
+    def csv_enumerator: [T] (Enumerable[T] csv, cursor: Integer?) -> Enumerator[[T, Integer], void]
+
+    private
+
+    def active_record_batches: (untyped relation, untyped cursor, Integer batch_size) { (Array[untyped] records) -> void } -> void
+
+    def safe_checkpoint: (Config config, String key, Integer? total) -> void
+
+    def warn_slow: (Float seconds, Config config) -> void
+
+    def checkpoint: (Config config, String key, Integer? total, ?check_cancel: bool) ?{ (Redis::Pipeline tx) -> void } -> bool
+
+    # [percent, "done/total"], or [nil, nil, {"iterations" => n}].
+    def progress_args: (Integer? total) -> [Integer | Float | nil, String?, Hash[String, Integer]]
+
+    def percent: (Integer total) -> (Integer | Float)
+
+    def progress_command: (Config config, Integer? total) -> Redis::command
+
+    def report_progress: (Integer? total) -> void
+
+    def requeue: (Config config, String key, Integer? total, String reason) -> void
+
+    def finish: (Config config, String key, Integer? total) -> void
+
+    def monotonic: () -> Float
+  end
+end

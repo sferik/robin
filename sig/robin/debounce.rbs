@@ -1,0 +1,36 @@
+module Robin
+  # Debounced jobs: a burst of pushes with the same arguments collapses
+  # into a single run, +debounce+ seconds after the last push.
+  module Debounce
+    CLAIM: Redis::Script
+
+    # The instance variable a push's claim waits on.
+    CLAIM_IVAR: Symbol
+
+    # Queues the claims of +payloads+ on +pipe+, ahead of the jobs.
+    def self.queue_claims: (Redis::Pipeline pipe, Array[job_hash] payloads) -> void
+
+    # Moves the claim of +from+ to +to+, the payload the middleware chain
+    # returned instead.
+    def self.carry: (job_hash from, job_hash? to) -> void
+
+    class ClientMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (String job_class, job_hash payload, String queue, Redis::Pool redis) -> bool
+
+      def call: (String job_class, job_hash payload, String queue, Redis::Pool redis) { () -> job_hash? } -> job_hash?
+    end
+
+    # Skips debounced jobs superseded by a later push.
+    class ServerMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (untyped job, job_hash payload, String queue) -> bool
+
+      def call: (untyped job, job_hash payload, String queue) { () -> untyped } -> untyped
+    end
+  end
+end

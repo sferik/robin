@@ -1,0 +1,191 @@
+module Robin
+  # Runs a Robin server: worker threads for every capsule, the scheduler,
+  # and a heartbeat thread that publishes process state, flushes metrics,
+  # takes part in leader election and reacts to remote control signals.
+  class Launcher
+    # A housekeeping hook (see #every_beat), given the heartbeat's
+    # connection.
+    type hook = ^(Redis::Connection conn) -> void
+
+    STOPPING_MARGIN: Integer
+
+    HARD_SHUTDOWN_GRACE: Integer
+
+    SLOW_REDIS_US: Integer
+
+    IDLE_GC_AFTER: Integer
+
+    GVL_HIGH: Integer
+
+    GVL_HIGH_BEATS: Integer
+
+    MINIMUM_REDIS: Array[Integer]
+
+    @embedded: bool
+    @scheduler: Scheduler
+    @quiet: bool
+    @done: bool
+    @last: Hash[Symbol, Float]
+    @acks: Thread::Queue[Fetcher?]
+    @hooks: Hash[Symbol, Array[hook]]
+    @suspects: Array[[String, String?]]
+    @gvl: GVL
+    @gvl_high: Integer
+    @wake_mutex: Thread::Mutex
+    @wake: Thread::ConditionVariable
+    @on_stop_request: (^() -> void)?
+    # nil until #run
+    @started_at: Integer
+    @heartbeat: Thread
+    @chores: Thread
+    @acker: Thread
+    # nil unless config.health_port is set
+    @health: HealthServer
+    # nil until the first heartbeat
+    @beat_at: Float
+    @beaten: bool?
+    @rtt: Integer
+    @collected_counts: Hash[Processor, Integer]?
+    @rss: Integer
+    @rss_at: Float
+
+    attr_reader config: Config
+
+    # This process's identity: "hostname:pid:random".
+    attr_reader identity: String
+
+    attr_reader managers: Array[Manager]
+
+    attr_reader collector: Metrics::Collector
+
+    attr_reader leader: Leader
+
+    # When it started running (epoch ms), or nil before #run.
+    def started_at: () -> Integer?
+
+    # Called (instead of stopping on a thread of its own) when the dashboard
+    # asks the process to stop.
+    %a{pure}
+    def on_stop_request: () -> (^() -> void)?
+
+    def on_stop_request=: ((^() -> void)? callback) -> (^() -> void)?
+
+    def initialize: (Config config, ?embedded: bool) -> void
+
+    def quiet?: () -> bool
+
+    # How many workers it runs, in every capsule.
+    def concurrency: () -> Integer
+
+    # Has capsule +capsule+ run +count+ workers from now on; false (changing
+    # nothing) when the process is quiet or the Redis pool can't grow.
+    def resize: (Integer count, ?capsule: String) -> bool
+
+    def stopping?: () -> bool
+
+    # Runs the block on every heartbeat.
+    def every_beat: () { (Redis::Connection conn) -> void } -> Array[hook]
+
+    # Runs the block on every heartbeat, on the leader only.
+    def every_leader_beat: () { (Redis::Connection conn) -> void } -> Array[hook]
+
+    def run: () -> self
+
+    # Stop fetching new jobs; running jobs finish.
+    def quiet: () -> void
+
+    # Graceful shutdown.
+    def stop: () -> void
+
+    # This process's health, as Robin::HealthServer serves it.
+    def health: () -> Hash[String, bool | String | Float | Integer | nil]
+
+    def inflight_key: () -> String
+
+    def proc_key: () -> String
+
+    def stopping_key: () -> String
+
+    def work_started: (Processor processor, Fetcher::UnitOfWork unit) -> void
+
+    def work_finished: (Processor processor, job_hash payload, Float | Integer elapsed_ms, bool ok) -> void
+
+    def work_finished_cleanup: (Processor processor) -> void
+
+    def busy: () -> Integer
+
+    # [processor, its work] for every job running now.
+    def running: () -> Array[[Processor, Processor::work]]
+
+    # The process's record, as the dashboard shows it (JSON).
+    def process_info: () -> Hash[String, json]
+
+    # One heartbeat, in one round trip.
+    def beat: () -> void
+
+    # Runs a full GC once the process has gone idle (see Config#idle_gc).
+    def collect_idle_garbage: () -> void
+
+    def collect_garbage: () -> void
+
+    # Puts back the jobs fetched for workers that are from a paused queue
+    # or that no worker took in time.
+    def hand_back_stale: (Redis::Connection conn, Array[String] paused) -> void
+
+    # The process title of a standalone server.
+    def title: () -> String
+
+    # Handles a remote signal ("TSTP", "TERM", "TTIN", "RESIZE <n> <capsule>").
+    def handle_signal: (String signal) -> void
+
+    def request_stop: () -> void
+
+    def dump_threads: () -> void
+
+    private
+
+    def work_json: (String queue, String raw, Integer run_at) -> String
+
+    def check!: () -> void
+
+    def connected: (Redis::Connection conn, String version) -> String
+
+    def start_health_server: () -> void
+
+    def mark_stopping: () -> void
+
+    def housekeeping_thread: (String name) { () -> void } -> Thread
+
+    def nap: (seconds seconds) -> void
+
+    def wake_up: () -> void
+
+    def send_acks: () -> void
+
+    def leader_chores: () -> void
+
+    def warn_about_slow_redis: (Integer rtt_us) -> void
+
+    def check_gvl: (Float percent) -> void
+
+    def warn_about_lapse: () -> void
+
+    def held_keys: () -> Array[String]
+
+    def sweep_inflight: (Redis::Connection conn, Array[String] registered) -> void
+
+    def every: (Integer seconds, Symbol name) { () -> void } -> void
+
+    def due?: (Integer seconds, Symbol name) -> (Float | false)
+
+    def prune_processes: (Redis::Connection conn) -> Redis::reply
+
+    def check_memory: () -> void
+
+    def rss_kb: () -> Integer
+
+    def safely: (String what) { () -> void } -> void
+
+    def monotonic: () -> Float
+  end
+end

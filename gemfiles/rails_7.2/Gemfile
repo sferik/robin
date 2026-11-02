@@ -1,0 +1,8 @@
+# frozen_string_literal: true
+
+# The Rails integration against Rails 7.2 (the CI "rails" job runs each
+# of these): pinned before the main Gemfile adds its own.
+gem "activejob", "~> 7.2.0", ">= 7.2.4"
+gem "railties", "~> 7.2.0", ">= 7.2.4"
+
+eval_gemfile "../../Gemfile"

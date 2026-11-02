@@ -1,0 +1,10 @@
+module Robin
+  # Things worth knowing about that aren't errors, as events (see
+  # Config#event_handlers for the handlers, and lib/robin/events.rb for
+  # the list).
+  module Events
+    # Calls every handler; one that raises is reported and the others still
+    # run.
+    def self.emit: (Config config, String name, **untyped payload) -> nil
+  end
+end

@@ -1,0 +1,149 @@
+module Robin
+  # A cron expression (five fields, or six with leading seconds; names, L,
+  # ? and @shortcuts), in a time zone.
+  class Cron
+    class ParseError < ArgumentError
+    end
+
+    SHORTCUTS: Hash[String, String]
+    MONTHS: Hash[String, Integer]
+    DAYS: Hash[String, Integer]
+    DAY_NAMES: Array[String]
+    MONTH_NAMES: Array[String]
+    ANY: Array[String]
+    MAX_STEPS: Integer
+
+    @last_dom: bool
+    @dom_any: bool
+    @dow_any: bool
+
+    attr_reader expression: String
+
+    # The time zone: nil (the system's), "UTC", an offset ("+05:30") or an
+    # IANA name ("Europe/Berlin", with the tzinfo gem).
+    attr_reader tz: String?
+
+    attr_reader zone: Zone::_Zone
+
+    attr_reader seconds: Array[Integer]
+    attr_reader minutes: Array[Integer]
+    attr_reader hours: Array[Integer]
+    attr_reader days: Array[Integer]
+    attr_reader months: Array[Integer]
+    attr_reader weekdays: Array[Integer]
+
+    def initialize: (_ToS expression, ?tz: String?) -> void
+
+    def to_s: () -> String
+
+    def inspect: () -> String
+
+    # Whether +time+ (to the second) matches.
+    def match?: (Time time) -> bool
+
+    # The first matching time strictly after +from+, in UTC (nil for an
+    # expression that never matches).
+    def next_time: (?Time from) -> Time?
+
+    # The last matching time strictly before +from+, in UTC.
+    def previous_time: (?Time from) -> Time?
+
+    # Best-effort English description.
+    def description: () -> String
+
+    private
+
+    def next_month: (Time w) -> Time
+
+    def next_day: (Time w) -> Time
+
+    def describe_time: () -> String?
+
+    def step_of: (Array[Integer] values, Integer max) -> Integer?
+
+    def contiguous?: (Array[Integer] values) -> bool
+
+    def every: (Integer step, String unit) -> String
+
+    def describe_days: () -> String?
+
+    def describe_dom: () -> String?
+
+    def describe_dow: () -> String?
+
+    def describe_months: () -> String?
+
+    def parse: (String expr) -> void
+
+    def field: (String text, Integer min, Integer max, ?Hash[String, Integer] names) -> Array[Integer]
+
+    def value: (String text, Hash[String, Integer] names) -> Integer
+
+    def day_match?: (Time w) -> bool
+
+    # Converts between UTC instants and "wall clock" times (UTC Times
+    # holding the local fields).
+    module Zone
+      interface _Zone
+        # The zone's name for descriptions (nil for the system zone).
+        def label: () -> String?
+
+        def to_wall: (Time time) -> Time
+
+        # nil for wall times skipped by a daylight-saving change.
+        def to_utc: (Time wall) -> Time?
+      end
+
+      OFFSET: Regexp
+
+      def self.for: (String? tz) -> (Fixed | Local | IANA)
+
+      # A fixed offset from UTC (a _Zone).
+      class Fixed
+        @offset: Integer
+
+        attr_reader label: String
+
+        def initialize: (Integer offset, String label) -> void
+
+        def to_wall: (Time time) -> Time
+
+        def to_utc: (Time wall) -> Time
+      end
+
+      # The system's zone (a _Zone).
+      class Local
+        attr_reader label: nil
+
+        def to_wall: (Time time) -> Time
+
+        def to_utc: (Time wall) -> Time?
+      end
+
+      # An IANA zone, with the tzinfo gem (a _Zone).
+      class IANA
+        # What Robin uses of a TZInfo::Timezone (Robin doesn't depend on
+        # tzinfo, so its signatures can't name it).
+        interface _Timezone
+          def utc_to_local: (Time utc_time) -> Time
+
+          def local_to_utc: (Time local_time, ?bool? dst) -> Time
+        end
+
+        @tz: _Timezone
+
+        attr_reader label: String
+
+        def to_wall: (Time time) -> Time
+
+        def to_utc: (Time wall) -> Time?
+
+        def self.lookup: (String name) -> _Timezone
+
+        def self.load_tzinfo: (String name) -> bool
+
+        def initialize: (String name) -> void
+      end
+    end
+  end
+end
