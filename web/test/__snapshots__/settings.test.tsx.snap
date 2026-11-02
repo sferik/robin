@@ -1,0 +1,1060 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`NotFound > links home 1`] = `
+<div>
+  <section
+    class="panel"
+  >
+    <div
+      class="empty"
+    >
+      <svg
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="miter"
+        stroke-width="1.6"
+        viewBox="0 0 20 20"
+      >
+        <path
+          d="M8.5 4 A4.5 4.5 0 1 0 8.51 4 M12 12 L16 16"
+        />
+      </svg>
+      <h3>
+        There's nothing at this address
+      </h3>
+      <p>
+        The page may have moved. 
+        <a
+          href="/robin/"
+        >
+          Go to the dashboard
+        </a>
+        .
+      </p>
+    </div>
+  </section>
+</div>
+`;
+
+exports[`Settings > copes with sparse Redis info 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div
+      class="row"
+      style="gap: 18px; align-items: center;"
+    >
+      <img
+        alt="Robin, a red-bellied bird in a mask"
+        height="84"
+        src="assets/robin-1.svg"
+        width="84"
+      />
+      <div>
+        <h1>
+          Robin 
+          0.1.0
+        </h1>
+        <p
+          class="subtitle"
+        >
+          Fast, reliable background jobs for Ruby. Free and open source under the LGPL.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div
+    class="grid-2"
+  >
+    <section
+      class="panel panel-pad"
+    >
+      <h2>
+        Robin
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Version
+        </dt>
+        <dd>
+          0.1.0
+        </dd>
+        <dt>
+          Ruby
+        </dt>
+        <dd
+          class="small"
+        >
+          ruby 3.4.11
+        </dd>
+        <dt>
+          Cluster
+        </dt>
+        <dd>
+          default
+        </dd>
+        <dt>
+          Processes
+        </dt>
+        <dd>
+          3
+        </dd>
+        <dt>
+          Leader
+        </dt>
+        <dd>
+          None elected
+        </dd>
+        <dt>
+          Key prefix
+        </dt>
+        <dd>
+          <code>
+            robin:
+          </code>
+        </dd>
+        <dt>
+          Default retries
+        </dt>
+        <dd>
+          20
+        </dd>
+        <dt>
+          Dead set
+        </dt>
+        <dd>
+          10,000 jobs, kept 180 days
+        </dd>
+        <dt>
+          Protocol parser
+        </dt>
+        <dd>
+          Pure Ruby
+        </dd>
+      </dl>
+    </section>
+    <section
+      class="panel panel-pad"
+    >
+      <h2>
+        Redis
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Server
+        </dt>
+        <dd>
+          <code>
+            redis://localhost:6379/0
+          </code>
+        </dd>
+        <dt>
+          Version
+        </dt>
+        <dd>
+          –
+           
+        </dd>
+        <dt>
+          Uptime
+        </dt>
+        <dd>
+          –
+        </dd>
+        <dt>
+          Memory
+        </dt>
+        <dd>
+          –
+        </dd>
+        <dt>
+          Max memory
+        </dt>
+        <dd>
+          Unlimited
+           
+          <span
+            class="dim"
+          >
+            noeviction
+          </span>
+        </dd>
+        <dt>
+          Clients
+        </dt>
+        <dd>
+          –
+        </dd>
+        <dt>
+          Ops per second
+        </dt>
+        <dd>
+          –
+        </dd>
+        <dt>
+          Hit rate
+        </dt>
+        <dd>
+          50.0%
+        </dd>
+      </dl>
+    </section>
+    <section
+      class="panel panel-pad"
+    >
+      <h2>
+        Your access
+      </h2>
+      <p
+        class="notice mb"
+      >
+        This dashboard is read-only.
+      </p>
+      <dl
+        class="kv"
+      >
+        <dt>
+          View the dashboard
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Retry and enqueue jobs
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Edit job arguments
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Delete jobs and clear queues
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Kill jobs
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Pause queues and cron jobs
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Cancel jobs
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Quiet and stop processes
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Run cron jobs now
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Reset rate limiters
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Delete batches
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Delete job profiles
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Use actions on extension pages
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+      </dl>
+    </section>
+    <section
+      class="panel panel-pad"
+    >
+      <h2>
+        Language
+      </h2>
+      <label
+        class="row"
+      >
+        <span
+          class="sr-only"
+        >
+          Language
+        </span>
+        <select
+          class="select"
+        >
+          <option
+            lang="ar"
+            value="ar"
+          >
+            العربية
+          </option>
+          <option
+            lang="cs"
+            value="cs"
+          >
+            Čeština
+          </option>
+          <option
+            lang="da"
+            value="da"
+          >
+            Dansk
+          </option>
+          <option
+            lang="de"
+            value="de"
+          >
+            Deutsch
+          </option>
+          <option
+            lang="en"
+            value="en"
+          >
+            English
+          </option>
+          <option
+            lang="es"
+            value="es"
+          >
+            Español
+          </option>
+          <option
+            lang="fa"
+            value="fa"
+          >
+            فارسی
+          </option>
+          <option
+            lang="fr"
+            value="fr"
+          >
+            Français
+          </option>
+          <option
+            lang="he"
+            value="he"
+          >
+            עברית
+          </option>
+          <option
+            lang="hi"
+            value="hi"
+          >
+            हिन्दी
+          </option>
+          <option
+            lang="it"
+            value="it"
+          >
+            Italiano
+          </option>
+          <option
+            lang="ja"
+            value="ja"
+          >
+            日本語
+          </option>
+          <option
+            lang="ko"
+            value="ko"
+          >
+            한국어
+          </option>
+          <option
+            lang="nb"
+            value="nb"
+          >
+            Norsk bokmål
+          </option>
+          <option
+            lang="nl"
+            value="nl"
+          >
+            Nederlands
+          </option>
+          <option
+            lang="pl"
+            value="pl"
+          >
+            Polski
+          </option>
+          <option
+            lang="pt-BR"
+            value="pt-BR"
+          >
+            Português (Brasil)
+          </option>
+          <option
+            lang="ru"
+            value="ru"
+          >
+            Русский
+          </option>
+          <option
+            lang="sv"
+            value="sv"
+          >
+            Svenska
+          </option>
+          <option
+            lang="tr"
+            value="tr"
+          >
+            Türkçe
+          </option>
+          <option
+            lang="uk"
+            value="uk"
+          >
+            Українська
+          </option>
+          <option
+            lang="ur"
+            value="ur"
+          >
+            اردو
+          </option>
+          <option
+            lang="vi"
+            value="vi"
+          >
+            Tiếng Việt
+          </option>
+          <option
+            lang="zh-CN"
+            value="zh-CN"
+          >
+            简体中文
+          </option>
+          <option
+            lang="zh-TW"
+            value="zh-TW"
+          >
+            繁體中文
+          </option>
+        </select>
+      </label>
+      <h2
+        class="mt"
+      >
+        Keyboard
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          <kbd>
+            /
+          </kbd>
+        </dt>
+        <dd>
+          Find a job by ID
+        </dd>
+        <dt>
+          <kbd>
+            Esc
+          </kbd>
+        </dt>
+        <dd>
+          Close dialogs and the menu
+        </dd>
+      </dl>
+      <h2
+        class="mt"
+      >
+        Prometheus
+      </h2>
+      <p
+        class="small"
+      >
+        Scrape 
+        <code>
+          /robin/metrics
+        </code>
+         for queue sizes, latency and job counters.
+      </p>
+    </section>
+  </div>
+</div>
+`;
+
+exports[`Settings > shows Robin, Redis and access details 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div
+      class="row"
+      style="gap: 18px; align-items: center;"
+    >
+      <img
+        alt="Robin, a red-bellied bird in a mask"
+        height="84"
+        src="assets/robin-1.svg"
+        width="84"
+      />
+      <div>
+        <h1>
+          Robin 
+          0.1.0
+        </h1>
+        <p
+          class="subtitle"
+        >
+          Fast, reliable background jobs for Ruby. Free and open source under the LGPL.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div
+    class="grid-2"
+  >
+    <section
+      class="panel panel-pad"
+    >
+      <h2>
+        Robin
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Version
+        </dt>
+        <dd>
+          0.1.0
+        </dd>
+        <dt>
+          Ruby
+        </dt>
+        <dd
+          class="small"
+        >
+          ruby 3.4.11
+        </dd>
+        <dt>
+          Cluster
+        </dt>
+        <dd>
+          default
+        </dd>
+        <dt>
+          Processes
+        </dt>
+        <dd>
+          3
+        </dd>
+        <dt>
+          Leader
+        </dt>
+        <dd>
+          web-1
+        </dd>
+        <dt>
+          Key prefix
+        </dt>
+        <dd>
+          <code>
+            robin:
+          </code>
+        </dd>
+        <dt>
+          Default retries
+        </dt>
+        <dd>
+          20
+        </dd>
+        <dt>
+          Dead set
+        </dt>
+        <dd>
+          10,000 jobs, kept 180 days
+        </dd>
+        <dt>
+          Protocol parser
+        </dt>
+        <dd>
+          Native extension
+        </dd>
+      </dl>
+    </section>
+    <section
+      class="panel panel-pad"
+    >
+      <h2>
+        Redis
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Server
+        </dt>
+        <dd>
+          <code>
+            redis://localhost:6379/0
+          </code>
+        </dd>
+        <dt>
+          Version
+        </dt>
+        <dd>
+          8.0.1
+           
+          <span
+            class="dim"
+          >
+            (
+            master
+            )
+          </span>
+        </dd>
+        <dt>
+          Uptime
+        </dt>
+        <dd>
+          1 d 1 h
+        </dd>
+        <dt>
+          Memory
+        </dt>
+        <dd>
+          12M
+          <span
+            class="dim"
+          >
+             
+            (peak 20M)
+          </span>
+        </dd>
+        <dt>
+          Max memory
+        </dt>
+        <dd>
+          1G
+           
+          <span
+            class="dim"
+          >
+            allkeys-lru
+          </span>
+        </dd>
+        <dt>
+          Clients
+        </dt>
+        <dd>
+          17
+        </dd>
+        <dt>
+          Ops per second
+        </dt>
+        <dd>
+          523
+        </dd>
+        <dt>
+          Hit rate
+        </dt>
+        <dd>
+          99.8%
+        </dd>
+      </dl>
+      <p
+        class="notice mt"
+      >
+        Redis may evict keys under memory pressure (allkeys-lru). Set maxmemory-policy to noeviction so jobs are never silently dropped.
+      </p>
+    </section>
+    <section
+      class="panel panel-pad"
+    >
+      <h2>
+        Your access
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          View the dashboard
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Retry and enqueue jobs
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Edit job arguments
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Delete jobs and clear queues
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            Not allowed
+          </span>
+        </dd>
+        <dt>
+          Kill jobs
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Pause queues and cron jobs
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Cancel jobs
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Quiet and stop processes
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Run cron jobs now
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Reset rate limiters
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Delete batches
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Delete job profiles
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          Use actions on extension pages
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+        <dt>
+          custom_thing
+        </dt>
+        <dd>
+          Allowed
+        </dd>
+      </dl>
+    </section>
+    <section
+      class="panel panel-pad"
+    >
+      <h2>
+        Language
+      </h2>
+      <label
+        class="row"
+      >
+        <span
+          class="sr-only"
+        >
+          Language
+        </span>
+        <select
+          class="select"
+        >
+          <option
+            lang="ar"
+            value="ar"
+          >
+            العربية
+          </option>
+          <option
+            lang="cs"
+            value="cs"
+          >
+            Čeština
+          </option>
+          <option
+            lang="da"
+            value="da"
+          >
+            Dansk
+          </option>
+          <option
+            lang="de"
+            value="de"
+          >
+            Deutsch
+          </option>
+          <option
+            lang="en"
+            value="en"
+          >
+            English
+          </option>
+          <option
+            lang="es"
+            value="es"
+          >
+            Español
+          </option>
+          <option
+            lang="fa"
+            value="fa"
+          >
+            فارسی
+          </option>
+          <option
+            lang="fr"
+            value="fr"
+          >
+            Français
+          </option>
+          <option
+            lang="he"
+            value="he"
+          >
+            עברית
+          </option>
+          <option
+            lang="hi"
+            value="hi"
+          >
+            हिन्दी
+          </option>
+          <option
+            lang="it"
+            value="it"
+          >
+            Italiano
+          </option>
+          <option
+            lang="ja"
+            value="ja"
+          >
+            日本語
+          </option>
+          <option
+            lang="ko"
+            value="ko"
+          >
+            한국어
+          </option>
+          <option
+            lang="nb"
+            value="nb"
+          >
+            Norsk bokmål
+          </option>
+          <option
+            lang="nl"
+            value="nl"
+          >
+            Nederlands
+          </option>
+          <option
+            lang="pl"
+            value="pl"
+          >
+            Polski
+          </option>
+          <option
+            lang="pt-BR"
+            value="pt-BR"
+          >
+            Português (Brasil)
+          </option>
+          <option
+            lang="ru"
+            value="ru"
+          >
+            Русский
+          </option>
+          <option
+            lang="sv"
+            value="sv"
+          >
+            Svenska
+          </option>
+          <option
+            lang="tr"
+            value="tr"
+          >
+            Türkçe
+          </option>
+          <option
+            lang="uk"
+            value="uk"
+          >
+            Українська
+          </option>
+          <option
+            lang="ur"
+            value="ur"
+          >
+            اردو
+          </option>
+          <option
+            lang="vi"
+            value="vi"
+          >
+            Tiếng Việt
+          </option>
+          <option
+            lang="zh-CN"
+            value="zh-CN"
+          >
+            简体中文
+          </option>
+          <option
+            lang="zh-TW"
+            value="zh-TW"
+          >
+            繁體中文
+          </option>
+        </select>
+      </label>
+      <h2
+        class="mt"
+      >
+        Keyboard
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          <kbd>
+            /
+          </kbd>
+        </dt>
+        <dd>
+          Find a job by ID
+        </dd>
+        <dt>
+          <kbd>
+            Esc
+          </kbd>
+        </dt>
+        <dd>
+          Close dialogs and the menu
+        </dd>
+      </dl>
+      <h2
+        class="mt"
+      >
+        Prometheus
+      </h2>
+      <p
+        class="small"
+      >
+        Scrape 
+        <code>
+          /robin/metrics
+        </code>
+         for queue sizes, latency and job counters.
+      </p>
+    </section>
+  </div>
+</div>
+`;

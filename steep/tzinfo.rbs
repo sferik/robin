@@ -1,0 +1,17 @@
+# What Robin::Cron uses of the tzinfo gem (optional, and without RBS of its
+# own). For this check only, so not in the gem.
+module TZInfo
+  class InvalidTimezoneIdentifier < StandardError
+  end
+
+  class PeriodNotFound < StandardError
+  end
+
+  class Timezone
+    def self.get: (String identifier) -> Timezone
+
+    def utc_to_local: (Time utc_time) -> Time
+
+    def local_to_utc: (Time local_time, ?bool? dst) -> Time
+  end
+end

@@ -1,0 +1,438 @@
+module Robin
+  # Cluster-wide counts, in one round trip.
+  class Stats
+    @config: Config
+
+    attr_reader processed: Integer
+    attr_reader failed: Integer
+    attr_reader scheduled_size: Integer
+    attr_reader retry_size: Integer
+    attr_reader dead_size: Integer
+    attr_reader processes_size: Integer
+    attr_reader workers_size: Integer
+    attr_reader enqueued: Integer
+
+    # Each queue's size, largest first.
+    attr_reader queues: Hash[String, Integer]
+
+    # Seconds the default queue's oldest job has waited.
+    attr_reader default_queue_latency: Float
+
+    def initialize: (?config: Config) -> void
+
+    # Reads them all, in one round trip.
+    def fetch: () -> self
+
+    def to_h: () -> Hash[String, Integer | Float]
+
+    # Daily processed/failed counts ("YYYY-MM-DD" => count) for the last
+    # +days+ days.
+    def history: (?days: Integer, ?now: Time) -> Hash[String, Hash[String, Integer]]
+
+    # Resets counters ("processed", "failed"); returns how many it deleted.
+    def reset: (*String names) -> Integer
+  end
+
+  # A queue's jobs, next to run first.
+  class Queue
+    include Enumerable[JobRecord]
+
+    PAGE: Integer
+
+    FIND_SLICE: Integer
+
+    def self.all: (?config: Config) -> Array[Queue]
+
+    # Seconds the oldest job (its raw JSON) has been waiting.
+    def self.latency_of: (String? raw, ?Integer now) -> Float
+
+    # The names of the paused queues.
+    def self.paused: (?config: Config) -> Array[String]
+
+    @config: Config
+    @key: String
+
+    attr_reader name: String
+
+    def initialize: (?_ToS name, ?config: Config) -> void
+
+    def size: () -> Integer
+
+    def latency: () -> Float
+
+    def paused?: () -> bool
+
+    def pause!: () -> Integer
+
+    def unpause!: () -> Integer
+
+    # Jobs from next-to-run to most recently pushed.
+    def each: () { (JobRecord job) -> void } -> void
+            | () -> Enumerator[JobRecord, void]
+
+    # A page of jobs: page 1 holds the jobs that will run next.
+    def page: (Integer number, ?per_page: Integer) -> Array[JobRecord]
+
+    # Finds a job by jid.
+    def find_job: (String jid) -> JobRecord?
+
+    # Deletes every job of class +klass+; returns how many.
+    def delete_by_class: (_ToS klass) -> Integer
+
+    # Deletes +jobs+ (read from this queue); returns how many.
+    def delete_jobs: (Array[JobRecord] jobs) -> Integer
+
+    def clear: () -> true
+
+    alias delete clear
+
+    # Name, size, latency and whether it's paused, in one round trip.
+    def to_h: () -> Hash[String, String | Integer | Float | bool]
+
+    private
+
+    def page_command: (Integer offset) -> Redis::command
+
+    # A job read from the queue.
+    def record: (String raw) -> JobRecord
+  end
+
+  # A job as stored in Redis.
+  class JobRecord
+    @config: Config
+
+    # The job's hash.
+    attr_reader item: job_hash
+
+    # The job's JSON.
+    attr_reader value: String
+
+    attr_reader queue: String?
+
+    def initialize: (String | job_hash value, ?String? queue, ?config: Config) -> void
+
+    def []: (String key) -> json
+
+    # The job's class name.
+    def klass: () -> String
+
+    # The class users care about (unwraps ActiveJob).
+    def display_class: () -> String?
+
+    def args: () -> Array[json]
+
+    # The arguments to show: an ActiveJob's own, and encrypted ones hidden.
+    def display_args: () -> Array[json]
+
+    def jid: () -> String
+
+    def bid: () -> String?
+
+    def tags: () -> Array[String]
+
+    def error_class: () -> String?
+
+    def error_message: () -> String?
+
+    # The backtrace stored with the last failure.
+    def error_backtrace: () -> Array[String]?
+
+    # How many times the job has failed.
+    def failures: () -> Integer
+
+    def created_at: () -> Time?
+
+    def enqueued_at: () -> Time?
+
+    def failed_at: () -> Time?
+
+    def retried_at: () -> Time?
+
+    # Epoch ms since when the job has been ready to run.
+    def waiting_since: () -> (Integer | Float | nil)
+
+    def latency: () -> Float
+
+    def delete: () -> bool
+
+    def to_h: () -> Hash[String, json]
+
+    private
+
+    def ms_time: (Integer | Float | nil time) -> Time?
+
+    def parse: (String raw) -> job_hash
+  end
+
+  # A job in the schedule, retry or dead set.
+  class SortedEntry < JobRecord
+    # Its score in the set: when it's due (or died), in epoch seconds.
+    attr_reader score: Float
+
+    attr_reader parent: JobSet
+
+    def initialize: (JobSet parent, String | Float | Integer score, String value) -> void
+
+    # When the job is due (or, in the dead set, died).
+    def at: () -> Time
+
+    # "<score>-<jid>", as the dashboard names it.
+    def id: () -> String
+
+    def delete: () -> bool
+
+    # Pushes the job onto its queue now; false if it's gone from the set.
+    def add_to_queue: () -> bool
+
+    alias retry! add_to_queue
+
+    # The job without its time in the set.
+    def bare_item: () -> job_hash
+
+    # The job #add_to_queue pushes.
+    def queued_item: () -> job_hash
+
+    def reschedule: (time at) -> Array[Redis::reply]
+
+    # Moves the job to the dead set; false if it's gone from the set.
+    def kill!: () -> bool
+
+    def to_h: () -> Hash[String, json]
+
+    private
+
+    # Removes it, then yields the job; false if it was gone.
+    def remove_and: () { (job_hash item) -> void } -> bool
+  end
+
+  # A sorted set of jobs: the schedule, retry or dead set.
+  class JobSet
+    include Enumerable[SortedEntry]
+
+    PAGE: Integer
+
+    attr_reader name: String
+    attr_reader key: String
+    attr_reader config: Config
+
+    def initialize: (String name, ?config: Config) -> void
+
+    def size: () -> Integer
+
+    def clear: () -> Integer
+
+    # Adds a job (a payload hash or its JSON) due at +at+.
+    def schedule: (time at, job_hash | String payload) -> Integer
+
+    # Iterates by score: soonest first, or latest first with +reverse+.
+    def each: (?reverse: bool) { (SortedEntry entry) -> void } -> void
+            | (?reverse: bool) -> Enumerator[SortedEntry, void]
+
+    def page: (Integer number, ?per_page: Integer, ?reverse: bool) -> Array[SortedEntry]
+
+    # A #page and the set's size, in one round trip.
+    def page_and_size: (Integer number, per_page: Integer, reverse: bool) -> [Array[SortedEntry], Integer]
+
+    # Up to +limit+ entries whose JSON contains +term+, soonest first.
+    def scan: (_ToS term, ?limit: Integer) -> Array[SortedEntry]
+
+    def find_job: (String jid) -> SortedEntry?
+
+    # Entries with exactly this score (and optionally jid).
+    def fetch: (_ToS score, ?String? jid) -> Array[SortedEntry]
+
+    # Looks up by the "<score>-<jid>" ids used in the web UI.
+    def find_by_id: (String id) -> SortedEntry?
+
+    def delete_entry: (SortedEntry entry) -> bool
+
+    def delete_by_jid: (_ToS score, String jid) -> bool
+
+    # Looks up several "<score>-<jid>" ids in one round trip.
+    def find_all_by_id: (Array[String] ids) -> Array[SortedEntry]
+
+    # Removes +entries+ and returns those it removed.
+    def take: (Array[SortedEntry] entries) -> Array[SortedEntry]
+
+    # Deletes +entries+; returns how many.
+    def delete_entries: (Array[SortedEntry] entries) -> Integer
+
+    # Pushes +entries+ onto their queues now; returns how many.
+    def retry_entries: (Array[SortedEntry] entries) -> Integer
+
+    # Moves +entries+ to the dead set; returns how many.
+    def kill_entries: (Array[SortedEntry] entries) -> Integer
+
+    # Yields the entries in the set now to a block that removes each one
+    # and returns truthy if it did. Returns how many it removed.
+    def drain: () { (SortedEntry entry) -> boolish } -> Integer
+
+    # Like #drain, a page at a time: the block returns how many it removed.
+    def drain_pages: () { (Array[SortedEntry] page) -> Integer } -> Integer
+
+    private
+
+    def range: (Integer start, Integer count, bool reverse) -> Array[SortedEntry]
+
+    def range_command: (Integer start, Integer count, bool reverse) -> Redis::command
+
+    def entries_from: (Redis::reply raw) -> Array[SortedEntry]
+
+    # An entry read from the set.
+    def entry: (String score, String value) -> SortedEntry
+  end
+
+  class ScheduledSet < JobSet
+    def initialize: (?config: Config) -> void
+  end
+
+  class RetrySet < JobSet
+    def initialize: (?config: Config) -> void
+
+    # Pushes every entry back onto its queue; returns how many.
+    def retry_all: () -> Integer
+
+    # Moves every entry to the dead set; returns how many.
+    def kill_all: () -> Integer
+  end
+
+  class DeadSet < JobSet
+    def initialize: (?config: Config) -> void
+
+    # Adds a job's JSON to the dead set (trimming it), acknowledging +ack+
+    # in the same transaction; +notify+ runs the death handlers.
+    def kill: (String raw, ?ack: Fetcher::UnitOfWork?, ?notify: bool) -> true
+
+    def retry_all: () -> Integer
+
+    # Queues what #kill sends into +tx+ (a transaction).
+    def queue_kill: (Redis::Pipeline tx, String raw, Fetcher::UnitOfWork? ack) -> void
+  end
+
+  # A running Robin process, as its heartbeat left it.
+  class ProcessRecord
+    # Remote signals, named like the Unix signals that do the same.
+    SIGNALS: Hash[String, String]
+
+    @config: Config
+    @quiet: bool
+    @leader: bool
+
+    attr_reader identity: String
+
+    # What the process says about itself (hostname, pid, capsules...).
+    attr_reader info: Hash[String, json]
+
+    # How many jobs it's running.
+    attr_reader busy: Integer
+
+    # Its last heartbeat, in epoch ms.
+    attr_reader beat: Integer
+
+    # Its resident memory, in KB.
+    attr_reader rss: Integer
+
+    # Its last Redis round trip, in microseconds.
+    attr_reader rtt_us: Integer
+
+    # GVL contention over its last heartbeat interval, as a percentage, or
+    # nil where it isn't measured.
+    attr_reader gvl_contention: Float?
+
+    def initialize: (String identity, Hash[String, String] data, ?config: Config) -> void
+
+    def []: (String key) -> json
+
+    # Epoch ms.
+    def started_at: () -> Integer?
+
+    def quiet?: () -> bool
+
+    def leader?: () -> bool
+
+    def quiet!: () -> true
+
+    def stop!: () -> true
+
+    def dump_threads: () -> true
+
+    # Has the process run +count+ workers in +capsule+.
+    def resize!: (Integer count, ?capsule: String) -> true
+
+    def to_h: () -> Hash[String, json]
+
+    private
+
+    def signal: (String name) -> true
+
+    def send_signal: (String signal) -> true
+  end
+
+  # The running processes.
+  class ProcessSet
+    include Enumerable[ProcessRecord]
+
+    @config: Config
+
+    def initialize: (?config: Config) -> void
+
+    def each: () { (ProcessRecord process) -> void } -> void
+            | () -> Enumerator[ProcessRecord, void]
+
+    def size: () -> Integer
+
+    def total_concurrency: () -> Integer
+
+    def total_rss_kb: () -> Integer
+
+    # The leader's identity, if there is one.
+    def leader: () -> String?
+
+    private
+
+    # A process read from Redis.
+    def record: (String identity, Hash[String, String] data) -> ProcessRecord
+  end
+
+  # Finds where a job is by jid.
+  class JobLocator
+    # Where => set.
+    SETS: Hash[String, singleton(ScheduledSet) | singleton(RetrySet) | singleton(DeadSet)]
+
+    QUEUE_LIMIT: Integer
+
+    @config: Config
+
+    def initialize: (?config: Config) -> void
+
+    # Where the job is: hashes with "where" ("busy", "scheduled",
+    # "retries", "dead" or "queue") and "job" (a JobRecord), plus the
+    # process ("identity", "thread") or the "queue".
+    def locate: (String jid) -> Array[Hash[String, untyped]]
+
+    private
+
+    def busy: (String jid) -> Array[Hash[String, untyped]]
+
+    def sets: (String jid) -> Array[Hash[String, untyped]]
+
+    def queued: (String jid) -> Array[Hash[String, untyped]]
+  end
+
+  # Jobs currently running across the cluster.
+  class WorkSet
+    include Enumerable[[String, String, Hash[String, json]]]
+
+    @config: Config
+
+    def initialize: (?config: Config) -> void
+
+    # Yields (identity, thread name, {"queue", "payload" (the job hash),
+    # "run_at" (epoch ms)}).
+    def each: () { (String identity, String thread, Hash[String, json] work) -> void } -> void
+            | () { ([String, String, Hash[String, json]] row) -> void } -> void
+            | () -> Enumerator[[String, String, Hash[String, json]], void]
+
+    def size: () -> Integer
+  end
+end

@@ -1,0 +1,36 @@
+# What Robin's Puma plugin (lib/puma/plugin/robin.rb) uses of Puma, which
+# Robin doesn't depend on. For this check only, so not in the gem.
+module Puma
+  class Plugin
+  end
+
+  module Plugins
+    def self.register: (String name, Class plugin) -> void
+  end
+
+  class DSL
+  end
+
+  class Launcher
+    def events: () -> Events
+
+    # Puma's options (a UserFileDefaultOptions): settings of every kind, by name.
+    def options: () -> UserFileDefaultOptions
+
+    def log_writer: () -> LogWriter
+  end
+
+  class UserFileDefaultOptions
+    def []: (Symbol key) -> untyped
+
+    def fetch: (Symbol key) -> untyped
+  end
+
+  class Events
+    def register: (Symbol hook) { (Symbol state) -> void } -> void
+  end
+
+  class LogWriter
+    def log: (String message) -> void
+  end
+end

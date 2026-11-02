@@ -1,0 +1,22 @@
+W, [2026-10-20T04:17:59.707713 #62168]  WARN -- : recovered 11 in-flight job(s) from dead process monad.local:62133:9e9d98c7
+robin   in flight at kill  11, lost   0, ran twice   0, all done 21.95s after the kill
+sidekiq in flight at kill   9, lost   9, ran twice   0, all done never
+sidekiq in flight at kill  10, lost  10, ran twice   0, all done never
+W, [2026-10-20T04:20:45.824195 #62617]  WARN -- : recovered 10 in-flight job(s) from dead process monad.local:62581:5c97d69e
+robin   in flight at kill   8, lost   0, ran twice   2, all done 21.86s after the kill
+jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 OpenJDK 64-Bit Server VM 27+35 on 27+35 +indy +jit [arm64-darwin]
+Crash test: 1000 jobs of 0.05s, 10 threads, kill -9 after 250 finished, fresh server at once, waiting up to 60.0s; Robin with heartbeat_interval 2s, process_ttl 10s
+
+| system | jobs | finished before kill | in flight at kill | lost | run twice | queue empty after kill | all finished after kill |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| Robin 0.1.0 (NativeRESP parser) | 1000 | 250 | 11 | 0 | 0 | 8.09 s | 21.95 s |
+| Sidekiq 8.1.7 (ruby driver) | 1000 | 251 | 9 | 9 | 0 | 6.48 s | never |
+| Sidekiq 8.1.7 (ruby driver) | 1000 | 250 | 10 | 10 | 0 | 6.45 s | never |
+| Robin 0.1.0 (NativeRESP parser) | 1000 | 250 | 8 | 0 | 2 | 8.06 s | 21.86 s |
+
+Raw results:
+
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","jobs":1000,"threads":10,"sleep":0.05,"finished_at_kill":250,"in_flight_at_kill":11,"lost":0,"run_twice":0,"extra_runs":0,"restart_secs":3.71,"queue_drained_secs":8.09,"all_done_secs":21.95}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (ruby driver)","jobs":1000,"threads":10,"sleep":0.05,"finished_at_kill":251,"in_flight_at_kill":9,"lost":9,"run_twice":0,"extra_runs":0,"restart_secs":2.24,"queue_drained_secs":6.48,"all_done_secs":null}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (ruby driver)","jobs":1000,"threads":10,"sleep":0.05,"finished_at_kill":250,"in_flight_at_kill":10,"lost":10,"run_twice":0,"extra_runs":0,"restart_secs":2.23,"queue_drained_secs":6.45,"all_done_secs":null}
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","jobs":1000,"threads":10,"sleep":0.05,"finished_at_kill":250,"in_flight_at_kill":8,"lost":0,"run_twice":2,"extra_runs":2,"restart_secs":3.68,"queue_drained_secs":8.06,"all_done_secs":21.86}

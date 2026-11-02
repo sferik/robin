@@ -1,0 +1,394 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Extension > renders every kind of block as text 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <h1>
+        Billing desk
+      </h1>
+    </div>
+  </div>
+  <h2
+    class="ext-heading"
+  >
+    Today
+  </h2>
+  <div
+    class="facts"
+  >
+    <div
+      class="fact"
+    >
+      <span
+        class="fact-value"
+      >
+        12
+      </span>
+      <span
+        class="fact-label"
+      >
+        Waiting
+      </span>
+    </div>
+    <div
+      class="fact"
+    >
+      <span
+        class="fact-value"
+      >
+        true
+      </span>
+      <span
+        class="fact-label"
+      >
+        Paused
+      </span>
+    </div>
+    <div
+      class="fact"
+    >
+      <span
+        class="fact-value"
+      >
+        –
+      </span>
+      <span
+        class="fact-label"
+      >
+        Owner
+      </span>
+    </div>
+  </div>
+  <p
+    class="ext-text"
+  >
+    &lt;b&gt;not html&lt;/b&gt;
+  </p>
+  <section
+    class="panel ext-block"
+  >
+    <div
+      class="table-wrap"
+    >
+      <table
+        class="table"
+      >
+        <thead>
+          <tr>
+            <th>
+              Customer
+            </th>
+            <th>
+              Total
+            </th>
+            <th>
+              Paid
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              Acme
+            </td>
+            <td>
+              99.5
+            </td>
+            <td>
+              false
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Zed
+            </td>
+            <td>
+              –
+            </td>
+            <td>
+              true
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section
+    class="panel ext-block"
+  >
+    <div
+      class="empty"
+    >
+      <svg
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="miter"
+        stroke-width="1.6"
+        viewBox="0 0 20 20"
+      >
+        <path
+          d="M6 4 H14 L17 8 L10 16 L3 8 Z M3 8 H17 M8 4 L10 8 L12 4 M10 8 V16"
+        />
+      </svg>
+      <h3>
+        Nothing to show
+      </h3>
+    </div>
+  </section>
+  <div
+    class="ext-block"
+  >
+    <div
+      class="btn-group"
+    >
+      <button
+        class="btn"
+      >
+        Send now
+      </button>
+      <button
+        class="btn btn-danger"
+      >
+        Purge
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Profiles > lists profiles with downloads 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <h1>
+        Profiles
+      </h1>
+      <p
+        class="subtitle"
+      >
+        Where single job runs spent their time. Download one and drop it onto the 
+        <a
+          href="https://profiler.firefox.com"
+          rel="noreferrer"
+          target="_blank"
+        >
+          Firefox Profiler
+        </a>
+         to explore it.
+      </p>
+    </div>
+  </div>
+  <section
+    class="panel"
+  >
+    <div
+      class="table-wrap"
+    >
+      <table
+        class="table"
+      >
+        <thead>
+          <tr>
+            <th>
+              Job
+            </th>
+            <th>
+              Label
+            </th>
+            <th
+              class="r"
+            >
+              Took
+            </th>
+            <th>
+              Result
+            </th>
+            <th>
+              Recorded
+            </th>
+            <th
+              class="r"
+            >
+              Size
+            </th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a
+                class="cls"
+                href="/robin/metrics/jobs/ExportJob"
+              >
+                ExportJob
+              </a>
+              <div
+                class="dim small mono"
+              >
+                p1
+                 · 
+                low
+              </div>
+            </td>
+            <td>
+              big export
+            </td>
+            <td
+              class="r num"
+            >
+              1.5 s
+            </td>
+            <td>
+              <span
+                class="badge egg"
+              >
+                Succeeded
+              </span>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:29:00.000Z"
+                title="2026-10-14 09:29:00"
+              >
+                1 minute ago
+              </time>
+            </td>
+            <td
+              class="r num"
+            >
+              2.4 MB
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <a
+                  class="btn btn-small"
+                  download="robin-p1.json"
+                  href="api/profiles/p1"
+                >
+                  <svg
+                    aria-hidden="true"
+                    fill="none"
+                    height="14"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="miter"
+                    stroke-width="1.6"
+                    viewBox="0 0 20 20"
+                    width="14"
+                  >
+                    <path
+                      d="M10 3 V12 M6 8.5 L10 12.5 L14 8.5 M4 16 H16"
+                    />
+                  </svg>
+                   
+                  Download
+                </a>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a
+                class="cls"
+                href="/robin/metrics/jobs/Mail%3A%3AJob"
+              >
+                Mail::Job
+              </a>
+              <div
+                class="dim small mono"
+              >
+                p 2
+              </div>
+            </td>
+            <td>
+              <span
+                class="dim"
+              >
+                –
+              </span>
+            </td>
+            <td
+              class="r num"
+            >
+              12 ms
+            </td>
+            <td>
+              <span
+                class="badge ruby"
+              >
+                Failed
+              </span>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:29:55.000Z"
+                title="2026-10-14 09:29:55"
+              >
+                5 seconds ago
+              </time>
+            </td>
+            <td
+              class="r num"
+            >
+              900 B
+            </td>
+            <td
+              class="r"
+            >
+              <div
+                class="btn-group"
+              >
+                <a
+                  class="btn btn-small"
+                  download="robin-p 2.json"
+                  href="api/profiles/p%202"
+                >
+                  <svg
+                    aria-hidden="true"
+                    fill="none"
+                    height="14"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="miter"
+                    stroke-width="1.6"
+                    viewBox="0 0 20 20"
+                    width="14"
+                  >
+                    <path
+                      d="M10 3 V12 M6 8.5 L10 12.5 L14 8.5 M4 16 H16"
+                    />
+                  </svg>
+                   
+                  Download
+                </a>
+                <button
+                  class="btn btn-small btn-danger"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+`;

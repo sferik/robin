@@ -1,0 +1,25 @@
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 OpenJDK 64-Bit Server VM 27+35 on 27+35 +indy +jit [arm64-darwin]
+parser: Robin::Redis::RESP · jobs: 50000 · concurrency: 10
+perform_async:      3557 jobs/s (10000 jobs)
+perform_bulk:     193942 jobs/s (40000 jobs)
+processing:        18203 jobs/s (2.75s for 50000 jobs)
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 OpenJDK 64-Bit Server VM 27+35 on 27+35 +indy +jit [arm64-darwin]
+parser: Robin::Redis::RESP · jobs: 50000 · concurrency: 10
+perform_async:      3480 jobs/s (10000 jobs)
+perform_bulk:     193694 jobs/s (40000 jobs)
+processing:        18864 jobs/s (2.65s for 50000 jobs)
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 OpenJDK 64-Bit Server VM 27+35 on 27+35 +indy +jit [arm64-darwin]
+parser: Robin::Redis::RESP · jobs: 50000 · concurrency: 10
+perform_async:      3484 jobs/s (10000 jobs)
+perform_bulk:     201777 jobs/s (40000 jobs)
+processing:        17879 jobs/s (2.80s for 50000 jobs)
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 OpenJDK 64-Bit Server VM 27+35 on 27+35 +indy +jit [arm64-darwin]
+parser: Robin::Redis::RESP · jobs: 50000 · concurrency: 10
+perform_async:      3460 jobs/s (10000 jobs)
+perform_bulk:     206791 jobs/s (40000 jobs)
+processing:        17566 jobs/s (2.85s for 50000 jobs)
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 OpenJDK 64-Bit Server VM 27+35 on 27+35 +indy +jit [arm64-darwin]
+parser: Robin::Redis::RESP · jobs: 50000 · concurrency: 10
+perform_async:      3432 jobs/s (10000 jobs)
+perform_bulk:     192084 jobs/s (40000 jobs)
+processing:        18815 jobs/s (2.66s for 50000 jobs)

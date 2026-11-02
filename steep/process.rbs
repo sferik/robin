@@ -1,0 +1,17 @@
+# What Robin calls that core's RBS lacks: Process.fork and Process.spawn
+# (declared on Kernel only, and spawn without its environment Hash), and
+# Kernel#trap (declared on Signal only). For this check only, so not in the
+# gem.
+module Process
+  def self.fork: () -> Integer?
+               | () { () -> void } -> Integer
+
+  def self.spawn: (Hash[String, String?] env, String command, *String args) -> Integer
+end
+
+module Kernel
+  private
+
+  def trap: (Integer | interned signal) { (Integer signo) -> void } -> Signal::trap_command
+          | (Integer | interned signal, Signal::trap_command command) -> Signal::trap_command
+end

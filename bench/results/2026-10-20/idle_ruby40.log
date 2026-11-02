@@ -1,0 +1,20 @@
+W, [2026-10-20T04:54:01.791863 #68359]  WARN -- : Redis round trips take 52.7ms; jobs will be slow (is Redis far away, or overloaded?)
+robin   50 idle processes: Redis 21.2 ms CPU/s, 657 commands/s
+sidekiq 50 idle processes: Redis 19.4 ms CPU/s, 305 commands/s
+sidekiq 50 idle processes: Redis 18.9 ms CPU/s, 305 commands/s
+W, [2026-10-20T04:56:36.785928 #69609]  WARN -- : Redis round trips take 66.0ms; jobs will be slow (is Redis far away, or overloaded?)
+robin   50 idle processes: Redis 18.8 ms CPU/s, 648 commands/s
+ruby 4.0.7 (2026-09-15 revision 229531a6cf) +YJIT +PRISM [arm64-darwin27]
+Idle processes: 50 processes, no jobs, 30.0s window after 20.0s, median of 2
+
+| system | processes | threads each | Redis CPU per second | per process | Redis commands/s | per process | Redis clients | summed RSS |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| Robin 0.1.0 (NativeRESP parser) | 50 | 10 | 21.19 ms | 423.8 µs | 657.0 | 13.14 | 602 | 1220 MB |
+| Sidekiq 8.1.7 (hiredis driver) | 50 | 10 | 19.39 ms | 387.8 µs | 305.4 | 6.11 | 551 | 1179 MB |
+
+Raw results:
+
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","procs":50,"threads":10,"secs":30.011,"redis_cpu_ms_per_sec":21.19,"commands_per_sec":657.0,"ops_per_sec_sample":608,"clients":602,"rss_mb":1220}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (hiredis driver)","procs":50,"threads":10,"secs":30.016,"redis_cpu_ms_per_sec":19.39,"commands_per_sec":305.4,"ops_per_sec_sample":646,"clients":551,"rss_mb":1179}
+{"system":"sidekiq","label":"Sidekiq 8.1.7 (hiredis driver)","procs":50,"threads":10,"secs":30.009,"redis_cpu_ms_per_sec":18.91,"commands_per_sec":305.1,"ops_per_sec_sample":647,"clients":551,"rss_mb":1156}
+{"system":"robin","label":"Robin 0.1.0 (NativeRESP parser)","procs":50,"threads":10,"secs":30.011,"redis_cpu_ms_per_sec":18.78,"commands_per_sec":647.9,"ops_per_sec_sample":606,"clients":602,"rss_mb":1186}

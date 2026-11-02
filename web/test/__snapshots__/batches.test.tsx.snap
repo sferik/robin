@@ -1,0 +1,1317 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BatchDetail > handles a plain batch 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <div
+        class="crumb"
+      >
+        <a
+          href="/robin/batches"
+        >
+          Batches
+        </a>
+      </div>
+      <h1>
+        Untitled batch
+      </h1>
+      <p
+        class="subtitle"
+      >
+        <span
+          class="badge "
+        >
+          Running
+        </span>
+         
+        <span
+          class="mono small"
+        >
+          b-1
+        </span>
+      </p>
+    </div>
+    <span
+      class="spacer"
+    />
+    <div
+      class="btn-group"
+    >
+      <button
+        class="btn"
+      >
+        Cancel batch
+      </button>
+      <button
+        class="btn btn-danger"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+  <section
+    class="panel panel-pad mb"
+  >
+    <div>
+      <div
+        aria-label="Batch progress"
+        aria-valuemax="100"
+        aria-valuemin="0"
+        aria-valuenow="60"
+        class="progress"
+        role="progressbar"
+      >
+        <span
+          class="p-ok"
+          style="width: 60%;"
+        />
+      </div>
+      <div
+        class="progress-label"
+      >
+        <span>
+          60 of 100 done
+        </span>
+        <span
+          class="num"
+        >
+          40 waiting
+        </span>
+      </div>
+    </div>
+  </section>
+  <div
+    class="grid-3-1"
+  >
+    <div
+      class="stack"
+    >
+      <section
+        class="panel"
+      >
+        <div
+          class="panel-head"
+        >
+          <h2>
+            Failed jobs
+          </h2>
+        </div>
+        <div
+          class="empty"
+        >
+          <svg
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="miter"
+            stroke-width="1.6"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="M4 10.5 L8 14.5 L16 5.5"
+            />
+          </svg>
+          <h3>
+            No failures
+          </h3>
+          <p>
+            Jobs that fail at least once are listed here until they succeed.
+          </p>
+        </div>
+      </section>
+    </div>
+    <section
+      class="panel panel-pad"
+      style="align-self: start;"
+    >
+      <h2>
+        Details
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Jobs
+        </dt>
+        <dd
+          class="num"
+        >
+          100 jobs
+        </dd>
+        <dt>
+          Pending
+        </dt>
+        <dd
+          class="num"
+        >
+          40
+        </dd>
+        <dt>
+          Failures
+        </dt>
+        <dd
+          class="num"
+        >
+          0
+        </dd>
+        <dt>
+          Created
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:20:00.000Z"
+            title="2026-10-14 09:20:00"
+          >
+            10 minutes ago
+          </time>
+        </dd>
+        <dt>
+          Completed
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            –
+          </span>
+        </dd>
+        <dt>
+          Succeeded
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            –
+          </span>
+        </dd>
+      </dl>
+    </section>
+  </div>
+</div>
+`;
+
+exports[`BatchDetail > shows progress, failures, children and details 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <div
+        class="crumb"
+      >
+        <a
+          href="/robin/batches"
+        >
+          Batches
+        </a>
+         / 
+        <a
+          href="/robin/batches/p%201"
+        >
+          parent
+        </a>
+      </div>
+      <h1>
+        Import users
+      </h1>
+      <p
+        class="subtitle"
+      >
+        <span
+          class="badge ruby"
+        >
+          Complete with failures
+        </span>
+         
+        <span
+          class="mono small"
+        >
+          b/1
+        </span>
+      </p>
+    </div>
+    <span
+      class="spacer"
+    />
+    <div
+      class="btn-group"
+    >
+      <button
+        class="btn btn-danger"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+  <section
+    class="panel panel-pad mb"
+  >
+    <div>
+      <div
+        aria-label="Batch progress"
+        aria-valuemax="100"
+        aria-valuemin="0"
+        aria-valuenow="60"
+        class="progress"
+        role="progressbar"
+      >
+        <span
+          class="p-ok"
+          style="width: 60%;"
+        />
+        <span
+          class="p-fail"
+          style="width: 2%;"
+        />
+      </div>
+      <div
+        class="progress-label"
+      >
+        <span>
+          60 of 100 done, 2 failing
+        </span>
+        <span
+          class="num"
+        >
+          38 waiting
+        </span>
+      </div>
+    </div>
+  </section>
+  <div
+    class="grid-3-1"
+  >
+    <div
+      class="stack"
+    >
+      <section
+        class="panel"
+      >
+        <div
+          class="panel-head"
+        >
+          <h2>
+            Failed jobs
+          </h2>
+        </div>
+        <div
+          class="table-wrap"
+        >
+          <table
+            class="table"
+          >
+            <thead>
+              <tr>
+                <th>
+                  Job ID
+                </th>
+                <th>
+                  Error
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <a
+                    class="mono small"
+                    href="/robin/jobs/f%201"
+                  >
+                    f 1
+                  </a>
+                </td>
+                <td>
+                  <span
+                    class="err"
+                  >
+                    Boom
+                  </span>
+                  <div
+                    class="err-msg"
+                  >
+                    It broke
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section
+        class="panel"
+      >
+        <div
+          class="panel-head"
+        >
+          <h2>
+            Child batches
+          </h2>
+        </div>
+        <div
+          class="table-wrap"
+        >
+          <table
+            class="table"
+          >
+            <tbody>
+              <tr>
+                <td>
+                  <a
+                    href="/robin/batches/c-1"
+                  >
+                    c-1
+                  </a>
+                </td>
+                <td
+                  style="width: 50%;"
+                />
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="/robin/batches/c-2"
+                  >
+                    Child
+                  </a>
+                </td>
+                <td
+                  style="width: 50%;"
+                >
+                  <div>
+                    <div
+                      aria-label="Batch progress"
+                      aria-valuemax="100"
+                      aria-valuemin="0"
+                      aria-valuenow="75"
+                      class="progress"
+                      role="progressbar"
+                    >
+                      <span
+                        class="p-ok"
+                        style="width: 75%;"
+                      />
+                    </div>
+                    <div
+                      class="progress-label"
+                    >
+                      <span>
+                        3 of 4 done
+                      </span>
+                      <span
+                        class="num"
+                      >
+                        1 waiting
+                      </span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="/robin/batches/c-3"
+                  >
+                    c-3
+                  </a>
+                </td>
+                <td
+                  style="width: 50%;"
+                />
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <section
+      class="panel panel-pad"
+      style="align-self: start;"
+    >
+      <h2>
+        Details
+      </h2>
+      <dl
+        class="kv"
+      >
+        <dt>
+          Jobs
+        </dt>
+        <dd
+          class="num"
+        >
+          100 jobs
+        </dd>
+        <dt>
+          Pending
+        </dt>
+        <dd
+          class="num"
+        >
+          40
+        </dd>
+        <dt>
+          Failures
+        </dt>
+        <dd
+          class="num"
+        >
+          2
+        </dd>
+        <dt>
+          Created
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:20:00.000Z"
+            title="2026-10-14 09:20:00"
+          >
+            10 minutes ago
+          </time>
+        </dd>
+        <dt>
+          Completed
+        </dt>
+        <dd>
+          <time
+            datetime="2026-10-14T09:29:59.000Z"
+            title="2026-10-14 09:29:59"
+          >
+            just now
+          </time>
+        </dd>
+        <dt>
+          Succeeded
+        </dt>
+        <dd>
+          <span
+            class="dim"
+          >
+            –
+          </span>
+        </dd>
+        <dt>
+          Callbacks
+        </dt>
+        <dd>
+          <code
+            class="small"
+          >
+            {"success":[["Notify",{}]]}
+          </code>
+        </dd>
+      </dl>
+      <h2
+        class="mt"
+      >
+        Pending job IDs
+      </h2>
+      <div
+        class="stack"
+        style="gap: 4px;"
+      >
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j0
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j1
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j2
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j3
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j4
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j5
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j6
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j7
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j8
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j9
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j10
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j11
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j12
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j13
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j14
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j15
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j16
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j17
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j18
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j19
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j20
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j21
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j22
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j23
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j24
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j25
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j26
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j27
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j28
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j29
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j30
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j31
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j32
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j33
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j34
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j35
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j36
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j37
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j38
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j39
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j40
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j41
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j42
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j43
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j44
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j45
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j46
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j47
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j48
+        </button>
+        <button
+          class="jid"
+          title="Copy job ID"
+          type="button"
+        >
+          j49
+        </button>
+      </div>
+    </section>
+  </div>
+</div>
+`;
+
+exports[`Batches > explains missing support, empty lists, loading and errors 1`] = `
+<div
+  class="empty"
+>
+  <svg
+    aria-hidden="true"
+    fill="none"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="miter"
+    stroke-width="1.6"
+    viewBox="0 0 20 20"
+  >
+    <path
+      d="M4 6 L10 3 L16 6 L10 9 Z M4 10 L10 13 L16 10 M4 14 L10 17 L16 14"
+    />
+  </svg>
+  <h3>
+    No batches yet
+  </h3>
+  <p>
+    Create one with 
+    <code>
+      Robin::Batch.new
+    </code>
+     and push jobs inside 
+    <code>
+      batch.jobs { … }
+    </code>
+    .
+  </p>
+</div>
+`;
+
+exports[`Batches > lists batches with their state 1`] = `
+<div>
+  <div
+    class="page-head"
+  >
+    <div>
+      <h1>
+        Batches
+      </h1>
+      <p
+        class="subtitle"
+      >
+        Groups of jobs tracked together, with callbacks when they complete or succeed.
+      </p>
+    </div>
+  </div>
+  <section
+    class="panel"
+  >
+    <div
+      class="table-wrap"
+    >
+      <table
+        class="table"
+      >
+        <thead>
+          <tr>
+            <th>
+              Batch
+            </th>
+            <th>
+              Status
+            </th>
+            <th
+              style="width: 34%;"
+            >
+              Progress
+            </th>
+            <th>
+              Created
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a
+                class="cls"
+                href="/robin/batches/b-1"
+              >
+                Import users
+              </a>
+              <div
+                class="dim small mono"
+              >
+                b-1
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge "
+              >
+                Running
+              </span>
+            </td>
+            <td>
+              <div>
+                <div
+                  aria-label="Batch progress"
+                  aria-valuemax="100"
+                  aria-valuemin="0"
+                  aria-valuenow="60"
+                  class="progress"
+                  role="progressbar"
+                >
+                  <span
+                    class="p-ok"
+                    style="width: 60%;"
+                  />
+                </div>
+                <div
+                  class="progress-label"
+                >
+                  <span>
+                    60 of 100 done
+                  </span>
+                  <span
+                    class="num"
+                  >
+                    40 waiting
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:20:00.000Z"
+                title="2026-10-14 09:20:00"
+              >
+                10 minutes ago
+              </time>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a
+                class="cls"
+                href="/robin/batches/b%202"
+              >
+                Untitled batch
+              </a>
+              <div
+                class="dim small mono"
+              >
+                b 2
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge egg"
+              >
+                Succeeded
+              </span>
+            </td>
+            <td>
+              <div>
+                <div
+                  aria-label="Batch progress"
+                  aria-valuemax="100"
+                  aria-valuemin="0"
+                  aria-valuenow="100"
+                  class="progress"
+                  role="progressbar"
+                >
+                  <span
+                    class="p-ok"
+                    style="width: 100%;"
+                  />
+                </div>
+                <div
+                  class="progress-label"
+                >
+                  <span>
+                    100 of 100 done
+                  </span>
+                  <span
+                    class="num"
+                  >
+                    
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:20:00.000Z"
+                title="2026-10-14 09:20:00"
+              >
+                10 minutes ago
+              </time>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a
+                class="cls"
+                href="/robin/batches/b-3"
+              >
+                Untitled batch
+              </a>
+              <div
+                class="dim small mono"
+              >
+                b-3
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge ruby"
+              >
+                Complete with failures
+              </span>
+            </td>
+            <td>
+              <div>
+                <div
+                  aria-label="Batch progress"
+                  aria-valuemax="100"
+                  aria-valuemin="0"
+                  aria-valuenow="95"
+                  class="progress"
+                  role="progressbar"
+                >
+                  <span
+                    class="p-ok"
+                    style="width: 95%;"
+                  />
+                  <span
+                    class="p-fail"
+                    style="width: 2%;"
+                  />
+                </div>
+                <div
+                  class="progress-label"
+                >
+                  <span>
+                    95 of 100 done, 2 failing
+                  </span>
+                  <span
+                    class="num"
+                  >
+                    3 waiting
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:20:00.000Z"
+                title="2026-10-14 09:20:00"
+              >
+                10 minutes ago
+              </time>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a
+                class="cls"
+                href="/robin/batches/b-4"
+              >
+                Import users
+              </a>
+              <div
+                class="dim small mono"
+              >
+                b-4
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge ruby"
+              >
+                Running, with failures
+              </span>
+            </td>
+            <td>
+              <div>
+                <div
+                  aria-label="Batch progress"
+                  aria-valuemax="100"
+                  aria-valuemin="0"
+                  aria-valuenow="90"
+                  class="progress"
+                  role="progressbar"
+                >
+                  <span
+                    class="p-ok"
+                    style="width: 90%;"
+                  />
+                  <span
+                    class="p-fail"
+                    style="width: 3%;"
+                  />
+                </div>
+                <div
+                  class="progress-label"
+                >
+                  <span>
+                    90 of 100 done, 3 failing
+                  </span>
+                  <span
+                    class="num"
+                  >
+                    7 waiting
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:20:00.000Z"
+                title="2026-10-14 09:20:00"
+              >
+                10 minutes ago
+              </time>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a
+                class="cls"
+                href="/robin/batches/b-5"
+              >
+                Import users
+              </a>
+              <div
+                class="dim small mono"
+              >
+                b-5
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge "
+              >
+                Running
+              </span>
+            </td>
+            <td>
+              <div>
+                <div
+                  aria-label="Batch progress"
+                  aria-valuemax="100"
+                  aria-valuemin="0"
+                  aria-valuenow="0"
+                  class="progress"
+                  role="progressbar"
+                />
+                <div
+                  class="progress-label"
+                >
+                  <span>
+                    0 of 0 done
+                  </span>
+                  <span
+                    class="num"
+                  >
+                    
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:20:00.000Z"
+                title="2026-10-14 09:20:00"
+              >
+                10 minutes ago
+              </time>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a
+                class="cls"
+                href="/robin/batches/b-6"
+              >
+                Import users
+              </a>
+              <div
+                class="dim small mono"
+              >
+                b-6
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge ruby"
+              >
+                Running, with failures
+              </span>
+            </td>
+            <td>
+              <div>
+                <div
+                  aria-label="Batch progress"
+                  aria-valuemax="100"
+                  aria-valuemin="0"
+                  aria-valuenow="60"
+                  class="progress"
+                  role="progressbar"
+                >
+                  <span
+                    class="p-ok"
+                    style="width: 60%;"
+                  />
+                  <span
+                    class="p-fail"
+                    style="width: 40%;"
+                  />
+                </div>
+                <div
+                  class="progress-label"
+                >
+                  <span>
+                    6 of 10 done, 4 failing
+                  </span>
+                  <span
+                    class="num"
+                  >
+                    
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <time
+                datetime="2026-10-14T09:20:00.000Z"
+                title="2026-10-14 09:20:00"
+              >
+                10 minutes ago
+              </time>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+`;

@@ -1,0 +1,56 @@
+module Robin
+  # Per-thread logging context (class, jid, bid...), included in every log
+  # line written while a job runs.
+  module Context
+    KEY: Symbol
+
+    # This thread's context.
+    def self.current: () -> Hash[Symbol, untyped]
+
+    # Adds +hash+ to the context for the block.
+    def self.with: [T] (Hash[Symbol, untyped] hash) { () -> T } -> T
+  end
+
+  # Logs "start", then "done" or "fail", around each job.
+  class JobLogger
+    # Text log lines, with the context as key=value pairs.
+    class Formatter < ::Logger::Formatter
+      def call: (String severity, Time time, String? progname, untyped message) -> String
+    end
+
+    # One-line JSON per log entry.
+    class JSONFormatter < ::Logger::Formatter
+      def call: (String severity, Time time, String? progname, untyped message) -> String
+
+      private
+
+      def clean: (untyped value) -> untyped
+    end
+
+    # The logging context of a job: its class, jid, and bid and tags when
+    # it has them.
+    def self.context_for: (job_hash payload) -> Hash[Symbol, untyped]
+
+    # This thread's id in log lines.
+    def self.tid: () -> String
+
+    @config: Config
+
+    def initialize: (Config config) -> void
+
+    LEVELS: Array[String]
+
+    ENABLED: Hash[String, Symbol]
+
+    # Runs the job (the block), logging around it; returns the block's value.
+    def call: [T] (job_hash payload) { () -> T } -> T
+
+    private
+
+    def level_for: (job_hash payload) -> String?
+
+    def log: (String level, String message) -> void
+
+    def elapsed: (Float start) -> String
+  end
+end

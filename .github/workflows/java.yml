@@ -1,0 +1,43 @@
+name: Java extension
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# The JRuby counterpart of c.yml. The tools (JUnit, JaCoCo, PIT,
+# google-java-format) are pinned and checksummed in the Rakefile.
+jobs:
+  java:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: "Lint (google-java-format, javac -Werror)", task: "java:lint" }
+          - { name: "Coverage (100% line, branch and method)", task: "java:coverage" }
+          - { name: "Mutation coverage (100%)", task: "java:mutation" }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: jruby-10.1
+          bundler-cache: true
+      - uses: actions/cache@v6
+        with:
+          path: tmp/java-tools
+          key: java-tools-${{ hashFiles('Rakefile') }}
+      - run: bundle exec rake ${{ matrix.task }}
+      - uses: actions/upload-artifact@v7
+        if: always() && matrix.task != 'java:lint'
+        with:
+          name: ${{ matrix.task == 'java:coverage' && 'java-coverage' || 'java-mutation' }}
+          path: tmp/java/${{ matrix.task == 'java:coverage' && 'coverage' || 'mutation' }}/

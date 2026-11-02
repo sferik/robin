@@ -1,0 +1,22 @@
+module Robin
+  # Live progress reporting for long jobs, shown on the web UI's Busy page.
+  module Progress
+    # What #report stores: "pct" (0-100, or nil when unknown), "msg", "at"
+    # (epoch ms) and, with any, "meta".
+    type entry = Hash[String, untyped]
+
+    TTL: Integer
+
+    def self.report: (String? jid, Integer | Float | nil percent, ?String? message, ?Hash[String | Symbol, untyped] meta, ?config: Config) -> entry
+
+    # What #report stores.
+    def self.entry: (Integer | Float | nil percent, ?String? message, ?Hash[String | Symbol, untyped] meta) -> entry
+
+    # The command #report sends.
+    def self.set_command: (Config config, String? jid, entry data) -> Redis::command
+
+    def self.fetch: (String jid, ?config: Config) -> entry?
+
+    def self.fetch_many: (Array[String] jids, ?config: Config) -> Hash[String, entry]
+  end
+end

@@ -1,0 +1,51 @@
+module Robin
+  # OpenTelemetry tracing for pushing and running jobs (require
+  # "robin/opentelemetry").
+  module OpenTelemetry
+    # What Robin uses of an OpenTelemetry tracer provider and its tracers
+    # (Robin doesn't depend on OpenTelemetry, so its signatures can't name
+    # them).
+    interface _TracerProvider
+      def tracer: (?String? name, ?String? version) -> _Tracer
+    end
+
+    interface _Tracer
+      def in_span: [T] (String name, ?attributes: Hash[String, untyped]?, ?links: Array[untyped]?, ?kind: Symbol?) { () -> T } -> T
+    end
+
+    # Adds the tracing middleware to +config+; +parent+ is :child (a run's
+    # span is a child of its push's) or :link (linked to it).
+    def self.install: (Config config, ?tracer_provider: _TracerProvider, ?parent: :child | :link) -> Config
+
+    # A span's attributes for a job.
+    def self.attributes: (job_hash payload, String queue, String operation) -> Hash[String, untyped]
+
+    # Opens a "publish <queue>" span around each push.
+    class ClientMiddleware
+      include Middleware::Stateless
+
+      @tracer: _Tracer
+
+      def initialize: (_Tracer tracer) -> void
+
+      def call: (String _job_class, job_hash payload, String queue, Redis::Pool _redis) { () -> job_hash? } -> job_hash?
+    end
+
+    # Opens a "process <queue>" span around each run.
+    class ServerMiddleware
+      include Middleware::Stateless
+
+      @tracer: _Tracer
+      @parent: :child | :link
+
+      def initialize: (_Tracer tracer, :child | :link parent) -> void
+
+      def call: (untyped _job, job_hash payload, String queue) { () -> untyped } -> untyped
+
+      private
+
+      # Runs the block in an empty OpenTelemetry context (yielded).
+      def detached: [T] () { (untyped context) -> T } -> T
+    end
+  end
+end
