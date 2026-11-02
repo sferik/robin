@@ -1,0 +1,56 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ruby:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: RuboCop
+        run: bundle exec rubocop
+      - name: Standard
+        run: bundle exec standardrb
+      - name: Build the gem
+        run: |
+          gem build robin.gemspec
+
+  # The RBS signatures (sig/) and Steep's strict check of lib/ against them
+  # (rake steep). Steep runs on CRuby only.
+  types:
+    name: Types (Ruby ${{ matrix.ruby }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.4", "4.0", "head"]
+    # Ruby's development version gets an early look, but can't fail the
+    # build: its steps may fail (continue-on-error on each, not the job,
+    # so the job still passes, with a warning, rather than showing as a
+    # failed check).
+    steps:
+      - uses: actions/checkout@v7
+      - id: ruby
+        uses: ruby/setup-ruby@v1
+        continue-on-error: ${{ matrix.ruby == 'head' }}
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - id: steep
+        name: RBS and Steep
+        if: steps.ruby.outcome == 'success'
+        continue-on-error: ${{ matrix.ruby == 'head' }}
+        run: bundle exec rake steep
+      - name: Note an advisory failure
+        if: steps.ruby.outcome == 'failure' || steps.steep.outcome == 'failure'
+        run: echo "::warning title=Ruby ${{ matrix.ruby }} (advisory)::The type check failed on Ruby ${{ matrix.ruby }}, a development version"

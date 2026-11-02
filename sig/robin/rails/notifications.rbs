@@ -1,0 +1,9 @@
+module Robin
+  module Rails
+    # A Config#event_handlers entry publishing Robin's events through
+    # ActiveSupport::Notifications as "<event>.robin".
+    module Notifications
+      def self.call: (String name, Hash[Symbol, untyped] payload) -> void
+    end
+  end
+end

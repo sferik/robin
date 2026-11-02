@@ -1,0 +1,8 @@
+# frozen_string_literal: true
+
+# The Rails integration against Rails 8.1 (the CI "rails" job runs each
+# of these): pinned before the main Gemfile adds its own.
+gem "activejob", "~> 8.1.0", ">= 8.1.4"
+gem "railties", "~> 8.1.0", ">= 8.1.4"
+
+eval_gemfile "../../Gemfile"

@@ -1,0 +1,55 @@
+module Robin
+  # Sends job and queue metrics to StatsD or DogStatsD over UDP.
+  class Statsd
+    # Tags: a value (anything with #to_s) or an Array of them, which
+    # repeats the tag once per element (DogStatsD).
+    type tags = Hash[Symbol | String, Object]
+
+    MAX_PACKET: Integer
+
+    @dogstatsd: bool
+    @distributions: bool
+    @mutex: Thread::Mutex
+    @socket: UDPSocket?
+
+    attr_reader host: String
+    attr_reader port: Integer
+
+    # "<prefix>." (or "" for none).
+    attr_reader prefix: String
+
+    # Tags sent with every metric (DogStatsD).
+    attr_reader tags: tags
+
+    def initialize: (?host: String, ?port: Integer, ?prefix: _ToS?, ?tags: tags, ?dogstatsd: bool, ?distributions: bool) -> void
+
+    def dogstatsd?: () -> bool
+
+    def distributions?: () -> bool
+
+    def increment: (String name, ?Numeric value, ?tags: tags) -> nil
+
+    def gauge: (String name, Numeric value, ?tags: tags) -> nil
+
+    def timing: (String name, Integer | Float ms, ?tags: tags) -> nil
+
+    # A Datadog distribution sample (needs dogstatsd: true).
+    def distribution: (String name, Integer | Float value, ?tags: tags) -> nil
+
+    # +jobs+: per-class counts as Metrics::Collector drains them.
+    def job_metrics: (Metrics::jobs jobs) -> nil
+
+    # +queues+: {name => {size:, latency:}}.
+    def queue_metrics: (Hash[String, Metrics::queue_sample] queues) -> nil
+
+    def close: () -> nil
+
+    private
+
+    def line: (String name, Numeric value, String type, tags tags) -> String
+
+    def send_lines: (Array[String] lines) -> nil
+
+    def deliver: (String packet) -> void
+  end
+end

@@ -1,0 +1,25 @@
+Robin 0.1.0 · ruby 4.0.7 (2026-09-15 revision 229531a6cf) +YJIT +PRISM [arm64-darwin27]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      8762 jobs/s (10000 jobs)
+perform_bulk:     379845 jobs/s (40000 jobs)
+processing:       104809 jobs/s (0.48s for 50000 jobs)
+Robin 0.1.0 · ruby 4.0.7 (2026-09-15 revision 229531a6cf) +YJIT +PRISM [arm64-darwin27]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      8496 jobs/s (10000 jobs)
+perform_bulk:     370542 jobs/s (40000 jobs)
+processing:       109906 jobs/s (0.45s for 50000 jobs)
+Robin 0.1.0 · ruby 4.0.7 (2026-09-15 revision 229531a6cf) +YJIT +PRISM [arm64-darwin27]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      8308 jobs/s (10000 jobs)
+perform_bulk:     363036 jobs/s (40000 jobs)
+processing:       107130 jobs/s (0.47s for 50000 jobs)
+Robin 0.1.0 · ruby 4.0.7 (2026-09-15 revision 229531a6cf) +YJIT +PRISM [arm64-darwin27]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      8705 jobs/s (10000 jobs)
+perform_bulk:     370806 jobs/s (40000 jobs)
+processing:       104873 jobs/s (0.48s for 50000 jobs)
+Robin 0.1.0 · ruby 4.0.7 (2026-09-15 revision 229531a6cf) +YJIT +PRISM [arm64-darwin27]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      8841 jobs/s (10000 jobs)
+perform_bulk:     391309 jobs/s (40000 jobs)
+processing:       104522 jobs/s (0.48s for 50000 jobs)

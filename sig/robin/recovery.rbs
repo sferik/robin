@@ -1,0 +1,29 @@
+module Robin
+  # Puts jobs held by crashed processes back on their queues.
+  module Recovery
+    # RECOVER's reply: ["ok" or "dead", raw job] pairs, flattened.
+    type recovered = Array[String]
+
+    # Recovers every dead process's in-flight jobs; returns how many.
+    def self.run: (Config config, ?pool: Redis::Pool) -> Integer
+
+    # Moves all jobs in a process's in-flight keys back to their queues
+    # and unregisters the keys; returns how many.
+    def self.drain: (Config config, Redis::Connection conn, String key, count: bool) -> Integer
+
+    private
+
+    def self.recover: (Config config, Redis::Connection conn, Array[[String, String, bool]] dead) -> Array[Integer]
+
+    def self.forget: (Config config, Redis::Pipeline pipe, String set, String identity) -> void
+
+    # Runs RECOVER on +redis+ (a connection), or queues it (a pipeline).
+    def self.queue_recover: (Config config, Redis::Connection | Redis::Pipeline redis, String key, bool count) -> Redis::reply
+
+    def self.settle: (Config config, Redis::Connection conn, Array[[recovered, bool?]] results) -> Array[Integer]
+
+    def self.recovered_job: (Config config, String raw, bool poison) -> void
+
+    def self.mark_poison: (Config config, Redis::Connection conn, Array[String] raws) -> void
+  end
+end

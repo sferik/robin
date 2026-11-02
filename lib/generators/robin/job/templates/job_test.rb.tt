@@ -1,0 +1,21 @@
+# frozen_string_literal: true
+
+require "test_helper"
+require "robin/testing"
+
+class <%= @job.class_name %>Test < ActiveSupport::TestCase
+  setup { <%= @job.class_name %>.clear }
+
+  test "is pushed to the <%= @job.queue %> queue" do
+    <%= @job.class_name %>.perform_async
+
+    assert_equal ["<%= @job.queue %>"], <%= @job.class_name %>.jobs.map { |job| job["queue"] }
+  end
+
+  test "performs" do
+    <%= @job.class_name %>.perform_async
+    <%= @job.class_name %>.drain
+
+    assert_empty <%= @job.class_name %>.jobs
+  end
+end

@@ -1,0 +1,79 @@
+module Robin
+  # A live view of a cluster in the terminal: `robin top`.
+  class Top
+    VIEWS: Array[String]
+
+    QUIT: Array[String]
+
+    DEFAULT_SIZE: [Integer, Integer]
+
+    KEY_BUFFER: Integer
+
+    # A queue's row: name, size, latency (seconds), whether it's paused.
+    type queue_row = [String, Integer, Float, bool]
+
+    # Everything one frame shows, read from Redis in one go.
+    class Snapshot < Struct[untyped]
+      attr_accessor stats: Stats
+      attr_accessor queues: Array[queue_row]
+      attr_accessor processes: Array[ProcessRecord]
+      attr_accessor work: Array[[String, String, Hash[String, untyped]]]
+      attr_accessor at: Integer
+
+      def self.new: (Stats stats, Array[queue_row] queues, Array[ProcessRecord] processes, Array[[String, String, Hash[String, untyped]]] work, Integer at) -> instance
+
+      def self.take: (Config config) -> Snapshot
+    end
+
+    @config: Config
+    @input: IO
+    @output: IO
+    @interval: seconds
+
+    # The view shown: 0 (overview), 1 (processes) or 2 (busy).
+    attr_reader view: Integer
+
+    def initialize: (?config: Config, ?input: IO, ?output: IO, ?interval: seconds) -> void
+
+    # Runs until a quit key (or the end of input).
+    def run: () -> void
+
+    # One frame for a terminal +height+ lines by +width+ columns.
+    def frame: (Integer height, Integer width) -> Array[String]
+
+    # Acts on a key press; false means quit.
+    def key: (String char) -> bool
+
+    private
+
+    def loop_frames: () -> void
+
+    def size: () -> [Integer, Integer]
+
+    def header: (Integer width) -> String
+
+    def tabs: () -> String
+
+    def body: (Snapshot snap) -> Array[String]
+
+    def overview: (Snapshot snap) -> Array[String]
+
+    def processes: (Snapshot snap) -> Array[String]
+
+    def busy: (Snapshot snap) -> Array[String]
+
+    def table: (Array[String] headers, Array[Array[String]] rows, right: Array[Integer], empty: String) -> Array[String]
+
+    def pairs: (Hash[String, String] hash) -> String
+
+    def fit: (String line, Integer width) -> String
+
+    def number: (_ToI? n) -> String
+
+    def megabytes: (Integer kb) -> String
+
+    def since: (Integer now, Integer? ms) -> String
+
+    def duration: (_ToF? seconds) -> String
+  end
+end

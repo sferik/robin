@@ -1,0 +1,14 @@
+module Robin
+  class Web
+    # Fine-grained actions passed to Robin::Web.authorize.
+    module Permissions
+      # Action => what it allows.
+      ACTIONS: Hash[Symbol, String]
+
+      def self.allowed?: (env env, Symbol action, ?String? resource) -> bool
+
+      # Each action's name => whether it's allowed.
+      def self.for: (env env) -> Hash[String, bool]
+    end
+  end
+end

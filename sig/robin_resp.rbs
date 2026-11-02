@@ -1,0 +1,55 @@
+# The optional native extension (robin_resp/robin_resp): C on CRuby
+# (ext/robin_resp), Java on JRuby (ext/java). Robin falls back to pure Ruby
+# without it.
+module Robin
+  module Redis
+    # The extension's RESP2 parser and encoder (C and Java): what
+    # Robin::Redis::RESP does, faster.
+    module NativeRESP
+      # [value, next_pos], or nil while +buf+ doesn't yet hold a whole reply
+      # at +pos+. Error replies are returned as CommandErrors.
+      def self?.parse: (String buf, Integer pos) -> [reply, Integer]?
+
+      # Appends the command +args+ to +out+ and returns +out+.
+      def self?.encode: (command args, ?String out) -> String
+    end
+
+    # The extension's socket reader (C where poll(2) exists, and Java).
+    module NativeIO
+      # Appends what arrives on +io+ within +timeout+ seconds to +buffer+:
+      # how many bytes, nil when the server closed the connection, or false
+      # when nothing arrived in time.
+      def self?.fill: (IO io, String buffer, seconds timeout) -> (Integer | false | nil)
+
+      # Whether a connection between commands can't be used.
+      def self?.stale?: (IO io) -> bool
+
+      # Sends +data+ and reads the start of the replies into +buffer+ (C
+      # only): what #fill returns, :stale (having sent nothing), or
+      # [bytes written, errno] (a nil errno for a write that timed out).
+      def self?.roundtrip: (IO io, String data, String buffer, seconds write_timeout, seconds read_timeout) -> (Integer | false | nil | :stale | [Integer, Integer?])
+    end
+
+    # The Java extension's lock-free pool bookkeeping (JRuby only).
+    class NativeSlots
+      include Pool::_Slots
+
+      def initialize: (Integer size) -> void
+    end
+  end
+
+  # The total time threads have waited for the GVL (C, on Rubies with thread
+  # event hooks).
+  module NativeGVL
+    # Starts measuring (again); a no-op while measuring.
+    def self?.start: () -> nil
+
+    # Stops measuring; the total stays.
+    def self?.stop: () -> nil
+
+    def self?.running?: () -> bool
+
+    # Nanoseconds all threads have waited for the GVL while measuring.
+    def self?.wait_ns: () -> Integer
+  end
+end

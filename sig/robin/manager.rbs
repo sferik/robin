@@ -1,0 +1,54 @@
+module Robin
+  # Owns the worker threads of one capsule.
+  class Manager
+    RESPAWN_WINDOW: Integer
+
+    MAX_RESPAWN_DELAY: Integer
+
+    @config: Config
+    @mutex: Thread::Mutex
+    @slots: Integer
+    @processors: Array[Processor]
+    @stopping: bool?
+    @started: bool?
+    @deaths: Integer
+    # nil until a worker dies
+    @last_death: Float
+
+    attr_reader capsule: Capsule
+    attr_reader fetcher: Fetcher
+    attr_reader launcher: Launcher
+
+    def initialize: (Capsule capsule, Launcher launcher) -> void
+
+    # How many workers it runs.
+    def concurrency: () -> Integer
+
+    # Runs +count+ workers from now on.
+    def resize: (Integer count) -> void
+
+    def start: () -> void
+
+    def processors: () -> Array[Processor]
+
+    def quiet: () -> void
+
+    # Waits for running jobs until +deadline+ (monotonic seconds), then
+    # interrupts the rest and waits for them until +hard_deadline+.
+    def stop: (Float deadline, Float hard_deadline) -> void
+
+    def processor_stopped: (Processor processor) -> void
+
+    def processor_died: (Processor processor, Exception exception) -> void
+
+    def work_started: (Processor processor, Fetcher::UnitOfWork unit) -> void
+
+    def work_finished: (Processor processor, job_hash payload, Float | Integer elapsed_ms, bool ok) -> void
+
+    private
+
+    def respawn_delay: () -> Integer
+
+    def monotonic: () -> Float
+  end
+end

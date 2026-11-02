@@ -1,0 +1,31 @@
+# What Robin's dashboard (Robin::Web) uses of Rack, which Robin doesn't
+# depend on. For this check only, so not in the gem.
+module Rack
+  # A request's body (rack.input).
+  interface _Input
+    def read: () -> String?
+  end
+
+  class Request
+    def initialize: (Hash[String, untyped] env) -> void
+
+    def head?: () -> bool
+
+    def request_method: () -> String
+
+    def path_info: () -> String
+
+    # The query parameters.
+    def GET: () -> Hash[String, untyped]
+
+    def get_header: (String name) -> untyped
+
+    def base_url: () -> String
+
+    def body: () -> _Input?
+  end
+
+  module Utils
+    def self.escape_html: (_ToS string) -> String
+  end
+end

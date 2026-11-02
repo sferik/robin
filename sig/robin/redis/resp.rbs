@@ -1,0 +1,29 @@
+module Robin
+  module Redis
+    # Raised for "-ERR ..." replies (returned, not raised, when nested in an
+    # Array reply).
+    class CommandError < StandardError
+    end
+
+    class ProtocolError < StandardError
+    end
+
+    # Encodes commands and decodes replies in RESP2.
+    module RESP
+      CRLF: String
+
+      # Appends the command +args+ (anything responding to #to_s) to +out+.
+      def self.encode: (command args, ?String out) -> String
+
+      # [value, next_offset], or nil while +buf+ doesn't yet hold a whole
+      # reply at +pos+.
+      def self.parse: (String buf, Integer pos) -> [reply, Integer]?
+
+      private def self.parse_bulk: (String buf, Integer pos, Integer len) -> [String?, Integer]?
+
+      private def self.parse_array: (String buf, Integer pos, Integer count) -> [Array[reply]?, Integer]?
+
+      private def self.utf8: (String str) -> String
+    end
+  end
+end

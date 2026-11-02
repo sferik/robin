@@ -1,0 +1,25 @@
+module Robin
+  # Runs a Robin server inside another process (see the Puma plugin).
+  class Embedded
+    @stop_lock: Thread::Mutex
+
+    # nil until #run.
+    @launcher: Launcher
+
+    attr_reader config: Config
+
+    # The server's launcher, once it runs.
+    def launcher: () -> Launcher?
+
+    def initialize: (Config config) -> void
+
+    def configure: () ?{ (Config config) -> void } -> self
+
+    def run: () -> self
+
+    def quiet: () -> void
+
+    # Stops the server gracefully and returns once it has stopped.
+    def stop: () -> void
+  end
+end

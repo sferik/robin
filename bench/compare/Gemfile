@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+# Kept apart from Robin's own Gemfile so the comparison's dependencies
+# never become Robin's.
+source "https://rubygems.org"
+
+gem "robin", path: "../.."
+gem "sidekiq", "~> 8.1"
+# Sidekiq's C driver for redis-client (CRuby only), so Sidekiq gets a C
+# Redis client where Robin uses its C extension.
+gem "hiredis-client", platforms: :mri

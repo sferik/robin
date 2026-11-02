@@ -1,0 +1,60 @@
+module Robin
+  # Profiles single job runs with Vernier (see the "profile" job option).
+  module Profiler
+    TTL: Integer
+
+    KEEP: Integer
+
+    MAX_BYTES: Integer
+
+    LOCK: Thread::Mutex
+
+    # nil until the first check.
+    self.@available: bool
+
+    # Loads Vernier once, warning when it can't.
+    def self.available?: (Config config) -> bool
+
+    # Runs the block under the profiler and stores the result. Returns the
+    # block's value.
+    def self.profile: [T] (Config config, job_hash payload) { () -> T } -> T
+
+    # A running collector, or nil if one can't start.
+    # What Robin uses of a Vernier::Collector (Robin doesn't depend on
+    # Vernier, so its signatures can't name it).
+    interface _Collector
+      def stop: () -> _Profile
+    end
+
+    interface _Profile
+      # The profile in the Firefox Profiler format (JSON).
+      def to_gecko: () -> String
+    end
+
+    def self.start: (Config config) -> _Collector?
+
+    def self.record: (Config config, job_hash payload, _Collector collector, Integer started, bool ok) -> void
+
+    # Stored profiles, newest first (without their data).
+    def self.list: (?config: Config) -> Array[Hash[String, untyped]]
+
+    # The profile JSON for +jid+, or nil once it has expired.
+    def self.data: (String jid, ?config: Config) -> String?
+
+    # Deletes the profile of +jid+; true if there was one.
+    def self.delete: (String jid, ?config: Config) -> bool
+
+    # [raw, parsed] pairs, newest first.
+    private def self.entries: (Config config) -> Array[[String, Hash[String, untyped]]]
+
+    # Profiles jobs pushed with a "profile" option.
+    class ServerMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (untyped _job, job_hash payload, String _queue) -> bool
+
+      def call: (untyped _job, job_hash payload, String _queue) { () -> untyped } -> untyped
+    end
+  end
+end

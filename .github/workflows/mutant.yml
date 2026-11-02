@@ -1,0 +1,106 @@
+name: Mutant
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Every subject, sharded: Actions > Mutant > Run workflow.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Subjects a runner takes, sized so a shard of the slowest stays well
+  # inside the timeout below (each mutation reruns the tests that cover
+  # its subject, and many of them wait on Redis).
+  SUBJECTS_PER_SHARD: 50
+  # A ceiling on the fan-out: past it, shards grow rather than runners.
+  MAX_SHARDS: 24
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      base: ${{ steps.plan.outputs.base }}
+      count: ${{ steps.plan.outputs.count }}
+      shards: ${{ steps.plan.outputs.shards }}
+      total: ${{ steps.plan.outputs.total }}
+    steps:
+      # Mutant selects subjects by diffing against a revision, so the
+      # revision has to be in the clone.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Fetch the base branch
+        if: github.event_name == 'pull_request'
+        run: git fetch --no-tags origin ${{ github.base_ref }}
+      # A pull request is diffed against its base branch, and a push against
+      # the head it replaced. The first push, a push whose old head is gone,
+      # and a manual run mutate every subject (an empty base).
+      - name: Plan the shards
+        id: plan
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base=$(git rev-parse "origin/${{ github.base_ref }}^{commit}")
+          elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            base="${{ github.event.before }}"
+            git cat-file -e "$base^{commit}" 2>/dev/null || git fetch --no-tags origin "$base" 2>/dev/null || base=""
+          else
+            base=""
+          fi
+          echo "Comparing against ${base:-nothing: every subject}"
+
+          count=$(bundle exec rake -s "mutant:subjects[$base]" | grep -c . || true)
+          if [ "$count" -eq 0 ]; then
+            total=0
+          else
+            total=$(( (count + SUBJECTS_PER_SHARD - 1) / SUBJECTS_PER_SHARD ))
+            if [ "$total" -gt "$MAX_SHARDS" ]; then total="$MAX_SHARDS"; fi
+          fi
+          echo "$count subject(s) across $total shard(s)"
+          {
+            echo "base=$base"
+            echo "count=$count"
+            echo "total=$total"
+            echo "shards=$(jq -nc --argjson n "$total" '[range($n)]')"
+          } >> "$GITHUB_OUTPUT"
+
+  # A change that touches no library code selects nothing and never gets
+  # here.
+  mutate:
+    name: Mutation coverage, shard ${{ matrix.shard }} (every mutant killed)
+    needs: plan
+    if: needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      # Every shard reports its own survivors: stopping the others on the
+      # first failure would hide the rest.
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/redis
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec rake compile
+      - name: Make the base revision available
+        if: needs.plan.outputs.base != ''
+        run: |
+          git cat-file -e "${{ needs.plan.outputs.base }}^{commit}" 2>/dev/null ||
+            git fetch --no-tags origin "${{ needs.plan.outputs.base }}"
+      # mutant.yml says what's mutated and how it's tested. Any mutant left
+      # alive fails the shard.
+      - name: Mutation-test this shard
+        run: bundle exec rake "mutant:shard[${{ needs.plan.outputs.base }},${{ matrix.shard }},${{ needs.plan.outputs.total }}]"

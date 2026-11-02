@@ -1,0 +1,536 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ConfirmDialog > opens for a request and resolves with the answer 1`] = `
+<div>
+  <dialog
+    aria-labelledby="confirm-title"
+    class="confirm"
+  />
+</div>
+`;
+
+exports[`ConfirmDialog > opens for a request and resolves with the answer 2`] = `
+<div>
+  <dialog
+    aria-labelledby="confirm-title"
+    class="confirm"
+    open=""
+  >
+    <form
+      method="dialog"
+    >
+      <h3
+        id="confirm-title"
+      >
+        Pause?
+      </h3>
+      <p>
+        It stops.
+      </p>
+      <div
+        class="btn-group"
+      >
+        <button
+          class="btn"
+          type="button"
+        >
+          Cancel
+        </button>
+        <button
+          autofocus="true"
+          class="btn btn-primary"
+          type="submit"
+        >
+          Pause
+        </button>
+      </div>
+    </form>
+  </dialog>
+</div>
+`;
+
+exports[`ConfirmDialog > starts on Cancel for dangerous actions, and can be cancelled 1`] = `
+<div>
+  <dialog
+    aria-labelledby="confirm-title"
+    class="confirm"
+    open=""
+  >
+    <form
+      method="dialog"
+    >
+      <h3
+        id="confirm-title"
+      >
+        Delete?
+      </h3>
+      <div
+        class="btn-group"
+      >
+        <button
+          autofocus="true"
+          class="btn"
+          type="button"
+        >
+          Cancel
+        </button>
+        <button
+          class="btn btn-danger solid"
+          type="submit"
+        >
+          Delete
+        </button>
+      </div>
+    </form>
+  </dialog>
+</div>
+`;
+
+exports[`Empty, Problem and Loading > Empty 1`] = `
+<div>
+  <div
+    class="empty"
+  >
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="miter"
+      stroke-width="1.6"
+      viewBox="0 0 20 20"
+    >
+      <path
+        d="M6 4 H14 L17 8 L10 16 L3 8 Z M3 8 H17 M8 4 L10 8 L12 4 M10 8 V16"
+      />
+    </svg>
+    <h3>
+      Nothing here
+    </h3>
+  </div>
+</div>
+`;
+
+exports[`Empty, Problem and Loading > Empty 2`] = `
+<div>
+  <div
+    class="empty"
+  >
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="miter"
+      stroke-width="1.6"
+      viewBox="0 0 20 20"
+    >
+      <path
+        d="M4 5 H16 M4 10 H16 M4 15 H11"
+      />
+    </svg>
+    <h3>
+      No queues
+    </h3>
+    <p>
+      Push a job.
+    </p>
+  </div>
+</div>
+`;
+
+exports[`Empty, Problem and Loading > Loading 1`] = `
+<div>
+  <div
+    aria-busy="true"
+    aria-label="Loading"
+    class="panel-pad stack"
+  >
+    <div
+      class="skeleton"
+      style="width: 90%;"
+    />
+    <div
+      class="skeleton"
+      style="width: 81%;"
+    />
+    <div
+      class="skeleton"
+      style="width: 72%;"
+    />
+    <div
+      class="skeleton"
+      style="width: 63%;"
+    />
+    <div
+      class="skeleton"
+      style="width: 54%;"
+    />
+  </div>
+</div>
+`;
+
+exports[`Empty, Problem and Loading > Problem 1`] = `
+<div>
+  <div
+    class="problem row"
+    role="alert"
+  >
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="18"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="miter"
+      stroke-width="1.6"
+      viewBox="0 0 20 20"
+      width="18"
+    >
+      <path
+        d="M10 3 L18 16.5 H2 Z M10 8 V11.5 M10 13.8 V14"
+      />
+    </svg>
+    <span>
+      Broken
+    </span>
+  </div>
+</div>
+`;
+
+exports[`Empty, Problem and Loading > Problem 2`] = `
+<div>
+  <div
+    class="problem row"
+    role="alert"
+  >
+    <svg
+      aria-hidden="true"
+      fill="none"
+      height="18"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="miter"
+      stroke-width="1.6"
+      viewBox="0 0 20 20"
+      width="18"
+    >
+      <path
+        d="M10 3 L18 16.5 H2 Z M10 8 V11.5 M10 13.8 V14"
+      />
+    </svg>
+    <span>
+      Down
+    </span>
+    <button
+      class="btn btn-small right"
+    >
+      Try again
+    </button>
+  </div>
+</div>
+`;
+
+exports[`Icon > is decorative unless titled 1`] = `
+<div>
+  <svg
+    aria-hidden="true"
+    fill="none"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="miter"
+    stroke-width="1.6"
+    viewBox="0 0 20 20"
+  >
+    <path
+      d="M6 4 H14 L17 8 L10 16 L3 8 Z M3 8 H17 M8 4 L10 8 L12 4 M10 8 V16"
+    />
+  </svg>
+</div>
+`;
+
+exports[`Icon > is decorative unless titled 2`] = `
+<div>
+  <svg
+    fill="none"
+    role="img"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="miter"
+    stroke-width="1.6"
+    viewBox="0 0 20 20"
+    width="15"
+  >
+    <title>
+      Dark
+    </title>
+    <path
+      d="M15.5 12.5 A6 6 0 0 1 7.5 4.5 A6 6 0 1 0 15.5 12.5 Z"
+    />
+  </svg>
+</div>
+`;
+
+exports[`JsonView > pretty-prints JSON with highlighting 1`] = `
+<div>
+  <pre
+    class="code"
+  >
+    {
+
+    
+      
+    <span
+      class="json-key"
+    >
+      "a"
+    </span>
+    : 
+    <span
+      class="json-num"
+    >
+      1
+    </span>
+    ,
+
+    
+      
+    <span
+      class="json-key"
+    >
+      "b"
+    </span>
+    : 
+    <span
+      class="json-str"
+    >
+      "x"
+    </span>
+    ,
+
+    
+      
+    <span
+      class="json-key"
+    >
+      "c"
+    </span>
+    : 
+    [
+
+      
+      
+    <span
+      class="json-lit"
+    >
+      true
+    </span>
+    ,
+
+      
+      
+    <span
+      class="json-lit"
+    >
+      null
+    </span>
+    ,
+
+      
+      
+    {
+
+        
+      
+    <span
+      class="json-key"
+    >
+      "d"
+    </span>
+    : 
+    []
+    
+
+        
+    }
+    
+
+      
+    ]
+    ,
+
+    
+      
+    <span
+      class="json-key"
+    >
+      "e"
+    </span>
+    : 
+    {}
+    ,
+
+    
+      
+    <span
+      class="json-key"
+    >
+      "f"
+    </span>
+    : 
+    [
+
+      
+      
+    [
+
+        
+      
+    <span
+      class="json-num"
+    >
+      1
+    </span>
+    ,
+
+        
+      
+    <span
+      class="json-num"
+    >
+      2
+    </span>
+    
+
+        
+    ]
+    
+
+      
+    ]
+    
+
+    
+    }
+  </pre>
+</div>
+`;
+
+exports[`Pager > shows the range and moves between pages 1`] = `
+<div>
+  <nav
+    aria-label="Pagination"
+    class="pager"
+  >
+    <span
+      class="num"
+    >
+      26–50 of 1,060
+    </span>
+    <span
+      class="spacer"
+    />
+    <button
+      class="btn btn-small"
+    >
+      Previous
+    </button>
+    <span
+      class="num"
+    >
+      Page 2 of 43
+    </span>
+    <button
+      class="btn btn-small"
+    >
+      Next
+    </button>
+  </nav>
+</div>
+`;
+
+exports[`SearchBox > submits the trimmed query and follows its value 1`] = `
+<div>
+  <form
+    class="search"
+    role="search"
+  >
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="miter"
+      stroke-width="1.6"
+      viewBox="0 0 20 20"
+    >
+      <path
+        d="M8.5 4 A4.5 4.5 0 1 0 8.51 4 M12 12 L16 16"
+      />
+    </svg>
+    <input
+      aria-label="Search jobs"
+      class="input"
+      placeholder="Search jobs"
+      type="search"
+    />
+  </form>
+</div>
+`;
+
+exports[`Toasts > lists current toasts 1`] = `
+<div>
+  <div
+    aria-live="polite"
+    class="toasts"
+    role="status"
+  />
+</div>
+`;
+
+exports[`Toasts > lists current toasts 2`] = `
+<div>
+  <div
+    aria-live="polite"
+    class="toasts"
+    role="status"
+  >
+    <div
+      class="toast ok"
+    >
+      <svg
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="miter"
+        stroke-width="1.6"
+        viewBox="0 0 20 20"
+      >
+        <path
+          d="M4 10.5 L8 14.5 L16 5.5"
+        />
+      </svg>
+      Saved
+    </div>
+    <div
+      class="toast error"
+    >
+      <svg
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="miter"
+        stroke-width="1.6"
+        viewBox="0 0 20 20"
+      >
+        <path
+          d="M10 3 L18 16.5 H2 Z M10 8 V11.5 M10 13.8 V14"
+        />
+      </svg>
+      Failed
+    </div>
+  </div>
+</div>
+`;

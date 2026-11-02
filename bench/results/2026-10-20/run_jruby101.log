@@ -1,0 +1,53 @@
+latency 0ms, 10 threads, robin    116690 jobs/s
+latency 0ms, 10 threads, sidekiq   40539 jobs/s
+latency 0ms, 10 threads, sidekiq   40630 jobs/s
+latency 0ms, 10 threads, robin    117832 jobs/s
+latency 0ms, 10 threads, robin    117309 jobs/s
+latency 0ms, 10 threads, sidekiq   40344 jobs/s
+latency 0ms, 25 threads, robin    144301 jobs/s
+latency 0ms, 25 threads, sidekiq   65231 jobs/s
+latency 0ms, 25 threads, sidekiq   65440 jobs/s
+latency 0ms, 25 threads, robin    143791 jobs/s
+latency 0ms, 25 threads, robin    145598 jobs/s
+latency 0ms, 25 threads, sidekiq   65292 jobs/s
+latency 0ms, 50 threads, robin    177148 jobs/s
+latency 0ms, 50 threads, sidekiq   80715 jobs/s
+latency 0ms, 50 threads, sidekiq   81536 jobs/s
+latency 0ms, 50 threads, robin    173226 jobs/s
+latency 0ms, 50 threads, robin    170095 jobs/s
+latency 0ms, 50 threads, sidekiq   80545 jobs/s
+latency 1ms, 10 threads, robin     77664 jobs/s
+latency 1ms, 10 threads, sidekiq   10296 jobs/s
+latency 1ms, 10 threads, sidekiq   10281 jobs/s
+latency 1ms, 10 threads, robin     80568 jobs/s
+latency 1ms, 10 threads, robin     77407 jobs/s
+latency 1ms, 10 threads, sidekiq   10311 jobs/s
+latency 1ms, 25 threads, robin    123662 jobs/s
+latency 1ms, 25 threads, sidekiq   26946 jobs/s
+latency 1ms, 25 threads, sidekiq   27007 jobs/s
+latency 1ms, 25 threads, robin    126483 jobs/s
+latency 1ms, 25 threads, robin    126184 jobs/s
+latency 1ms, 25 threads, sidekiq   27062 jobs/s
+latency 1ms, 50 threads, robin    138761 jobs/s
+latency 1ms, 50 threads, sidekiq   30503 jobs/s
+latency 1ms, 50 threads, sidekiq   30969 jobs/s
+latency 1ms, 50 threads, robin    143787 jobs/s
+latency 1ms, 50 threads, robin    136075 jobs/s
+latency 1ms, 50 threads, sidekiq   31018 jobs/s
+jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 OpenJDK 64-Bit Server VM 27+35 on 27+35 +indy +jit [arm64-darwin]
+500000 jobs per run, median of 3
+
+| system | latency (each way) | threads | processed jobs/s | pushed jobs/s | Ruby CPU/job | Redis CPU/job | Redis commands/job | RSS growth |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| Robin 0.1.0 (NativeRESP parser) | 0 ms | 10 | 117309 | 277469 | 22.1 µs | 7.0 µs | 1.44 | 88 MB |
+| Sidekiq 8.1.7 (ruby driver) | 0 ms | 10 | 40539 | 238892 | 61.1 µs | 24.3 µs | 1.0 | 54 MB |
+| Robin 0.1.0 (NativeRESP parser) | 0 ms | 25 | 144301 | 280269 | 20.8 µs | 4.7 µs | 1.35 | 121 MB |
+| Sidekiq 8.1.7 (ruby driver) | 0 ms | 25 | 65292 | 237869 | 83.7 µs | 14.9 µs | 1.0 | 70 MB |
+| Robin 0.1.0 (NativeRESP parser) | 0 ms | 50 | 173226 | 285388 | 19.3 µs | 4.0 µs | 1.32 | 100 MB |
+| Sidekiq 8.1.7 (ruby driver) | 0 ms | 50 | 80715 | 238663 | 88.9 µs | 12.1 µs | 1.0 | 88 MB |
+| Robin 0.1.0 (NativeRESP parser) | 1 ms | 10 | 77664 | 206868 | 20.4 µs | 8.2 µs | 1.4 | 78 MB |
+| Sidekiq 8.1.7 (ruby driver) | 1 ms | 10 | 10296 | 181686 | 59.5 µs | 46.2 µs | 1.0 | 46 MB |
+| Robin 0.1.0 (NativeRESP parser) | 1 ms | 25 | 126184 | 205677 | 22.4 µs | 5.6 µs | 1.34 | 90 MB |
+| Sidekiq 8.1.7 (ruby driver) | 1 ms | 25 | 27007 | 181488 | 79.1 µs | 33.2 µs | 1.0 | 34 MB |
+| Robin 0.1.0 (NativeRESP parser) | 1 ms | 50 | 138761 | 207383 | 23.4 µs | 4.6 µs | 1.32 | 131 MB |
+| Sidekiq 8.1.7 (ruby driver) | 1 ms | 50 | 30969 | 179727 | 99.2 µs | 22.2 µs | 1.0 | 64 MB |

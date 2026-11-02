@@ -1,0 +1,21 @@
+module Robin
+  module Rails
+    # A Robin error handler that reports to the Rails error reporter
+    # (Rails.error).
+    # (A Robin::_ErrorHandler.)
+    class ErrorReporter
+      # What it reports to: Rails.error (an ActiveSupport::ErrorReporter).
+      interface _Reporter
+        def report: (Exception error, handled: bool, source: String, context: Hash[Symbol, untyped]) -> void
+      end
+
+      JOB_FAILED: String
+
+      @reporter: _Reporter
+
+      def initialize: (_Reporter reporter) -> void
+
+      def call: (Exception exception, Hash[Symbol, untyped] context, Config _config) -> void
+    end
+  end
+end

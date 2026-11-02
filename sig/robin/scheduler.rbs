@@ -1,0 +1,40 @@
+module Robin
+  # Moves due jobs from the schedule and retry sets onto their queues.
+  class Scheduler
+    BATCH: Integer
+
+    SETS: Array[String]
+
+    MIN_WAIT: Float
+
+    @config: Config
+    @mutex: Thread::Mutex
+    @cond: Thread::ConditionVariable
+    @next: Hash[String, Float?]
+    # nil until #start
+    @thread: Thread
+    @done: bool?
+    @processes: Integer?
+
+    def initialize: (Config config) -> void
+
+    def start: () -> self
+
+    def stop: () -> Thread?
+
+    # Enqueues all currently due jobs. Returns the number moved.
+    def enqueue_due: (?Integer now) -> Integer
+
+    # When the next job of either set is due (epoch seconds), as of the
+    # last poll; nil if both were empty.
+    def next_due: () -> Float?
+
+    # Seconds until the next poll (for the leader, until the next job is
+    # due, if sooner).
+    def interval: () -> seconds
+
+    private
+
+    def sleep_for: (seconds seconds) -> void
+  end
+end

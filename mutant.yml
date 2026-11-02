@@ -1,0 +1,14 @@
+usage: opensource
+integration:
+  name: minitest
+includes:
+  - lib
+  - test
+requires:
+  - mutant_env
+matcher:
+  subjects:
+    - Robin*
+    - ActiveJob::QueueAdapters::RobinAdapter*
+mutation:
+  timeout: 20.0

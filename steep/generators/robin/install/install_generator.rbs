@@ -1,0 +1,15 @@
+module Robin
+  module Generators
+    # rails generate robin:install (see steep/robin/rails/railtie.rbs on why
+    # it's not in the gem).
+    class InstallGenerator < ::Rails::Generators::Base
+      ROUTE: String
+
+      def create_config_file: () -> String
+
+      def create_initializer: () -> String
+
+      def mount_dashboard: () -> void
+    end
+  end
+end

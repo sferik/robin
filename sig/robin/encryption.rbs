@@ -1,0 +1,49 @@
+module Robin
+  # Encrypts job arguments at rest with AES-256-GCM (robin_options
+  # encrypt: true, or "last" for just the last argument).
+  module Encryption
+    class Error < Robin::Error
+    end
+
+    CIPHER: String
+    IV_BYTES: Integer
+    TAG_BYTES: Integer
+
+    # The configured keys, by version, as 32 raw bytes.
+    def self.keys: (Config config) -> Hash[Integer, String]
+
+    # A key as 32 raw bytes, from raw bytes, 64 hex characters or base64.
+    def self.normalize_key: (_ToS key) -> String
+
+    # Returns [version, ciphertext (base64)].
+    def self.encrypt: (Config config, json args, String aad) -> [Integer, String]
+
+    def self.decrypt: (Config config, Integer version, String blob, String aad) -> json
+
+    # Whether only the job's last argument is encrypted.
+    def self.last_only?: (job_hash payload) -> bool
+
+    # An encrypted job's arguments as they may be shown.
+    def self.visible_args: (job_hash payload) -> Array[untyped]
+
+    def self.cipher: (:encrypt | :decrypt mode, String key) -> OpenSSL::Cipher
+
+    class ClientMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (String job_class, job_hash payload, String queue, Redis::Pool redis) -> bool
+
+      def call: (String job_class, job_hash payload, String queue, Redis::Pool redis) { () -> job_hash? } -> job_hash?
+    end
+
+    class ServerMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (untyped job, job_hash payload, String queue) -> bool
+
+      def call: (untyped job, job_hash payload, String queue) { () -> untyped } -> untyped
+    end
+  end
+end

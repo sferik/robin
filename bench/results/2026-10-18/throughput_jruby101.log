@@ -1,0 +1,25 @@
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 Java HotSpot(TM) 64-Bit Server VM 21.0.7+8-LTS-245 on 21.0.7+8-LTS-245 +indy +jit [arm64-darwin]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      3967 jobs/s (10000 jobs)
+perform_bulk:      81414 jobs/s (40000 jobs)
+processing:        17171 jobs/s (2.91s for 50000 jobs)
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 Java HotSpot(TM) 64-Bit Server VM 21.0.7+8-LTS-245 on 21.0.7+8-LTS-245 +indy +jit [arm64-darwin]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      3944 jobs/s (10000 jobs)
+perform_bulk:     133947 jobs/s (40000 jobs)
+processing:        21157 jobs/s (2.36s for 50000 jobs)
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 Java HotSpot(TM) 64-Bit Server VM 21.0.7+8-LTS-245 on 21.0.7+8-LTS-245 +indy +jit [arm64-darwin]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      3841 jobs/s (10000 jobs)
+perform_bulk:     118790 jobs/s (40000 jobs)
+processing:        18592 jobs/s (2.69s for 50000 jobs)
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 Java HotSpot(TM) 64-Bit Server VM 21.0.7+8-LTS-245 on 21.0.7+8-LTS-245 +indy +jit [arm64-darwin]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      3836 jobs/s (10000 jobs)
+perform_bulk:     127581 jobs/s (40000 jobs)
+processing:        18955 jobs/s (2.64s for 50000 jobs)
+Robin 0.1.0 · jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 Java HotSpot(TM) 64-Bit Server VM 21.0.7+8-LTS-245 on 21.0.7+8-LTS-245 +indy +jit [arm64-darwin]
+parser: Robin::Redis::NativeRESP · jobs: 50000 · concurrency: 10
+perform_async:      3837 jobs/s (10000 jobs)
+perform_bulk:     112193 jobs/s (40000 jobs)
+processing:        18722 jobs/s (2.67s for 50000 jobs)

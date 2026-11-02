@@ -1,0 +1,53 @@
+module Robin
+  class Web
+    # Dispatches /api requests to Robin::Web::API, enforcing CSRF and
+    # authorization rules.
+    class Router
+      class Route < Struct[untyped]
+        attr_accessor verb: String
+        attr_accessor pattern: Regexp
+        attr_accessor keys: Array[String]
+        # The Robin::Web::API method that handles it.
+        attr_accessor handler: Symbol
+        # The permission it needs (see Permissions::ACTIONS).
+        attr_accessor action: Symbol
+
+        def self.new: (String verb, Regexp pattern, Array[String] keys, Symbol handler, Symbol action) -> instance
+      end
+
+      class HttpError < StandardError
+        attr_reader status: Integer
+
+        def initialize: (Integer status, String message) -> void
+
+        def body: () -> Hash[String, String]
+      end
+
+      # verb, path, API method, permission needed.
+      ROUTES: Array[[String, String, Symbol, Symbol]]
+
+      # Actions checked by the handler itself, or not at all.
+      SELF_CHECKED: Array[Symbol]
+
+      SAME_SITE_FETCHES: Array[String]
+
+      attr_reader routes: Array[Route]
+
+      def initialize: () -> void
+
+      def call: (env env) -> response
+
+      private
+
+      def compile: (String verb, String path, Symbol handler, Symbol action) -> Route
+
+      # The route and its decoded path parameters.
+      def match: (String verb, String path) -> [Route, Hash[String, String]]?
+
+      # The requested cluster, or the first one when none is given.
+      def cluster_name: (untyped name) -> String?
+
+      def same_origin?: (_Request request) -> bool
+    end
+  end
+end

@@ -1,0 +1,13 @@
+module Robin
+  # Tells systemd how the server is doing (Type=notify services).
+  module Systemd
+    # Sends +state+ (e.g. "READY=1"). True if it was sent.
+    def self.notify: (String state, ?env: _Env) -> bool
+
+    # A leading "@" means Linux's abstract socket namespace.
+    def self.address: (String path) -> String
+
+    # Whether systemd watches this process.
+    def self.watchdog?: (?env: _Env, ?pid: Integer) -> bool
+  end
+end

@@ -1,0 +1,181 @@
+# What Robin's Rails integration (lib/robin/rails*, lib/robin/active_job.rb,
+# lib/active_job/, lib/generators/) uses of Rails: Railties, Active Support,
+# Active Job and Active Record. Robin doesn't depend on Rails, and Rails'
+# own RBS (gem_rbs_collection) is large and slow to check against, so these
+# are just the parts Robin calls. For this check only, so not in the gem.
+
+module Rails
+  # Rails.logger: an ActiveSupport::BroadcastLogger since Rails 7.1 (not a
+  # ::Logger), which answers #tagged only when its loggers do.
+  def self.logger: () -> untyped
+
+  def self.env: () -> ActiveSupport::StringInquirer
+
+  def self.backtrace_cleaner: () -> ActiveSupport::BacktraceCleaner
+
+  def self.error: () -> ActiveSupport::ErrorReporter
+
+  class Railtie
+    class Configuration
+      # config.robin: the integration's settings.
+      def robin: () -> ActiveSupport::OrderedOptions
+
+      def robin=: (ActiveSupport::OrderedOptions options) -> ActiveSupport::OrderedOptions
+
+      def after_initialize: () { (Application app) -> void } -> void
+    end
+
+    def self.config: () -> Configuration
+
+    def self.initializer: (String name, ?before: String | Symbol) { (Application app) -> void } -> void
+  end
+
+  class Application
+    class Configuration < Railtie::Configuration
+    end
+
+    def config: () -> Configuration
+
+    # The app's reloader (an ActiveSupport::Reloader subclass).
+    def reloader: () -> singleton(ActiveSupport::Reloader)
+  end
+
+  module Generators
+    class Base
+      # Sets (given a path) and returns the templates' directory.
+      def self.source_root: (?String? path) -> String?
+
+      def self.desc: (String description) -> String
+
+      def self.argument: (Symbol name, type: Symbol, ?default: untyped, ?banner: String) -> void
+
+      def self.class_option: (Symbol name, type: Symbol, ?desc: String) -> void
+
+      def initialize: (*untyped) -> void
+
+      # Thor's options: the generator's class options, by name.
+      def options: () -> Hash[Symbol | String, untyped]
+
+      def destination_root: () -> String
+
+      def template: (String source, String destination) -> String
+
+      def route: (String routing_code) -> void
+    end
+
+    class NamedBase < Base
+      def name: () -> String
+    end
+  end
+end
+
+module ActiveSupport
+  def self.on_load: (Symbol name) { () [self: Module] -> void } -> void
+
+  class StringInquirer < String
+  end
+
+  # Settings readable and writable as methods (through method_missing):
+  # here, the ones Robin's Railtie uses (config.robin.*).
+  class OrderedOptions < Hash[Symbol, untyped]
+    def report_errors: () -> bool
+
+    def report_errors=: (bool) -> bool
+
+    def transactional_push: () -> bool
+
+    def transactional_push=: (bool) -> bool
+
+    def current_attributes: () -> (String | Array[String])
+
+    def current_attributes=: (String | Array[String]) -> (String | Array[String])
+
+    def notifications: () -> bool
+
+    def notifications=: (bool) -> bool
+  end
+
+  class BacktraceCleaner
+    def clean: (Array[String] backtrace) -> Array[String]
+  end
+
+  class ErrorReporter
+    def report: (Exception error, ?handled: bool, ?severity: Symbol, ?context: Hash[Symbol, untyped], ?source: String) -> void
+  end
+
+  class Reloader
+    def self.wrap: [T] () { () -> T } -> T
+  end
+
+  module Notifications
+    def self.instrument: (String name, ?Hash[Symbol, untyped] payload) -> void
+  end
+end
+
+# Active Support's String extensions.
+class String
+  # The constant named by this string (whatever it is).
+  def constantize: () -> untyped
+
+  # Like #constantize, nil when there's no such constant.
+  def safe_constantize: () -> untyped
+
+  def underscore: () -> String
+
+  def camelize: () -> String
+end
+
+module ActiveJob
+  class Base
+    # Robin's on_load hook (lib/robin/active_job.rb) includes
+    # Robin::ActiveJob::Options, adding robin_options.
+    extend Robin::ActiveJob::Options::ClassMethods
+
+    def self.execute: (Hash[String, untyped] job_data) -> untyped
+
+    def initialize: (*untyped arguments) -> void
+
+    def arguments: () -> Array[untyped]
+
+    def queue_name: () -> String
+
+    def queue_name=: (String | Symbol queue) -> void
+
+    # Epoch seconds (a Float) before Rails 7.1, a Time since.
+    def scheduled_at: () -> (Time | Float | nil)
+
+    def provider_job_id=: (String? jid) -> void
+
+    # Since Rails 7.1.
+    def successfully_enqueued=: (bool enqueued) -> void
+
+    # The job's data, as ActiveJob::Base.execute takes it.
+    def serialize: () -> Hash[String, untyped]
+  end
+
+  module Arguments
+    def self.serialize: (untyped arguments) -> Array[untyped]
+
+    def self.deserialize: (Array[untyped] arguments) -> Array[untyped]
+  end
+
+  module QueueAdapters
+    class AbstractAdapter
+    end
+  end
+end
+
+module ActiveRecord
+  # Rails 7.2+.
+  def self.after_all_transactions_commit: () { () -> void } -> void
+
+  class Base
+    def self.current_transaction: () -> ConnectionAdapters::Transaction
+  end
+
+  module ConnectionAdapters
+    class Transaction
+      def open?: () -> bool
+    end
+  end
+end

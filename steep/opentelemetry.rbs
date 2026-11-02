@@ -1,0 +1,46 @@
+# What Robin uses of the opentelemetry-api gem (which has no RBS of its
+# own), for Robin::OpenTelemetry. For this check only, so not in the gem.
+module OpenTelemetry
+  interface _TextMapPropagator
+    def inject: (Hash[String, String] carrier) -> void
+
+    def extract: (Hash[String, String] carrier) -> Context
+  end
+
+  def self.tracer_provider: () -> Trace::TracerProvider
+
+  def self.propagation: () -> _TextMapPropagator
+
+  class Context
+    def self.with_current: [T] (Context ctx) { (Context ctx) -> T } -> T
+
+    def self.empty: () -> Context
+  end
+
+  module Trace
+    def self.current_span: (?Context? context) -> Span
+
+    class TracerProvider
+      def tracer: (?String? name, ?String? version) -> Tracer
+    end
+
+    class Tracer
+      # It yields the span and its context; Robin passes on a block that
+      # takes neither.
+      def in_span: [T] (String name, ?attributes: Hash[String, untyped]?, ?links: Array[Link]?, ?kind: Symbol?) { (Span span, Context context) -> T } -> T
+                 | [T] (String name, ?attributes: Hash[String, untyped]?, ?links: Array[Link]?, ?kind: Symbol?) { () -> T } -> T
+    end
+
+    class Span
+      def context: () -> SpanContext
+    end
+
+    class SpanContext
+      def valid?: () -> bool
+    end
+
+    class Link
+      def initialize: (SpanContext span_context, ?Hash[String, untyped]? attributes) -> void
+    end
+  end
+end
