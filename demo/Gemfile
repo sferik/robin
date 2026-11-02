@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+# Robin from this checkout, so the demo always runs the code you're working on.
+gem "robin", path: ".."
+
+gem "puma"
+gem "rackup"

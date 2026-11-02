@@ -1,0 +1,81 @@
+module Robin
+  # Periodic (cron) jobs: registered in config.periodic blocks, enqueued by
+  # the cluster leader.
+  module Periodic
+    # A registered periodic job, as stored: "cron", "class", "queue",
+    # "args", "tz", "description" and "options" (its job options).
+    type entry = Hash[String, untyped]
+
+    # A periodic job as Periodic.list shows it (JSON-ready).
+    type listing = Hash[String, untyped]
+
+    # A tick to claim or that was claimed: [entry id, due time (epoch ms)].
+    type tick = [String, Integer]
+
+    HISTORY: Integer
+    MAX_SLEEP: Integer
+    CLAIM_TTL: Integer
+    CLAIM: Redis::Script
+
+    # Raised by Periodic.verify! with every problem it found.
+    class Invalid < Robin::Error
+    end
+
+    # Collects registrations from config.periodic blocks.
+    class Registry
+      @problems: Array[String]?
+
+      # The registered entries, by id.
+      attr_reader entries: Hash[String, entry]
+
+      def initialize: (?Array[String]? problems) -> void
+
+      # Registers a periodic job; returns its id (nil when a bad one was
+      # noted as a problem instead). Other keywords are job options.
+      def register: (String cron, job_class | Symbol klass, ?queue: String | Symbol | nil, ?args: Array[untyped], ?tz: String?, ?description: String?, **untyped options) -> String?
+    end
+
+    # Checks periodic registrations (the block, or every block of +config+);
+    # raises Invalid listing every problem, else returns the entries.
+    def self.verify!: (?Config config) ?{ (Registry cron) -> void } -> Hash[String, entry]
+
+    # Starts the leader's periodic thread (Launcher#run calls it).
+    def self.attach: (Launcher launcher) -> Thread?
+
+    # Every periodic job; with +history+, its options and latest runs too.
+    def self.list: (?config: Config, ?history: Integer?) -> Array[listing]
+
+    # A periodic job's latest runs ({"at", "jid", "manual"}), newest first.
+    def self.history: (String id, ?config: Config, ?limit: Integer) -> Array[Hash[String, untyped]]
+
+    # Enqueues the job right away; returns its jid.
+    def self.enqueue_now: (String id, ?config: Config) -> String?
+
+    def self.pause!: (String id, ?config: Config) -> true
+
+    def self.unpause!: (String id, ?config: Config) -> true
+
+    # Enqueues the entries whose latest tick hasn't been claimed yet;
+    # returns their jids.
+    def self.tick: (Config config, Hash[String, entry] entries, Hash[String, Cron] crons, ?Time now, ?Hash[String, Integer] claimed) -> Array[String?]
+
+    # Writes the entries to Redis as the periodic jobs, arming new ones.
+    def self.write_registry: (Config config, Hash[String, entry] entries) -> void
+
+    private def self.claim: (Config config, Array[tick] dues, Hash[String, Cron] crons, Time now, Hash[String, Integer] claimed) -> Array[tick]
+
+    private def self.run_loop: (Launcher launcher, Hash[String, entry] entries, Hash[String, Cron] crons) -> void
+
+    private def self.seconds_until_next: (Hash[String, Cron] crons, Time now) -> (Float | Integer)
+
+    private def self.entry_problems: (entry entry) -> Array[String]
+
+    private def self.job_class: (String name) -> untyped
+
+    private def self.push_job: (Config config, String id, entry entry) -> String?
+
+    private def self.record: (Config config, Array[[String, Integer, String?]] pushed, ?manual: bool) -> void
+
+    private def self.parse: (entry entry) -> Cron?
+  end
+end

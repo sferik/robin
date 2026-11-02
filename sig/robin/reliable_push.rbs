@@ -1,0 +1,77 @@
+module Robin
+  # Keeps pushes from failing while Redis is briefly unreachable
+  # (Config#reliable_push).
+  class ReliablePush
+    DEFAULT_LIMIT: Integer
+
+    DRAIN_CHUNK: Integer
+
+    ERRORS: Array[singleton(StandardError)]
+
+    # Jobs dropped because the buffer was full.
+    class Dropped < Error
+    end
+
+    # Jobs still buffered when the process exited.
+    class Lost < Error
+    end
+
+    # ReliablePush.exit_hook: called with each instance the first time it
+    # buffers, to have it #finish when the process exits.
+    interface _ExitHook
+      def call: (ReliablePush reliable_push) -> void
+    end
+
+    self.@instances: Hash[[Integer, Integer], ReliablePush]
+    self.@lock: Thread::Mutex
+    self.@exit_hook: _ExitHook
+
+    AT_EXIT: ^(ReliablePush reliable_push) -> void
+
+    def self.exit_hook: () -> (_ExitHook)
+
+    def self.exit_hook=: (_ExitHook hook) -> (_ExitHook)
+
+    # One buffer per config and Redis pool.
+    def self.for: (Config config, ?Redis::Pool? pool) -> ReliablePush
+
+    @config: Config
+    @pool: Redis::Pool?
+    @buffer: Array[job_hash]
+    @mutex: Thread::Mutex
+    @hooked: bool?
+    @retrier: Thread?
+
+    # The most jobs it buffers.
+    attr_reader limit: Integer
+
+    def initialize: (Config config, ?limit: Integer?, ?pool: Redis::Pool?) -> void
+
+    def size: () -> Integer
+
+    # Yields to push +payloads+; buffers them if Redis is unreachable.
+    def push: (Array[job_hash] payloads) { () -> void } -> void
+
+    # Pushes buffered jobs, oldest first. True if the buffer is empty.
+    def drain: () -> bool
+
+    # One last try to push what's buffered (at exit).
+    def finish: () -> void
+
+    private
+
+    def append: (Array[job_hash] payloads) -> Array[job_hash]
+
+    def report_dropped: (Array[job_hash] dropped) -> void
+
+    def report_pushed: (Integer count) -> void
+
+    def push_chunk: (Array[job_hash] chunk) -> void
+
+    def describe: (Array[job_hash] jobs) -> String
+
+    def start_retrier: () -> void
+
+    def pause: (seconds seconds) -> void
+  end
+end

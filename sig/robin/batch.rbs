@@ -1,0 +1,292 @@
+module Robin
+  # A group of jobs tracked as a unit, with callbacks (:complete, :success,
+  # :death) when the group is done.
+  #
+  #   batch = Robin::Batch.new
+  #   batch.on(:success, ImportCallbacks, "file_id" => file.id)
+  #   batch.jobs { rows.each { |r| ImportRow.perform_async(r) } }
+  class Batch
+    class NoSuchBatch < Robin::Error
+    end
+
+    # A member of a batch: a jid, or "batch:<bid>" for a child batch.
+    type member = String
+
+    # Where batch commands go: a connection (which replies), or a pipeline
+    # or transaction to queue them in.
+    type redis = Redis::Connection | Redis::Pipeline
+
+    # A failure as a batch records it: "error_class" and "error_message".
+    type error_info = Hash[String, untyped]
+
+    # A callback: [target ("Class" or "Class#method"), options].
+    type callback = [String, Hash[String, untyped]]
+
+    EVENTS: Array[String]
+    TTL: Integer
+    CONTEXT: Symbol
+    RUNNING: Symbol
+    HOLD: Symbol
+    FAILURE: Symbol
+
+    # A batch job's failure as its ServerMiddleware saw it, held back while
+    # a processor runs the job.
+    class HeldFailure < Struct[untyped]
+      attr_accessor payload: job_hash
+
+      # nil until the job's middleware records its failure.
+      attr_accessor info: error_info?
+
+      def self.new: (job_hash payload, ?error_info? info) -> instance
+    end
+
+    # What an atomic +jobs+ block holds back until it finishes.
+    class Hold < Struct[untyped]
+      # [batch, member] pairs to register.
+      attr_accessor members: Array[[Batch, member]]
+
+      # [client, payloads] pairs to push.
+      attr_accessor pushes: Array[Client::held]
+
+      # The batches the block created.
+      attr_accessor created: Array[Batch]
+
+      # The +jobs+ blocks inside it to close.
+      attr_accessor closes: Array[Batch]
+
+      def self.new: (Array[[Batch, member]] members, Array[Client::held] pushes, Array[Batch] created, Array[Batch] closes) -> instance
+
+      def self.empty: () -> Hold
+
+      # Registers the members, sends the jobs, then closes the inner blocks.
+      def release: () -> void
+
+      # Undoes the batches the block created and closes the inner blocks.
+      def discard: () -> void
+
+      private
+
+      def by_batch: () -> Hash[Batch, Array[member]]
+
+      def shared_pool: () -> Redis::Pool?
+    end
+
+    UPDATE: Redis::Script
+    CANCEL: Redis::Script
+    MARK_DEATH: Redis::Script
+
+    # The batch whose +jobs+ block is running in this thread.
+    def self.current: () -> Batch?
+
+    # The atomic +jobs+ block's hold, if one is running in this thread.
+    def self.hold: () -> Hold?
+
+    # Inside a +jobs+ block, holds back the members it registers and the
+    # jobs it pushes until it finishes. Returns the block's value.
+    def self.holding: [T] () { () -> T } -> T
+
+    # The batch hash, pending members set and failed members hash.
+    def self.tracking_keys: (Config config, String? bid) -> [String, String, String]
+
+    # The tracking keys and the children set.
+    def self.keys: (Config config, String? bid) -> Array[String]
+
+    # The index of batches tagged +tag+.
+    def self.tag_key: (Config config, String tag) -> String
+
+    def self.error_info: (Exception exception) -> error_info
+
+    # Newest batches first (only those tagged +tag+), as Status.summarize
+    # describes them.
+    def self.list: (?config: Config, ?limit: Integer, ?tag: String?) -> Array[Hash[String, untyped]]
+
+    def self.job_succeeded: (Config config, String bid, member member) -> void
+
+    def self.job_failed: (Config config, String bid, member member, error_info? info) -> void
+
+    # A batch job that raised.
+    def self.failed: (Config config, job_hash payload, error_info info) -> void
+
+    # Runs the block (a batch job) with its failure held back in +held+.
+    def self.holding_failure: [T] (HeldFailure held) { () -> T } -> T
+
+    # Queues a job's failure into +tx+.
+    def self.queue_failure: (redis tx, Config config, job_hash payload, error_info? info) -> void
+
+    # A job in a batch won't run again: records its failure and the batch's
+    # first death.
+    def self.job_died: (Config config, job_hash payload, Exception? exception) -> void
+
+    # Queues what #job_died records into +tx+.
+    def self.queue_death: (redis tx, Config config, job_hash payload, Exception? exception) -> void
+
+    # Runs the callbacks the replies to #queue_death call for.
+    def self.death_recorded: (Config config, String bid, Array[Redis::reply] replies) -> void
+
+    def self.died: (Config config, String bid) -> void
+
+    def self.eval_mark_death: (redis redis, Config config, String bid) -> Redis::reply
+
+    def self.death_marked: (Config config, String bid, Redis::reply reply) -> void
+
+    def self.update: (Config config, String bid, String mode, ?member? member, ?String? info) -> void
+
+    def self.eval_update: (redis redis, Config config, String bid, String mode, member? member, String? info) -> Redis::reply
+
+    # Runs the callbacks an UPDATE reply says just became due.
+    def self.updated: (Config config, String bid, Redis::reply reply) -> void
+
+    # Counts batch events, and times completed batches, in StatsD.
+    def self.report: (Config config, Array[String] events, String? created, String? tags) -> void
+
+    # Pushes the job running +bid+'s callbacks for +event+ (then +chain+'s).
+    def self.enqueue_callback: (Config config, String bid, String event, ?String? chain, queue: String?) -> String?
+
+    @callbacks: Hash[String, Array[callback]]
+    @cancelled: bool
+    @persisted: true?
+    @discarded: true?
+
+    attr_reader bid: String
+    attr_reader config: Config
+    attr_reader parent_bid: String?
+    attr_reader tags: Array[String]
+
+    attr_accessor description: String?
+
+    # The queue the callbacks' job runs on (nil: the default).
+    attr_accessor callback_queue: String?
+
+    # A new batch, or (with +bid+) an existing one; raises NoSuchBatch for
+    # one that doesn't exist.
+    def initialize: (?String? bid, ?config: Config) -> void
+
+    # Registers a callback for :complete, :success or :death: a class
+    # (whose on_<event> is called) or "Class#method".
+    def on: (Symbol | String event, Class | String target, ?Hash[String | Symbol, untyped] options) -> self
+
+    def callbacks: () -> Hash[String, Array[callback]]
+
+    # Labels for finding the batch later; set before the first +jobs+.
+    def tags=: (_ToS | Array[_ToS] list) -> void
+
+    # Runs the block; every job pushed inside it belongs to this batch.
+    # Returns the bid.
+    def jobs: (?atomic: bool) { () -> void } -> String
+
+    # Ends one +jobs+ block.
+    def close: () -> void
+
+    def status: () -> Status
+
+    # Cancels this batch and its child batches; returns the bids cancelled.
+    def cancel!: () -> Array[String]
+
+    def cancelled?: () -> bool
+
+    def parent: () -> Batch?
+
+    # Adds +member+ to the pending set.
+    def register: (member member) -> void
+
+    def register_all: (Array[member] members) -> void
+
+    # Queues the commands registering +members+ into +tx+.
+    def queue_register: (redis tx, Array[member] members) -> void
+
+    # Deletes a batch an atomic +jobs+ block created before it raised.
+    def discard!: () -> true
+
+    private
+
+    def parent_for_new: () -> String?
+
+    def persist!: () -> void
+
+    # Read-only view of a batch, handed to callbacks and the web UI.
+    class Status
+      INTS: Array[String]
+
+      # A batch's hash as JSON-ready fields.
+      def self.summarize: (String bid, Hash[String, String] data) -> Hash[String, untyped]
+
+      @config: Config
+      @data: Hash[String, String]
+
+      attr_reader bid: String
+
+      def initialize: (String bid, ?config: Config) -> void
+
+      def exists?: () -> bool
+
+      def total: () -> Integer
+
+      def pending: () -> Integer
+
+      def failures: () -> Integer
+
+      def description: () -> String?
+
+      def parent_bid: () -> String?
+
+      def callback_queue: () -> String?
+
+      def tags: () -> Array[String]
+
+      def created_at: () -> Integer?
+
+      def complete?: () -> bool
+
+      def success?: () -> bool
+
+      def dead?: () -> bool
+
+      def cancelled?: () -> bool
+
+      def callbacks: () -> Hash[String, Array[callback]]
+
+      def jids: () -> Array[String]
+
+      def children: () -> Array[String]
+
+      # {"jid", "error_class", "error_message"} each.
+      def failed_jobs: () -> Array[Hash[String, untyped]]
+
+      # Counts and states only.
+      def progress: () -> Hash[String, String | Integer | bool]
+
+      def to_h: () -> Hash[String, untyped]
+
+      def delete!: () -> true
+    end
+
+    # Runs a batch's callbacks for one event, then propagates the outcome to
+    # the parent batch.
+    class Callback
+      include Job
+      extend Job::ClassMethods
+
+      def perform: (String bid, String event, ?String? chain) -> void
+    end
+
+    # Tags jobs pushed inside a +jobs+ block with the batch id.
+    class ClientMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (*untyped) -> bool
+
+      def call: (String job_class, job_hash payload, String queue, Redis::Pool redis) { () -> job_hash? } -> job_hash?
+    end
+
+    # Records the outcome of batch jobs.
+    class ServerMiddleware
+      include Middleware::ConfigAware
+      include Middleware::Stateless
+
+      def self.applies?: (untyped job, job_hash payload, String queue) -> bool
+
+      def call: (untyped job, job_hash payload, String queue) { () -> untyped } -> untyped
+    end
+  end
+end

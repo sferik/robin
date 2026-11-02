@@ -1,0 +1,327 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`EditArgs > starts from the current arguments 1`] = `
+<div>
+  <div
+    class="panel panel-pad mt"
+  >
+    <h2>
+      Edit arguments and retry
+    </h2>
+    <p
+      class="subtitle mb"
+    >
+      The job is removed from this set and pushed again with a new job ID and a clean failure count.
+    </p>
+    <textarea
+      aria-label="Job arguments as JSON"
+      class="input"
+    />
+    <div
+      class="btn-group mt"
+    >
+      <button
+        class="btn btn-primary"
+      >
+        Retry with these arguments
+      </button>
+      <button
+        class="btn"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`JobError > shows the error and backtrace 1`] = `
+<div>
+  <section
+    class="stack mt"
+  >
+    <div
+      class="error-box"
+    >
+      <span
+        class="err"
+      >
+        Boom
+      </span>
+      <span
+        class="err-msg"
+      >
+        It broke
+      </span>
+    </div>
+    <div>
+      <h2>
+        Backtrace
+      </h2>
+      <pre
+        class="code"
+      >
+        <div
+          class="bt-app"
+        >
+          app/x.rb:1
+        </div>
+        <div
+          class="bt-lib"
+        >
+          /gems/y.rb:2
+        </div>
+      </pre>
+    </div>
+  </section>
+</div>
+`;
+
+exports[`JobFacts > lists everything a failed job in a batch has 1`] = `
+<div>
+  <dl
+    class="kv"
+  >
+    <dt>
+      Job
+    </dt>
+    <dd>
+      <span
+        class="cls"
+      >
+        <a
+          href="/robin/metrics/jobs/HardJob"
+        >
+          HardJob
+        </a>
+        <span
+          class="dim small"
+          style="font-weight: 400;"
+        >
+           
+          via Wrapper
+        </span>
+      </span>
+    </dd>
+    <dt>
+      Job ID
+    </dt>
+    <dd>
+      <button
+        class="jid"
+        title="Copy job ID"
+        type="button"
+      >
+        a1b2c3d4e5f6a1b2c3d4e5f6
+      </button>
+    </dd>
+    <dt>
+      Queue
+    </dt>
+    <dd>
+      <a
+        href="/robin/queues/mail%20ers"
+      >
+        mail ers
+      </a>
+    </dd>
+    <dt>
+      Where it is
+    </dt>
+    <dd>
+      Retries
+    </dd>
+    <dt>
+      Next retry
+    </dt>
+    <dd>
+      <time
+        datetime="2026-10-14T09:31:00.000Z"
+        title="2026-10-14 09:31:00"
+      >
+        in 1 minute
+      </time>
+    </dd>
+    <dt>
+      Created
+    </dt>
+    <dd>
+      <time
+        datetime="2026-10-14T09:29:00.000Z"
+        title="2026-10-14 09:29:00"
+      >
+        1 minute ago
+      </time>
+    </dd>
+    <dt>
+      Enqueued
+    </dt>
+    <dd>
+      <time
+        datetime="2026-10-14T09:29:30.000Z"
+        title="2026-10-14 09:29:30"
+      >
+        30 seconds ago
+      </time>
+    </dd>
+    <dt>
+      Failures
+    </dt>
+    <dd
+      class="num"
+    >
+      3
+    </dd>
+    <dt>
+      First failed
+    </dt>
+    <dd>
+      <time
+        datetime="2026-10-14T08:30:00.000Z"
+        title="2026-10-14 08:30:00"
+      >
+        1 hour ago
+      </time>
+    </dd>
+    <dt>
+      Last failed
+    </dt>
+    <dd>
+      <time
+        datetime="2026-10-14T09:29:00.000Z"
+        title="2026-10-14 09:29:00"
+      >
+        1 minute ago
+      </time>
+    </dd>
+    <dt>
+      Batch
+    </dt>
+    <dd>
+      <a
+        class="mono"
+        href="/robin/batches/b1"
+      >
+        b1
+      </a>
+    </dd>
+    <dt>
+      Tags
+    </dt>
+    <dd>
+      <span
+        class="tag"
+      >
+        billing
+      </span>
+      <span
+        class="tag"
+      >
+        eu
+      </span>
+    </dd>
+  </dl>
+</div>
+`;
+
+exports[`JobFacts > lists the basics 1`] = `
+<div>
+  <dl
+    class="kv"
+  >
+    <dt>
+      Job
+    </dt>
+    <dd>
+      <span
+        class="cls"
+      >
+        <a
+          href="/robin/metrics/jobs/HardJob"
+        >
+          HardJob
+        </a>
+      </span>
+    </dd>
+    <dt>
+      Job ID
+    </dt>
+    <dd>
+      <button
+        class="jid"
+        title="Copy job ID"
+        type="button"
+      >
+        a1b2c3d4e5f6a1b2c3d4e5f6
+      </button>
+    </dd>
+    <dt>
+      Queue
+    </dt>
+    <dd>
+      <a
+        href="/robin/queues/default"
+      >
+        default
+      </a>
+    </dd>
+    <dt>
+      Created
+    </dt>
+    <dd>
+      <time
+        datetime="2026-10-14T09:29:00.000Z"
+        title="2026-10-14 09:29:00"
+      >
+        1 minute ago
+      </time>
+    </dd>
+    <dt>
+      Enqueued
+    </dt>
+    <dd>
+      <time
+        datetime="2026-10-14T09:29:30.000Z"
+        title="2026-10-14 09:29:30"
+      >
+        30 seconds ago
+      </time>
+    </dd>
+  </dl>
+</div>
+`;
+
+exports[`Payload > shows the raw payload when there is one 1`] = `
+<div>
+  <section
+    class="mt"
+  >
+    <h2>
+      Payload
+    </h2>
+    <pre
+      class="code"
+    >
+      {
+
+      
+        
+      <span
+        class="json-key"
+      >
+        "class"
+      </span>
+      : 
+      <span
+        class="json-str"
+      >
+        "HardJob"
+      </span>
+      
+
+      
+      }
+    </pre>
+  </section>
+</div>
+`;

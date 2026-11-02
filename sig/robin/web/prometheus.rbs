@@ -1,0 +1,33 @@
+module Robin
+  class Web
+    # Prometheus text exposition at GET /metrics.
+    class Prometheus
+      # name, type, help, Robin::Stats reader
+      STATS: Array[[String, String, String, Symbol]]
+
+      # name, type, help
+      QUEUE_SIZE: [String, String, String]
+
+      QUEUE_LATENCY: [String, String, String]
+
+      GVL: [String, String, String]
+
+      @env: env
+
+      def initialize: (env env) -> void
+
+      def call: () -> response
+
+      private
+
+      # [labels, size, latency] for every queue in one cluster.
+      def queue_samples: (String cluster, Config config, Stats stats) -> Array[[Hash[String, String], Integer, Float]]
+
+      def header: (String out, String name, String type, String help) -> String
+
+      def sample: (String out, String name, Hash[String, String] labels, Numeric value) -> String
+
+      def escape: (String value) -> String
+    end
+  end
+end

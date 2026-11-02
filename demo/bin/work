@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Runs a Robin server for the demo. Extra arguments go to `robin`, e.g.
+# bin/work -c 20, or bin/work swarm -n 2.
+require_relative "setup"
+
+args = (ARGV.first == "swarm") ? [ARGV.shift] : []
+exec(Gem.bin_path("robin", "robin"), *args, "-r", "./app.rb", "-C", "config/robin.yml", *ARGV)

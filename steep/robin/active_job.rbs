@@ -1,0 +1,40 @@
+module Robin
+  # ActiveJob integration (see steep/robin/rails/railtie.rbs on why it's
+  # not in the gem).
+  module ActiveJob
+    # A Robin::Job inclusion check rejecting ActiveJob classes.
+    REJECT_ACTIVE_JOB_CLASSES: ^(Module base) -> void
+
+    # robin_options that the adapter sets itself.
+    IGNORED: Array[String]
+
+    # A Robin::Client rewriter: a job hash naming an ActiveJob class
+    # becomes the wrapper's payload.
+    WRAP_ACTIVE_JOB_CLASSES: ^(job_hash item) -> job_hash
+
+    # The Robin job hash that runs +job+ through Wrapper.
+    def self.payload: (::ActiveJob::Base job, time? timestamp, ?job_hash extra) -> job_hash
+
+    # The class a job shows as: a mail delivery's mailer and mail.
+    def self.display_class: (::ActiveJob::Base job) -> String?
+
+    # Runs ActiveJob jobs inside Robin.
+    class Wrapper
+      include Robin::Job
+      extend Robin::Job::ClassMethods
+
+      def perform: (Hash[String, untyped] job_data) -> untyped
+    end
+
+    # Adds robin_options to ActiveJob classes.
+    module Options
+      def self.included: (Module base) -> void
+
+      module ClassMethods : Robin::Job::_JobClass
+        @robin_options: job_hash?
+
+        def robin_options: (?Hash[Symbol | String, untyped]? opts) -> job_hash
+      end
+    end
+  end
+end

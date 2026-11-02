@@ -1,0 +1,43 @@
+module Robin
+  # Cluster-wide leader election using a Redis lease.
+  class Leader
+    TTL_MS: Integer
+
+    self.@leaders: Hash[Integer, Leader]
+
+    # Whether this process currently leads the cluster behind +config+.
+    def self.leader?: (?Config config) -> bool
+
+    def self.register: (Config config, Leader elector) -> Leader
+
+    def self.unregister: (Config config) -> Leader?
+
+    # Identity of the current leader, from Redis.
+    def self.current: (?Config config) -> String?
+
+    @config: Config
+    @leader: bool
+    @until: Float | Integer
+    # nil until #lease
+    @asked: Float
+
+    attr_reader identity: String
+
+    def initialize: (Config config, String identity) -> void
+
+    def leader?: () -> bool
+
+    # Queues a request to acquire or renew the lease on +pipe+; pass its
+    # reply to #settle.
+    def lease: (Redis::Pipeline pipe) -> nil
+
+    # Takes the reply to #lease; returns whether this process leads.
+    def settle: (Redis::reply reply) -> bool
+
+    def resign: (Redis::Connection conn) -> void
+
+    private
+
+    def monotonic: () -> Float
+  end
+end

@@ -1,0 +1,54 @@
+latency 0ms, 10 threads, robin    107549 jobs/s
+latency 0ms, 10 threads, sidekiq   39388 jobs/s
+latency 0ms, 10 threads, sidekiq   39360 jobs/s
+latency 0ms, 10 threads, robin    108796 jobs/s
+latency 0ms, 10 threads, robin    108534 jobs/s
+latency 0ms, 10 threads, sidekiq   39033 jobs/s
+latency 0ms, 25 threads, robin    139169 jobs/s
+latency 0ms, 25 threads, sidekiq   63185 jobs/s
+latency 0ms, 25 threads, sidekiq   61421 jobs/s
+latency 0ms, 25 threads, robin    139470 jobs/s
+latency 0ms, 25 threads, robin    137275 jobs/s
+latency 0ms, 25 threads, sidekiq   63914 jobs/s
+latency 0ms, 50 threads, robin    155803 jobs/s
+latency 0ms, 50 threads, sidekiq   78367 jobs/s
+latency 0ms, 50 threads, sidekiq   75192 jobs/s
+latency 0ms, 50 threads, robin    158581 jobs/s
+latency 0ms, 50 threads, robin    160525 jobs/s
+latency 0ms, 50 threads, sidekiq   76498 jobs/s
+latency 1ms, 10 threads, robin     71517 jobs/s
+latency 1ms, 10 threads, sidekiq   10215 jobs/s
+latency 1ms, 10 threads, sidekiq   10202 jobs/s
+latency 1ms, 10 threads, robin     70507 jobs/s
+latency 1ms, 10 threads, robin     72885 jobs/s
+latency 1ms, 10 threads, sidekiq   10233 jobs/s
+latency 1ms, 25 threads, robin    119043 jobs/s
+latency 1ms, 25 threads, sidekiq   27100 jobs/s
+latency 1ms, 25 threads, sidekiq   27120 jobs/s
+latency 1ms, 25 threads, robin    121528 jobs/s
+latency 1ms, 25 threads, robin    116162 jobs/s
+latency 1ms, 25 threads, sidekiq   26498 jobs/s
+latency 1ms, 50 threads, robin    134461 jobs/s
+latency 1ms, 50 threads, sidekiq   29758 jobs/s
+latency 1ms, 50 threads, sidekiq   30564 jobs/s
+W, [2026-10-18T23:03:50.825320 #39707]  WARN -- : Redis round trips take 69.9ms; jobs will be slow (is Redis far away, or overloaded?)
+latency 1ms, 50 threads, robin    133831 jobs/s
+latency 1ms, 50 threads, robin    136409 jobs/s
+latency 1ms, 50 threads, sidekiq   30036 jobs/s
+jruby 10.1.2.0 (4.0.0) 2026-09-21 36cf8bbe87 Java HotSpot(TM) 64-Bit Server VM 21.0.7+8-LTS-245 on 21.0.7+8-LTS-245 +indy +jit [arm64-darwin]
+500000 jobs per run, median of 3
+
+| system | latency (each way) | threads | processed jobs/s | pushed jobs/s | Ruby CPU/job | Redis CPU/job | Redis commands/job | RSS growth |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| Robin 0.1.0 (NativeRESP parser) | 0 ms | 10 | 108534 | 286533 | 23.2 µs | 7.1 µs | 1.45 | 164 MB |
+| Sidekiq 8.1.7 (ruby driver) | 0 ms | 10 | 39360 | 235405 | 67.5 µs | 25.1 µs | 1.0 | 122 MB |
+| Robin 0.1.0 (NativeRESP parser) | 0 ms | 25 | 139169 | 286041 | 21.2 µs | 4.7 µs | 1.35 | 108 MB |
+| Sidekiq 8.1.7 (ruby driver) | 0 ms | 25 | 63185 | 237756 | 89.4 µs | 15.4 µs | 1.0 | 146 MB |
+| Robin 0.1.0 (NativeRESP parser) | 0 ms | 50 | 158581 | 284576 | 23.5 µs | 4.1 µs | 1.32 | 113 MB |
+| Sidekiq 8.1.7 (ruby driver) | 0 ms | 50 | 76498 | 233863 | 94.7 µs | 12.8 µs | 1.0 | 159 MB |
+| Robin 0.1.0 (NativeRESP parser) | 1 ms | 10 | 71517 | 210526 | 23.0 µs | 8.0 µs | 1.43 | 140 MB |
+| Sidekiq 8.1.7 (ruby driver) | 1 ms | 10 | 10215 | 179404 | 67.7 µs | 46.1 µs | 1.0 | 135 MB |
+| Robin 0.1.0 (NativeRESP parser) | 1 ms | 25 | 119043 | 209380 | 23.6 µs | 5.7 µs | 1.34 | 114 MB |
+| Sidekiq 8.1.7 (ruby driver) | 1 ms | 25 | 27100 | 176741 | 88.3 µs | 33.5 µs | 1.0 | 177 MB |
+| Robin 0.1.0 (NativeRESP parser) | 1 ms | 50 | 134461 | 213493 | 23.7 µs | 4.7 µs | 1.32 | 135 MB |
+| Sidekiq 8.1.7 (ruby driver) | 1 ms | 50 | 30036 | 175193 | 106.4 µs | 23.6 µs | 1.0 | 146 MB |

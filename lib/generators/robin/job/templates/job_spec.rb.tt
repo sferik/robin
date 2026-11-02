@@ -1,0 +1,21 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+require "robin/testing"
+
+RSpec.describe <%= @job.class_name %> do
+  before { described_class.clear }
+
+  it "is pushed to the <%= @job.queue %> queue" do
+    described_class.perform_async
+
+    expect(described_class.jobs.map { |job| job["queue"] }).to eq(["<%= @job.queue %>"])
+  end
+
+  it "performs" do
+    described_class.perform_async
+    described_class.drain
+
+    expect(described_class.jobs).to be_empty
+  end
+end

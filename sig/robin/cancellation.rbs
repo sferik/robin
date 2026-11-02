@@ -1,0 +1,25 @@
+module Robin
+  # Cooperative job cancellation (see Robin.cancel!).
+  module Cancellation
+    # Each config's local copy of the cancellation list, by its object_id.
+    self.@cache: Hash[Integer, Set[String]]
+
+    # Cancels jobs (jids, or "batch:<bid>" for a batch's) for +ttl+
+    # seconds.
+    def self.cancel!: (*String | Array[String] jids, ?ttl: Integer, ?config: Config) -> true
+
+    # Live check against Redis: was the job, or its batch, cancelled?
+    def self.cancelled?: (String? jid, ?bid: String?, ?config: Config) -> bool
+
+    # Fast in-memory check used by processors.
+    def self.skip?: (Config config, String jid, ?String? bid) -> bool
+
+    def self.refresh: (Config config, Redis::Connection conn) -> Set[String]
+
+    # The command that reads the live cancellation list.
+    def self.listing: (Config config) -> Redis::command
+
+    # Replaces the local copy of the cancellation list.
+    def self.store: (Config config, Array[String] jids) -> Set[String]
+  end
+end
