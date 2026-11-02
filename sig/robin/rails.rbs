@@ -1,0 +1,8 @@
+module Robin
+  # Rails integration for Robin: a Railtie, the ActiveJob adapter,
+  # generators, Rails.error reporting and transaction-aware pushes. (The
+  # signatures of the parts that subclass Rails' and Puma's classes aren't
+  # in the gem, so that checking against it doesn't need Rails' or Puma's.)
+  module Rails
+  end
+end

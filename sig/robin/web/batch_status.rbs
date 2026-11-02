@@ -1,0 +1,25 @@
+module Robin
+  class Web
+    # A small JSON endpoint for a batch's progress (mount it apart from the
+    # dashboard).
+    class BatchStatus
+      PATH: Regexp
+
+      HEADERS: Hash[String, String]
+
+      @config: Config?
+
+      # +config+: the Robin config whose batches it shows (Robin.config when
+      # nil).
+      def initialize: (?config: Config?) -> void
+
+      def call: (env env) -> response
+
+      private
+
+      def not_found: () -> response
+
+      def reply: (Integer code, Hash[String, untyped] body, ?Hash[String, String] headers) -> response
+    end
+  end
+end

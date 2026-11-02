@@ -1,0 +1,102 @@
+module Robin
+  # The `robin` command.
+  class CLI
+    # CLI.app_loaders: loads the application in a directory; truthy when it
+    # did.
+    interface _AppLoader
+      def call: (String dir) -> boolish
+    end
+
+    # CLI.config_file_hooks: applies settings of the config file's (Symbol
+    # keys, the environment's section merged in) to the config.
+    interface _ConfigFileHook
+      def call: (Hash[Symbol, untyped] settings, Config config) -> void
+    end
+
+    SIGNALS: Array[String]
+
+    PLUGIN_GLOB: String
+
+    HEALTH_TIMEOUT: Integer
+
+    self.@app_loaders: Array[_AppLoader]
+    self.@environment_variables: Array[String]
+    self.@config_paths: Array[String]
+    self.@config_file_hooks: Array[_ConfigFileHook]
+
+    def self.app_loaders: () -> Array[_AppLoader]
+
+    def self.environment_variables: () -> Array[String]
+
+    def self.config_paths: () -> Array[String]
+
+    def self.config_file_hooks: () -> Array[_ConfigFileHook]
+
+    # The app directory's name (or a Capistrano-style release's app's).
+    def self.default_tag: (String dir) -> String
+
+    def self.plugin_files: () -> Array[String]
+
+    def self.load_plugins: () -> void
+
+    @argv: Array[String]
+    # Options from the command line and the config file (Symbol keys).
+    @options: Hash[Symbol, untyped]
+    @file_options: Hash[Symbol, untyped]
+    # nil until #serve.
+    @launcher: Launcher
+    # nil until #serve.
+    @signals: IO
+
+    attr_reader config: Config
+
+    # The server's launcher, once #serve runs.
+    def launcher: () -> Launcher?
+
+    def initialize: (?Array[String] argv, ?config: Config) -> void
+
+    def run: () -> void
+
+    def parse: () -> Hash[Symbol, untyped]
+
+    # Options from the command line and the config file.
+    attr_reader options: Hash[Symbol, untyped]
+
+    # Loads the application and applies options.
+    def boot: (?server: bool) -> void
+
+    def prepare: () -> void
+
+    # Runs a server until INT or TERM.
+    def serve: () -> void
+
+    # Hands a signal to the serving thread.
+    def signal: (String name) -> void
+
+    private
+
+    def build_launcher: () -> Launcher
+
+    def trap_signals: (Array[String] names) -> Hash[String, Signal::trap_command]
+
+    def chain: (untyped handler, Integer signo) -> void
+
+    def wait_for_signals: (IO reader) -> void
+
+    def reopen_logs: () -> void
+
+    def health_check: () -> bool
+
+    def health_http: (Integer | String port) -> Net::HTTP
+
+    def load_config_file: () -> void
+
+    def apply_options: () -> void
+
+    def load_application: () -> void
+
+    def load_directory: (String path) -> void
+
+    def print_banner: () -> void
+  end
+end

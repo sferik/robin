@@ -1,0 +1,42 @@
+module Robin
+  class Web
+    # Serves the compiled single-page app from lib/robin/web/dist.
+    class Static
+      TYPES: Hash[String, String]
+
+      CSP: String
+
+      SECURITY_HEADERS: Hash[String, String]
+
+      ASSET_CACHE: String
+
+      UNBUILT: String
+
+      @root: String
+      @index: String
+      @index_mtime: Time
+
+      def initialize: (String root) -> void
+
+      def call: (env env) -> response
+
+      # Serves +file+ (a full path, or nil for a 404).
+      def call_file: (env env, String? file) -> response
+
+      private
+
+      def not_found: () -> response
+
+      def respond: (env env) { () -> response } -> response
+
+      def file: (env env, String file, String cache) -> response
+
+      def index: (env env) -> response
+
+      def security_headers: () -> Hash[String, String]
+
+      # index.html, re-read whenever it changes on disk; nil when unbuilt.
+      def index_template: () -> String?
+    end
+  end
+end

@@ -1,0 +1,224 @@
+module Robin
+  module Redis
+    # A reply from Redis: a String, Integer, nil, an Array of replies, or
+    # (nested in an Array) a CommandError. What a command returns depends on
+    # the command, so callers know its shape, not the type checker.
+    type reply = untyped
+
+    # A command: its name and arguments (anything with #to_s).
+    type command = Array[untyped]
+
+    # The reply parser (and command encoder): Robin::Redis::RESP, or the
+    # extension's Robin::Redis::NativeRESP.
+    interface _Parser
+      def parse: (String buf, Integer pos) -> [reply, Integer]?
+    end
+
+    interface _Encoder
+      def encode: (command args, ?String out) -> String
+    end
+
+    class ConnectionError < StandardError
+    end
+
+    class TimeoutError < ConnectionError
+    end
+
+    # Picks the reply parser: the C (or Java) extension's when it's
+    # available, else the pure-Ruby one.
+    # Loads the extension (Kernel#require).
+    interface _Loader
+      def call: (String feature) -> boolish
+    end
+
+    def self.parser: (?disabled: bool, ?loader: _Loader) -> (singleton(RESP) | singleton(NativeRESP))
+
+    PARSER: singleton(RESP) | singleton(NativeRESP)
+
+    # The extension's socket reader, when the extension's parser is in use.
+    def self.native_io: (singleton(RESP) | singleton(NativeRESP) parser, singleton(Redis) mod) -> singleton(NativeIO)?
+
+    NATIVE_IO: singleton(NativeIO)?
+
+    # Encodes commands: the extension's encoder where it has one.
+    def self.encoder: (singleton(RESP) | singleton(NativeRESP) parser) -> (singleton(RESP) | singleton(NativeRESP))
+
+    ENCODER: singleton(RESP) | singleton(NativeRESP)
+
+    # What Connection, Pool and Pipeline share: sending a command.
+    interface _Caller
+      def call: (*untyped args) -> reply
+    end
+
+    # A single, non-thread-safe connection to a Redis server.
+    class Connection
+      DEFAULTS: Hash[Symbol, untyped]
+
+      SENTINEL_PORT: Integer
+
+      SCHEMES: Array[String]
+
+      TLS_SCHEMES: Array[String]
+
+      READ_CHUNK: Integer
+
+      RECONNECT_ERRORS: Array[String]
+
+      @options: Hash[Symbol, untyped]
+      @sentinels: Array[[String, Integer]]?
+      @sock: (Socket | UNIXSocket | OpenSSL::SSL::SSLSocket)?
+      @buf: String
+      @pos: Integer
+      @scripts: Set[String]
+      @native_io: singleton(NativeIO)?
+
+      # The options it connects with (see DEFAULTS).
+      attr_reader options: Hash[Symbol, untyped]
+
+      # +url+ with any password (or user) replaced, fit for messages.
+      def self.redact: (_ToS url) -> String
+
+      def self.parse_url: (String url) -> Hash[Symbol, untyped]
+
+      private def self.tcp_options: (URI::Generic uri) -> Hash[Symbol, untyped]
+
+      # The Redis URL from the environment.
+      def self.env_url: (?_Env env) -> String?
+
+      # Options: +url+ (redis://, rediss://, valkey://, valkeys:// or unix://)
+      # or the parts of one, timeouts in seconds, TLS +ssl_params+ (see
+      # OpenSSL::SSL::SSLContext#set_params), and Sentinel's.
+      def initialize: (
+        ?url: String?,
+        ?host: String,
+        ?port: Integer,
+        ?db: Integer,
+        ?path: String?,
+        ?username: String?,
+        ?password: String?,
+        ?ssl: bool,
+        ?ssl_params: Hash[Symbol, untyped],
+        ?connect_timeout: seconds,
+        ?read_timeout: seconds,
+        ?write_timeout: seconds,
+        ?name: String?,
+        ?sentinels: Array[String | Hash[Symbol | String, String | Integer]]?,
+        ?master_name: String?,
+        ?sentinel_username: String?,
+        ?sentinel_password: String?
+      ) -> void
+
+      # Normalizes the +sentinels:+ option to [host, port] pairs.
+      def self.sentinel_list: (Array[String | Hash[Symbol | String, String | Integer]]? sentinels) -> Array[[String, Integer]]?
+
+      def inspect: () -> String
+
+      # The server it talks to, for messages: "host:port/db", or the socket's path.
+      def id: () -> String
+
+      # Sends a command and returns its reply.
+      def call: (*untyped args) -> reply
+
+      # Like #call, for blocking commands: +timeout+ extends the read timeout.
+      def blocking_call: (seconds timeout, *untyped args) -> reply
+
+      # Sends several commands in one round trip; returns their replies.
+      def pipelined: (?timeout: seconds) { (Pipeline pipe) -> void } -> Array[reply]
+
+      # MULTI/EXEC transaction. Returns the EXEC reply.
+      def multi: () { (Pipeline pipe) -> void } -> Array[reply]
+
+      # Runs a Lua script by SHA, loading it the first time.
+      def evalsha: (Script script, ?Array[untyped] keys, ?Array[untyped]? argv) -> reply
+
+      def close: () -> void
+
+      # Lets go of the connection without a word to the server (after a fork).
+      def abandon: () -> void
+
+      private
+
+      def reset: () -> void
+
+      def call_with_timeout: (seconds read_timeout, command args, ?retried: bool) -> reply
+
+      def raise_first_error: (Array[reply] results) -> void
+
+      def reconnect_error?: (CommandError error) -> bool
+
+      def encode: (Array[command] commands) -> String
+
+      def roundtrip: (Array[command] commands, seconds read_timeout) -> Array[reply]
+
+      def send_commands: (String payload, seconds read_timeout) -> void
+
+      def roundtrip?: () -> bool
+
+      def send_and_read: (String payload, seconds read_timeout, ?reconnected: bool) -> void
+
+      def write_failed: ([Integer, Integer?] failure) -> bot
+
+      def read_replies: (Integer count, seconds read_timeout) -> Array[reply]
+
+      def stale?: () -> bool
+
+      def connect: () -> void
+
+      def open_socket: () -> (Socket | UNIXSocket | OpenSSL::SSL::SSLSocket)
+
+      # The master's [host, port], as the Sentinel answered.
+      def sentinel_master: () -> [String, String]
+
+      def ask_sentinel: (String host, Integer port, String name) -> ([String, String] | String | ConnectionError | CommandError)
+
+      def handshake: () -> void
+
+      def wrap_ssl: (Socket sock, String host) -> OpenSSL::SSL::SSLSocket
+
+      def write: (String data) -> void
+
+      def read_reply: (seconds timeout) -> reply
+
+      def consume: ([reply, Integer] result) -> reply
+
+      def fill: (seconds timeout) -> void
+
+      def native_fill: (seconds timeout) -> void
+
+      def filled: (Integer | false | nil read) -> void
+
+      # +kind+: :wait_readable or :wait_writable.
+      def wait: (Socket | UNIXSocket | OpenSSL::SSL::SSLSocket io, Symbol kind, seconds timeout) -> void
+    end
+
+    # Collects commands for Connection#pipelined and Connection#multi.
+    class Pipeline
+      NONE: Array[untyped]
+
+      @scripts: Set[String]?
+      @loads: Hash[Integer, String]?
+
+      attr_reader commands: Array[command]
+
+      def initialize: (?Set[String]? scripts) -> void
+
+      # The positions of the SCRIPT LOADs it added.
+      def loads: () -> Array[Integer]
+
+      # The SHAs those SCRIPT LOADs load.
+      def loading: () -> Array[String]
+
+      def call: (*untyped args) -> nil
+
+      def evalsha: (Script script, ?Array[untyped] keys, ?Array[untyped]? argv) -> nil
+    end
+
+    # A Lua script with a precomputed SHA1 for EVALSHA.
+    class Script
+      attr_reader source: String
+      attr_reader sha: String
+
+      def initialize: (String source) -> void
+    end
+  end
+end

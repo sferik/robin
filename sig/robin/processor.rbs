@@ -1,0 +1,107 @@
+module Robin
+  # A worker thread: fetch a job, run it through middleware, record the
+  # outcome, repeat.
+  class Processor
+    # What a worker is running: [queue, raw payload, started at (epoch ms),
+    # in-flight key].
+    type work = [String, String, Integer, String]
+
+    MIN_BACKOFF: Float
+
+    MAX_BACKOFF: Integer
+
+    @manager: Manager
+    @config: Config
+    @fetcher: Fetcher
+    @slot: Integer
+    @retrier: Retrier
+    @job_logger: JobLogger
+    @wrapper: job_wrapper?
+    @failures: Integer
+    @backoff: seconds
+    @retired: bool
+    @done: bool?
+    @outage_started: Float?
+    # nil outside #execute
+    @batch_failure: Batch::HeldFailure?
+
+    attr_reader capsule: Capsule
+
+    # The worker thread (nil until #start).
+    attr_reader thread: Thread?
+
+    # The job it's running, if any.
+    attr_reader job: untyped
+
+    # The in-flight key of the last finished job, until its acknowledgement
+    # goes out with the next fetch.
+    attr_reader unacked: String?
+
+    # The running job, or nil; kept up to date by the launcher.
+    attr_accessor work: work?
+
+    # When (monotonic seconds) it last finished a job, or nil.
+    attr_accessor finished_at: Float?
+
+    # How many jobs it has finished.
+    attr_accessor finished: Integer
+
+    def initialize: (Manager manager, Capsule capsule, Fetcher fetcher, Integer slot) -> void
+
+    # Starts the worker thread, after +delay+ seconds.
+    def start: (seconds delay) -> self
+
+    # Stop after the current job.
+    def terminate: () -> void
+
+    # Stop after the current job, without interrupting it.
+    def retire: () -> void
+
+    def retired?: () -> bool
+
+    def alive?: () -> bool?
+
+    # Hard stop: interrupt the running job.
+    def kill: () -> void
+
+    # Fetches the next job and runs it, on the calling thread; whether
+    # there was one.
+    def work_once: () -> bool
+
+    private
+
+    def run: (seconds delay) -> void
+
+    def fetch: () -> Fetcher::UnitOfWork?
+
+    def process: (Fetcher::UnitOfWork unit) -> void
+
+    def complete: (Fetcher::UnitOfWork unit, job_hash payload) -> void
+
+    def acknowledge_unacked: () -> void
+
+    def release_fetched: () -> void
+
+    def execute: (Class job_class, job_hash payload, Fetcher::UnitOfWork unit) -> void
+
+    def wrapped: (job_hash payload, ^() -> void run_job) -> void
+
+    # Does #process hand +exception+ to the retrier?
+    def retried?: (Exception exception) -> bool
+
+    def record_batch_failure: () -> void
+
+    def take_batch_failure: () -> Batch::HeldFailure?
+
+    # Runs the job's #perform: what it returns.
+    def perform: (untyped job, job_hash payload) -> untyped
+
+    def interruptible: [T] () { () -> T } -> T
+
+    def handle_failure: (Fetcher::UnitOfWork unit, job_hash payload, Class? job_class, Exception exception) -> void
+
+    def constantize: (String name) -> untyped
+
+    def monotonic: () -> Float
+  end
+end

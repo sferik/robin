@@ -1,0 +1,7 @@
+reply                                Ruby ops/s        C ops/s  speedup
+single job payload (BLMOVE)             5199660       11280674     2.2x
+LRANGE 100 payloads                       52968         215111     4.1x
+LRANGE 1000 payloads                       5325          21717     4.1x
+HGETALL process (16 fields)              305619        1422319     4.7x
+ZRANGE 100 WITHSCORES                     49832         244366     4.9x
+pipeline of 20 integers                  414864        1288979     3.1x

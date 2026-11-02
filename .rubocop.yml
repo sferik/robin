@@ -1,0 +1,47 @@
+plugins:
+  - rubocop-performance
+  - rubocop-minitest
+
+require:
+  - ./rubocop/robin/braced_hash_argument
+
+# The library's code only: JRuby runs it (see the cop).
+Robin/BracedHashArgument:
+  Enabled: true
+  Include:
+    - "lib/**/*.rb"
+
+inherit_gem:
+  standard: config/base.yml
+  standard-performance: config/base.yml
+
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - "web/node_modules/**/*"
+    - "tmp/**/*"
+    - "vendor/**/*"
+    - "pkg/**/*"
+    - "coverage/**/*"
+
+# Returning from inside a connection-pool block is intentional.
+Lint/NonLocalExitFromIterator:
+  Exclude:
+    - "lib/robin/fetcher.rb"
+    - "lib/robin/iterable_job.rb"
+
+# Integration tests check several facets of one end-to-end scenario.
+Minitest/MultipleAssertions:
+  Max: 15
+
+# Bang/verb methods like `pause!` and `delete` return booleans by design.
+Naming/PredicateMethod:
+  Enabled: false
+
+# The ActiveJob adapter must live in ActiveJob's namespace next to Robin's.
+Style/OneClassPerFile:
+  Exclude:
+    - "lib/robin/active_job.rb"
+    - "test/**/*"

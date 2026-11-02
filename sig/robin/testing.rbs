@@ -1,0 +1,80 @@
+module Robin
+  # Test helpers (require "robin/testing"): pushes are kept in memory
+  # (fake mode), run right away (inline mode), or go to Redis (disabled).
+  module Testing
+    type mode = :fake | :inline | :disable
+
+    class EmptyQueue < Robin::Error
+    end
+
+    self.@mode: mode
+    self.@queues: Hash[String, Array[job_hash]]
+    self.@mutex: Monitor
+
+    MODE_KEY: Symbol
+
+    # The current thread's mode.
+    def self.mode: () -> mode
+
+    # Switches to a mode: for the block on this thread (returning its
+    # value), or without one as every thread's default.
+    def self.fake!: [T] () ?{ () -> T } -> T?
+
+    def self.inline!: [T] () ?{ () -> T } -> T?
+
+    def self.disable!: [T] () ?{ () -> T } -> T?
+
+    def self.fake?: () -> bool
+
+    def self.inline?: () -> bool
+
+    def self.disabled?: () -> bool
+
+    # Every faked job, in push order, keyed by queue.
+    def self.queues: () -> Hash[String, Array[job_hash]]
+
+    # Every faked job across all queues.
+    def self.jobs: () -> Array[job_hash]
+
+    def self.jobs_for: (String? class_name) -> Array[job_hash]
+
+    def self.clear_all: () -> void
+
+    def self.clear: (String? class_name) -> void
+
+    # Runs faked jobs (including any they push) until none are left.
+    def self.drain_all: () -> void
+
+    # Runs faked jobs of one class until none are left.
+    def self.drain: (String? class_name) -> void
+
+    # Runs the next faked job of the class; returns what its #perform
+    # returns.
+    def self.perform_one: (String? class_name) -> untyped
+
+    # Called by the client in place of a Redis push.
+    def self.push: (Array[job_hash] payloads) -> Array[job_hash]
+
+    # Runs one job hash through the server middleware chain; returns what
+    # the job's #perform returns.
+    def self.execute: (job_hash payload, ?config: Config) -> untyped
+
+    private def self.switch: [T] (mode mode) ?{ () -> T } -> T?
+
+    private def self.shift_next: (?String? class_name) -> job_hash?
+
+    # Routes pushes to memory unless testing is disabled.
+    def self.intercept: (Array[job_hash] payloads) -> Array[job_hash]?
+
+    # Class-level helpers on every Robin::Job class.
+    module JobMethods : Job::_JobClass
+      def jobs: () -> Array[job_hash]
+
+      def clear: () -> void
+
+      def drain: () -> void
+
+      def perform_one: () -> untyped
+    end
+  end
+end

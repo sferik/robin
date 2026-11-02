@@ -1,0 +1,48 @@
+# Numeric declares #+ and #- but not #* and #/, which every Numeric Robin
+# takes (Integer, Float, Rational, BigDecimal, ActiveSupport::Duration's
+# parts) has: Robin checks a value `is_a?(Numeric)` and then does arithmetic
+# with it. For this check only, so not in the gem.
+class Numeric
+  def *: (Numeric other) -> Numeric
+
+  def /: (Numeric other) -> Numeric
+end
+
+# RBS declares Thread.handle_interrupt without the block it runs (and
+# whose value it returns).
+class Thread
+  def self.handle_interrupt: [T] (Hash[untyped, Symbol] hash) { () -> T } -> T
+                           | ...
+end
+
+# Kernel#loop is declared to return bot, so `break value` inside it (as in
+# `done = loop do ... break true ... end`) can't type: this overload lets
+# the break's value through.
+module Kernel
+  private
+
+  def loop: () { () -> void } -> untyped
+          | ...
+end
+
+# RBS says Enumerator::Yielder#<< returns void; it returns the yielder, so
+# calls chain (`out << a << b`).
+class Enumerator::Yielder
+  def <<: (untyped value) -> self
+        | ...
+end
+
+# RBS's BasicSocket#setsockopt takes its level and option name as a rest
+# argument, so Steep can't match (level, optname, true) to it.
+class BasicSocket
+  def setsockopt: (Integer | Symbol level, Integer | Symbol optname, boolish | Integer | String optval) -> Integer
+                | ...
+end
+
+# __dir__ is nil only in code eval'd from a string, never in Robin's files.
+module Kernel
+  private
+
+  def __dir__: () -> String
+             | ...
+end

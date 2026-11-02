@@ -1,0 +1,118 @@
+module Robin
+  # Pushes jobs into Redis.
+  class Client
+    class ArgumentError < ::ArgumentError
+    end
+
+    # Client.interceptor: may take over delivery (Robin::Testing keeps jobs
+    # in memory); truthy when it handled the push.
+    interface _Interceptor
+      def call: (Array[job_hash] payloads) -> boolish
+    end
+
+    # A lambda or another callable (Steep doesn't count a proc as an Object,
+    # so a lambda isn't an `Object & _Interceptor`).
+    type interceptor = ^(Array[job_hash] payloads) -> boolish | (Object & _Interceptor)
+
+    # A Client.rewriters entry: returns the job hash to push.
+    interface _Rewriter
+      def call: (job_hash item) -> job_hash
+    end
+
+    # What a Client.together block holds: the client and its payloads.
+    type held = [Client, Array[job_hash]]
+
+    self.@interceptor: interceptor?
+    self.@rewriters: Array[_Rewriter]?
+
+    def self.interceptor: () -> interceptor?
+
+    def self.interceptor=: (interceptor? interceptor) -> interceptor?
+
+    # Callables that may rewrite a job hash before #push handles it.
+    def self.rewriters: () -> Array[_Rewriter]
+
+    # Sends every push this thread makes inside the block to +pool+.
+    def self.via: [T] (Redis::Pool? pool) { () -> T } -> T
+
+    # The pool set by an enclosing Client.via block, if any.
+    def self.current_pool: () -> Redis::Pool?
+
+    # Holds back this thread's pushes inside the block and sends them all
+    # when it finishes. Returns the block's value.
+    def self.together: [T] () { () -> T } -> T
+
+    private def self.send_together: (Array[held] held) -> void
+
+    def self.push: (Hash[String | Symbol, untyped] item) -> String?
+
+    def self.push_bulk: (Hash[String | Symbol, untyped] items) -> Array[String?]
+
+    # Converts a delay (seconds), a Time, or an epoch timestamp (seconds or
+    # milliseconds) to epoch milliseconds: a +time+, though it takes anything
+    # with #to_time or #to_f (and raises for nil).
+    def self.timestamp_ms: (untyped value, ?Integer now) -> Integer
+
+    # +count+ times spread evenly over +interval+ seconds, from +start+, as
+    # epoch milliseconds.
+    def self.spread: (Integer count, untyped interval, ?time start) -> Array[Integer]
+
+    @config: Config
+    @pool: Redis::Pool?
+    @chain: Middleware::Chain?
+
+    attr_reader config: Config
+
+    def initialize: (?config: Config, ?pool: Redis::Pool?, ?chain: Middleware::Chain?) -> void
+
+    def middleware: () -> Middleware::Chain
+
+    def redis_pool: () -> Redis::Pool
+
+    # Pushes a single job. Returns its jid, or nil if a client middleware
+    # stopped the push.
+    def push: (Hash[String | Symbol, untyped] item) -> String?
+
+    # Pushes many jobs of the same class at once ("args": an Array of
+    # argument Arrays). Returns the jids (nil for any job middleware stopped).
+    def push_bulk: (Hash[String | Symbol, untyped] item) -> Array[String?]
+
+    # Fills in defaults and validates a job hash.
+    def normalize: (Hash[String | Symbol, untyped] item) -> job_hash
+
+    # Would #deliver_now send these jobs to Redis right away?
+    def direct?: (Array[job_hash] payloads) -> bool
+
+    # Does #send_payloads go straight to Redis?
+    def plain?: () -> bool
+
+    # Delivers now, without waiting for an atomic batch block.
+    def deliver_now: (Array[job_hash] payloads) -> void
+
+    # Queues the commands pushing +payloads+ into +pipe+.
+    def queue_push: (Redis::Pipeline pipe, Array[job_hash] payloads) -> void
+
+    private
+
+    def build: (job_hash template, Array[untyped] args, String? jid, time? at) -> job_hash
+
+    def run_middleware: (job_hash payload) -> job_hash?
+
+    def invoke_middleware: (job_hash payload) -> job_hash?
+
+    def schedule: (job_hash payload, Integer at_ms) -> void
+
+    def deliver: (Array[job_hash] payloads) -> void
+
+    def send_payloads: (Array[job_hash] payloads) -> void
+
+    def raw_push: (Array[job_hash] payloads) -> void
+
+    def index_jids: (Redis::Pipeline pipe, Array[job_hash] payloads) -> void
+
+    def check_args: (job_hash item) -> void
+
+    # The first value (or hash key) that doesn't survive a JSON round trip.
+    def find_non_native: (untyped obj) -> untyped
+  end
+end

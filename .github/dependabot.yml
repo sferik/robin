@@ -1,0 +1,37 @@
+version: 2
+
+updates:
+  # The actions every workflow uses, and the composite actions in
+  # .github/actions/.
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/*
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+
+  # The main Gemfile.
+  - package-ecosystem: bundler
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+
+  # Each Rails version's Gemfile (gemfiles/rails_*/Gemfile, run by CI's
+  # "rails" job): its Rails stays the version it tests, so only patch
+  # releases of it are proposed.
+  - package-ecosystem: bundler
+    directories:
+      - /gemfiles/*
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+    ignore:
+      - dependency-name: activejob
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: railties
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
