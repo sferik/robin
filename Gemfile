@@ -29,7 +29,7 @@ gem "simplecov", ">= 1.3"
 gem "opentelemetry-sdk"
 
 # Duel (`rake perf`) and its plugins.
-gem "duel", "~> 0.1", ">= 0.1.2"
+gem "duel", "~> 0.1", ">= 0.1.3"
 gem "duel-redis", "~> 0.1"
 gem "duel-gvl", "~> 0.1"
 gem "duel-retained", "~> 0.1"

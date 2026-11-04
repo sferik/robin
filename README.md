@@ -5,7 +5,7 @@
 <p align="center"><strong>Fast, reliable background jobs for Ruby. Every feature open source.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/sferik/duel-ruby"><img src="https://raw.githubusercontent.com/sferik/duel-ruby/main/assets/badge.svg" alt="Duel"></a>
+  <a href="https://github.com/sferik/duel-ruby"><img src="https://raw.githubusercontent.com/sferik/robin/duel/badge/badge.svg" alt="Duel"></a>
   <a href="https://github.com/sferik/robin/actions/workflows/test.yml"><img src="https://github.com/sferik/robin/actions/workflows/test.yml/badge.svg" alt="Test"></a>
   <a href="https://github.com/sferik/robin/actions/workflows/lint.yml"><img src="https://github.com/sferik/robin/actions/workflows/lint.yml/badge.svg" alt="Lint"></a>
   <a href="https://github.com/sferik/robin/actions/workflows/mutant.yml"><img src="https://github.com/sferik/robin/actions/workflows/mutant.yml/badge.svg" alt="Mutant"></a>
