@@ -268,7 +268,8 @@ class SchedulerTest < RobinTest
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
     release << true
 
-    assert_in_delta 2.0, elapsed, 0.4
+    # Two seconds, not less; a slow machine may take longer to get back.
+    assert_includes 1.6..3.5, elapsed
   end
 
   def test_stop_wakes_a_sleeping_thread

@@ -15,6 +15,9 @@ module ParallelRunner
   # rather than lasting until CI's own limit.
   TIMEOUT = Float(ENV.fetch("TEST_TIMEOUT", 300))
   SUMMARY = /(\d+) runs, (\d+) assertions, (\d+) failures, (\d+) errors, (\d+) skips/
+  # Windows has no process groups to kill at once: a file that outlasts
+  # TIMEOUT there is killed alone, not with what it started.
+  WINDOWS = Gem.win_platform?
 
   Result = Struct.new(:file, :output, :success, :seconds)
 
@@ -48,13 +51,14 @@ module ParallelRunner
   # passed. One that outlasts TIMEOUT is killed with all it started, and
   # named at once (a CI log shows a line only once it ends).
   def capture(env, file)
-    Open3.popen2e(env, RbConfig.ruby, "-Itest", "-Ilib", file, pgroup: true) do |stdin, out, wait|
+    group = WINDOWS ? {new_pgroup: true} : {pgroup: true}
+    Open3.popen2e(env, RbConfig.ruby, "-Itest", "-Ilib", file, **group) do |stdin, out, wait|
       stdin.close
       reader = Thread.new { out.read }
       next [reader.value, wait.value.success?] if ends_in_time?(wait, clock + TIMEOUT)
 
       begin
-        Process.kill("KILL", -wait.pid)
+        Process.kill("KILL", WINDOWS ? wait.pid : -wait.pid)
       rescue Errno::ESRCH
         # (It ended just now.)
       end

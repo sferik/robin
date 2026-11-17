@@ -33,6 +33,7 @@ module SwarmTestHelpers
   def pids = Robin::ProcessSet.new.map { |p| p["pid"] }.sort
 
   def run_swarm(mode)
+    skip "a swarm is run with signals (TSTP, TTIN, USR2) Windows doesn't have" if Gem.win_platform?
     Dir.mktmpdir do |dir|
       File.write(File.join(dir, "app.rb"), APP)
       log = File.join(dir, "log")

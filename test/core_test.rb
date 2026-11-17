@@ -173,7 +173,7 @@ class CoreTest < RobinTest
   end
 
   def test_profiled_jobs
-    skip "vernier needs CRuby" unless RUBY_ENGINE == "ruby"
+    skip "vernier needs CRuby, not on Windows" unless RUBY_ENGINE == "ruby" && !Gem.win_platform?
 
     jid = EchoJob.set(profile: "slow one").perform_async("p")
     run_server do

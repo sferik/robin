@@ -710,6 +710,7 @@ class SwarmUnitTest < RobinTest
   # -- the real OS adapter -----------------------------------------------------
 
   def test_os_processes
+    skip "Windows has no process groups, and kills a finished process with EINVAL" if Gem.win_platform?
     os = Robin::Swarm::OS.new
 
     assert_equal Process.respond_to?(:fork), os.fork?
@@ -766,6 +767,7 @@ class SwarmUnitTest < RobinTest
   end
 
   def test_os_signals
+    skip "no USR2 here" unless Signal.list.key?("USR2")
     os = Robin::Swarm::OS.new
     previous = trap("USR2", "IGNORE")
     reader = os.trap_signals(["USR2"])

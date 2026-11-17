@@ -24,7 +24,8 @@ module GeneratorTestSupport
 
   def write_routes
     FileUtils.mkdir_p(File.join(destination_root, "config"))
-    File.write(File.join(destination_root, "config/routes.rb"), ROUTES)
+    # (Byte for byte: JRuby on Windows would write it with CRLFs.)
+    File.binwrite(File.join(destination_root, "config/routes.rb"), ROUTES)
   end
 end
 

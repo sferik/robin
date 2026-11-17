@@ -1,0 +1,4 @@
+# Text files are checked out with LF line endings everywhere, Windows
+# included: JRuby there reads files without converting CRLF, so its
+# Bundler and Robin's generator templates would see different text.
+* text=auto eol=lf

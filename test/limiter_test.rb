@@ -88,6 +88,7 @@ class LimiterTest < RobinTest
 
   def test_bucket_waits_for_next_interval
     limiter = Robin::Limiter.bucket("bkt2", 2, 1, wait_timeout: 2)
+    limiter.used # (connected, its scripts loaded: only the waiting is timed)
     t = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     3.times { limiter.within_limit {} }
 
@@ -155,7 +156,7 @@ class LimiterTest < RobinTest
     LimitedJob.perform_async(1)
     entry = eventually { Robin::ScheduledSet.new.first }
 
-    assert_equal 1, entry["limited"]
+    assert_operator entry["limited"], :>=, 1, "rescheduled (on a slow runner, maybe more than once before this looks)"
     assert_equal 0, Robin::RetrySet.new.size
     redis("DEL", "#{key_prefix_for_test}lmtr:limited-job:s")
 

@@ -1225,9 +1225,16 @@ class TimeAndClassHelpersApiTest < Minitest::Test
     assert_raises(TypeError) { Robin.epoch_ms(nil) }
   end
 
+  # An Integer equal to +expected+ (not assert_same: on Windows, whose
+  # Fixnums have 30 bits, these are Bignums, a new object each time).
+  def assert_integer(expected, actual)
+    assert_instance_of Integer, actual
+    assert_equal expected, actual
+  end
+
   def test_ms_of_converts_only_legacy_float_seconds
-    assert_same 1_700_000_000_500, Robin.ms_of(1_700_000_000.5)
-    assert_same 99_999_999_999_000, Robin.ms_of(99_999_999_999.0)
+    assert_integer 1_700_000_000_500, Robin.ms_of(1_700_000_000.5)
+    assert_integer 99_999_999_999_000, Robin.ms_of(99_999_999_999.0)
     assert_in_delta 100_000_000_000.0, Robin.ms_of(100_000_000_000.0), 0
     assert_instance_of Float, Robin.ms_of(100_000_000_000.0)
     assert_same 1_700, Robin.ms_of(1_700)

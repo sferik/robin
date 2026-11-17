@@ -549,9 +549,10 @@ static VALUE native_stale_p(VALUE self, VALUE io) {
  * before), and each wait is added to one total atomically. The slot holds
  * a pointer, so the start is kept in one only where a pointer has 64 bits
  * (elsewhere a nanosecond timestamp wouldn't fit, and there's no
- * Robin::NativeGVL: Robin::GVL measures nothing, as on JRuby).
+ * Robin::NativeGVL: Robin::GVL measures nothing, as on JRuby). Nor is
+ * there one on Windows, where Ruby adds no thread event hooks.
  */
-#if UINTPTR_MAX >= UINT64_MAX
+#if UINTPTR_MAX >= UINT64_MAX && !defined(_WIN32)
 #define ROBIN_NATIVE_GVL 1
 static rb_internal_thread_specific_key_t gvl_ready_key;
 static rb_internal_thread_event_hook_t *gvl_hook;

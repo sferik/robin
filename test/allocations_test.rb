@@ -67,6 +67,8 @@ class AllocationsTest < RobinTest
   end
 
   def test_pushing_a_job
+    # (Windows's Fixnums have 30 bits: each millisecond timestamp is a Bignum.)
+    skip "the budget is for 62-bit Fixnums" if Gem.win_platform?
     assert_budget(native: 30, ruby: 50) { Robin::Client.push("class" => NoopJob, "args" => [1]) }
   end
 

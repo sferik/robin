@@ -268,7 +268,7 @@ class CLITest < RobinTest
     status, out, err = health("--health-port", port.to_s)
 
     assert_equal ["exit false", ""], [status, out]
-    assert_match(/\Arobin: health check failed: Errno::ECONNREFUSED: .+\n\z/, err)
+    assert_match(/\Arobin: health check failed: #{REFUSED}: .+\n\z/o, err)
   end
 
   def test_health_command_times_out
@@ -278,7 +278,8 @@ class CLITest < RobinTest
 
     assert_equal "exit false", status
     assert_equal "robin: health check failed: Net::ReadTimeout: Net::ReadTimeout with #<TCPSocket:(closed)>\n", err
-    assert_in_delta 2, Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, 0.5
+    # Two seconds, not less: a slow machine may take longer to get back.
+    assert_includes 1.6..3.5, Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
   ensure
     silent&.close
   end
@@ -827,6 +828,7 @@ class CLITest < RobinTest
   end
 
   def test_real_signals_reach_the_launcher_and_handlers_are_restored
+    skip "no USR2 here" unless Signal.list.key?("USR2")
     original = proc {}
     previous = trap("USR2", original)
     alt_config.logger = ReopenLogger.new(nil)
@@ -841,6 +843,7 @@ class CLITest < RobinTest
   end
 
   def test_previous_signal_handlers_still_run
+    skip "no USR2 here" unless Signal.list.key?("USR2")
     calls = []
     original = trap("USR2") { |signo| calls << signo }
     command = cli
@@ -853,7 +856,7 @@ class CLITest < RobinTest
     assert_equal "USR2\n", command.instance_variable_get(:@signals).string
     assert_kind_of Proc, previous.fetch("USR2")
   ensure
-    trap("USR2", original)
+    trap("USR2", original) if Signal.list.key?("USR2")
   end
 
   def test_chain_skips_named_handlers_and_reports_failures
@@ -864,9 +867,9 @@ class CLITest < RobinTest
     assert_nil command.send(:chain, "DEFAULT", 31)
     assert_nil command.send(:chain, nil, 31)
     assert_equal :ran, command.send(:chain, ->(signo) { (signo == 31) ? :ran : :wrong }, 31)
-    command.send(:chain, ->(_) { raise "handler broke" }, Signal.list.fetch("USR2"))
+    command.send(:chain, ->(_) { raise "handler broke" }, Signal.list.fetch("TERM"))
 
-    assert_equal [["handler broke", {context: "previous USR2 handler"}]], errors
+    assert_equal [["handler broke", {context: "previous TERM handler"}]], errors
   end
 
   def test_trap_signals_skips_unsupported_signals

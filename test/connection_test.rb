@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require_relative "support/redis"
 require_relative "support/runtime"
+require_relative "support/socket_pair"
 require "timeout"
 
 # Generate the TLS certificates once, up front (mutant forks after loading
@@ -466,18 +467,18 @@ class ConnectionTest < ConnectionTestCase
 
   def test_blocking_call_extends_read_timeout
     srv = server { |cmd, _|
-      sleep 0.35 if cmd.first == "BLPOP"
+      sleep 0.6 if cmd.first == "BLPOP"
       FakeRedis.ok
     }
     conn = connect(srv, read_timeout: 0.3)
 
-    assert_equal "OK", conn.blocking_call(0.2, "BLPOP", "k", 1)
+    assert_equal "OK", conn.blocking_call(0.5, "BLPOP", "k", 1)
     assert_raises(Robin::Redis::TimeoutError) { conn.call("BLPOP", "k", 1) }
   end
 
   def test_a_pipeline_with_a_blocking_command_extends_read_timeout
     srv = server { |cmd, _|
-      sleep 0.35 if cmd.first == "BLMOVE"
+      sleep 0.6 if cmd.first == "BLMOVE"
       sleep 0.1 if cmd.first == "GET"
       FakeRedis.ok
     }
@@ -486,7 +487,7 @@ class ConnectionTest < ConnectionTestCase
     assert_equal %w[OK], conn.pipelined { |p| p.call("GET", "k") }, "waits up to the read timeout by default"
     blocking = ->(p) { [p.call("BLMOVE", "a", "b", "RIGHT", "LEFT", 1), p.call("SISMEMBER", "s", "m")] }
 
-    assert_equal %w[OK OK], conn.pipelined(timeout: 0.2, &blocking)
+    assert_equal %w[OK OK], conn.pipelined(timeout: 0.5, &blocking)
     assert_raises(Robin::Redis::TimeoutError) { conn.pipelined(&blocking) }
   end
 
@@ -659,10 +660,14 @@ class ConnectionTest < ConnectionTestCase
   def test_connection_errors_are_wrapped
     conn = Connection.new(host: "127.0.0.1", port: closed_port)
     error = assert_raises(Robin::Redis::ConnectionError) { conn.call("PING") }
-    assert_match(/\AErrno::ECONNREFUSED: .* \(127\.0\.0\.1:\d+\/0\)\z/, error.message)
+    assert_match(/\A#{REFUSED}: .* \(127\.0\.0\.1:\d+\/0\)\z/o, error.message)
+
+    return unless defined?(UNIXSocket) # (JRuby on Windows has none)
 
     error = assert_raises(Robin::Redis::ConnectionError) { Connection.new(path: "/nonexistent/robin.sock").call("PING") }
-    assert_match(/\AErrno::ENOENT: .*\(\/nonexistent\/robin\.sock\)\z/, error.message)
+    # (Windows's Unix sockets fail to connect to any path with ENETDOWN.)
+    missing = Gem.win_platform? ? "Errno::ENETDOWN" : "Errno::ENOENT"
+    assert_match(/\A#{missing}: .*\(\/nonexistent\/robin\.sock\)\z/, error.message)
   end
 
   def test_socket_and_timeout_errors_are_wrapped
@@ -791,6 +796,9 @@ class ConnectionTest < ConnectionTestCase
 
     assert_equal "ok", conn.call("LATER")
     pushed.pop(timeout: 5) || flunk("the server never sent its push")
+    # Sent isn't yet readable (on Windows' loopback, say): the test is of
+    # data waiting to be read.
+    sock(conn).to_io.wait_readable(5) || flunk("the push never arrived")
 
     assert_equal "c1", conn.call("PING")
   end
@@ -923,7 +931,7 @@ class ConnectionTest < ConnectionTestCase
     mod = Module.new.tap { |m| m.const_set(:NativeIO, reader) }
 
     assert_same reader, Robin::Redis.native_io(Object.new, mod)
-    if Robin::Redis::PARSER.equal?(Robin::Redis::RESP)
+    if Robin::Redis::PARSER.equal?(Robin::Redis::RESP) || (Gem.win_platform? && RUBY_ENGINE == "ruby") # (no poll.h there)
       assert_nil Robin::Redis::NATIVE_IO
     else
       assert_same Robin::Redis::NativeIO, Robin::Redis::NATIVE_IO
@@ -1186,7 +1194,7 @@ class ConnectionTest < ConnectionTestCase
     conn = connect(srv)
 
     error = assert_raises(Robin::Redis::ConnectionError) { conn.call("PING") }
-    assert_equal "connection closed by Redis server (#{srv.path})", error.message
+    assert_equal "connection closed by Redis server (#{srv.location})", error.message
   end
 
   def test_read_timeout
@@ -1195,7 +1203,7 @@ class ConnectionTest < ConnectionTestCase
 
     took = elapsed do
       error = assert_raises(Robin::Redis::TimeoutError) { Timeout.timeout(5) { conn.call("PING") } }
-      assert_equal "timed out talking to Redis (#{srv.path})", error.message
+      assert_equal "timed out talking to Redis (#{srv.location})", error.message
     end
 
     assert_operator took, :>=, 0.09
@@ -1208,15 +1216,27 @@ class ConnectionTest < ConnectionTestCase
     assert_equal "hello", Timeout.timeout(5) { connect(srv, read_timeout: 1).call("GET") }
   end
 
+  # Connects +conn+ with its socket already full, on Windows: there a
+  # non-blocking write takes all it's given, however much, until the socket
+  # holds two writes' worth, so one command alone never waits.
+  def backed_up(conn)
+    return unless Gem.win_platform?
+
+    conn.send(:connect)
+    2.times { sock(conn).write_nonblock("x" * 1_000_000, exception: false) }
+  end
+
   def test_write_timeout
     srv = server(mode: :deaf)
     conn = connect(srv, write_timeout: 0.1, read_timeout: 10)
+    backed_up(conn)
 
     took = elapsed { assert_raises(Robin::Redis::TimeoutError) { Timeout.timeout(5) { conn.call("SET", "k", "x" * 8_000_000) } } }
 
     assert_operator took, :<, 4
     conn.send(:connect)
     conn.instance_variable_set(:@native_io, nil) # Ruby's own writes
+    backed_up(conn)
     took = elapsed { assert_raises(Robin::Redis::TimeoutError) { Timeout.timeout(5) { conn.call("SET", "k", "x" * 8_000_000) } } }
 
     assert_operator took, :<, 4
@@ -1418,7 +1438,7 @@ class ConnectionTest < ConnectionTestCase
 
   def test_wait
     conn = Connection.new(host: "h")
-    a, b = UNIXSocket.pair
+    a, b = SocketPair.open
     b.write("x")
 
     assert_nil conn.send(:wait, a, :wait_readable, 1)
@@ -1518,7 +1538,7 @@ class ConnectionSentinelTest < ConnectionTestCase
     @conn = Connection.new(host: "mymaster", sentinels: ["127.0.0.1:#{port}", "127.0.0.1:#{lost.port}", "127.0.0.1:#{broken.port}"])
 
     error = assert_raises(Robin::Redis::ConnectionError) { @conn.call("PING") }
-    assert_match(/\Ano Sentinel could locate master mymaster \(127\.0\.0\.1:#{port} Errno::ECONNREFUSED: .+; /o, error.message)
+    assert_match(/\Ano Sentinel could locate master mymaster \(127\.0\.0\.1:#{port} #{REFUSED}: .+; /o, error.message)
     assert_includes error.message, "; 127.0.0.1:#{lost.port} doesn't know it; 127.0.0.1:#{broken.port} ERR unknown command)"
   end
 

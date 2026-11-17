@@ -80,7 +80,7 @@ class ActiveJobAutoloadTest < Minitest::Test
   def test_the_wrapper_loads_on_demand
     lib = File.expand_path("../../lib", __dir__)
     script = 'require "robin/rails"; p [Robin.autoload?(:ActiveJob), Object.const_get("Robin::ActiveJob::Wrapper").name]'
-    out = IO.popen([RbConfig.ruby, "-I#{lib}", "-e", script], err: File::NULL, &:read)
+    out = run_ruby(script, lib)
 
     assert_equal %(["robin/active_job", "Robin::ActiveJob::Wrapper"]\n), out
   end

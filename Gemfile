@@ -20,6 +20,9 @@ gem "rack-test"
 gem "rack-session"
 gem "puma"
 gem "tzinfo"
+# (Windows has no zoneinfo files for TZInfo to read. Everywhere, so it's
+# locked: Bundler leaves a Windows-only gem out of a lockfile made elsewhere.)
+gem "tzinfo-data"
 gem "standard", ">= 1.57"
 gem "standard-performance"
 gem "rubocop"

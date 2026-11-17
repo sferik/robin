@@ -11,11 +11,11 @@ class SystemdTest < Minitest::Test
   def with_notify_socket
     Dir.mktmpdir("robin-sd") do |dir|
       path = File.join(dir, "notify")
-      server = Socket.new(:UNIX, :DGRAM)
       begin
+        server = Socket.new(:UNIX, :DGRAM)
         server.bind(Socket.sockaddr_un(path))
-      rescue SocketError
-        skip "no datagram Unix sockets on #{RUBY_ENGINE}"
+      rescue SocketError, Errno::EAFNOSUPPORT # (JRuby's, Windows's)
+        skip "no datagram Unix sockets here"
       end
       yield path, server
     ensure

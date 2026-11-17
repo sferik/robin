@@ -1192,6 +1192,7 @@ class LauncherTest < RobinTest
   end
 
   def test_real_rss_is_positive
+    skip "no /proc or ps on Windows" if Gem.win_platform?
     assert_operator Robin::Launcher.new(config).send(:rss_kb), :>, 0
   end
 

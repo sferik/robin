@@ -43,6 +43,10 @@ Minitest::Test.include(RoundTrips::Assertions)
 require "minitest/memory"
 Minitest::Test.include(Minitest::Memory)
 
+# How a connection to a closed local port fails: refused, except on
+# Windows, which retries a refused connect for about two seconds, so a
+# shorter timeout runs out first.
+REFUSED = Gem.win_platform? ? "(?:Errno::ECONNREFUSED|Errno::ETIMEDOUT|Net::OpenTimeout)" : "Errno::ECONNREFUSED"
 REDIS_URL = ENV.fetch("ROBIN_TEST_REDIS_URL", "redis://127.0.0.1:6379/15")
 # A loaded machine (a JVM busy compiling, say) can take over a second to
 # connect even to a local server, which is the default's limit.

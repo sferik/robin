@@ -380,7 +380,7 @@ class WebTest < RobinTest
     assert_operator json["redis"]["main"]["latency_ms"], :<, 1000
     refute json["healthy"]
     refute json["redis"]["down"]["ok"]
-    assert_match(/\ARobin::Redis::ConnectionError: Errno::ECONNREFUSED: .+ \(127\.0\.0\.1:1\/0\)\z/, json["redis"]["down"]["error"])
+    assert_match(/\ARobin::Redis::ConnectionError: #{REFUSED}: .+ \(127\.0\.0\.1:1\/0\)\z/o, json["redis"]["down"]["error"])
   ensure
     down&.redis_pool&.shutdown
   end

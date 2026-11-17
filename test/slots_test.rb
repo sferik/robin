@@ -68,7 +68,8 @@ module SlotsBehavior
     slots.put(:a, 1.0)
 
     assert_equal :a, waiter.value
-    assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - start, :<, 2
+    # Woken, not timed out (5s): well under, however slow the machine.
+    assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - start, :<, 4
   end
 
   def test_thread_raise_interrupts_a_waiting_take

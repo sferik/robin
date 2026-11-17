@@ -62,11 +62,13 @@ class FakeRedis
 
   # Listens on a unix socket unless +tcp+ is true: tests open and close
   # many connections, and unix sockets don't use up ephemeral TCP ports.
-  def initialize(tls: nil, mode: :normal, tcp: false, host: "127.0.0.1", &handler)
+  # (Not on Windows, whose Unix sockets Ruby can bind but not connect to.)
+  def initialize(tls: nil, mode: :normal, tcp: Gem.win_platform?, host: "127.0.0.1", &handler)
     @handler = handler || ->(_command, _client) { FakeRedis.ok }
     @commands = Thread::Queue.new
     @connections = 0
     @disconnects = 0
+    @host = host
     if tcp
       @server = TCPServer.new(host, 0)
       @port = @server.addr[1]
@@ -79,6 +81,9 @@ class FakeRedis
     @sockets = Thread::Queue.new
     @thread = Thread.new { accept_loop }
   end
+
+  # How a Connection names this server in its errors.
+  def location = path || "#{@host}:#{port}/0"
 
   # Commands received so far, in order.
   def received

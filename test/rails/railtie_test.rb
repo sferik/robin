@@ -290,7 +290,7 @@ class RailtieTest < Minitest::Test
     lib = File.expand_path("../../lib", __dir__)
     script = 'require "rails"; require "robin"; p defined?(Robin::Rails::Railtie)'
     without = 'require "robin"; p [defined?(Robin::Rails), defined?(Rails)]'
-    run = ->(code) { IO.popen([RbConfig.ruby, "-I#{lib}", "-e", code], err: File::NULL, &:read) }
+    run = ->(code) { run_ruby(code, lib) }
 
     assert_equal %("constant"\n), run.call(script)
     assert_equal "[nil, nil]\n", run.call(without), "and nothing of it elsewhere"

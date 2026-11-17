@@ -15,8 +15,7 @@ jobs:
     # The development versions (Ruby's, JRuby's and TruffleRuby's) get an
     # early look, but can't fail the build: their steps may fail
     # (continue-on-error on each, not the job, so the job still passes,
-    # with a warning, rather than showing as a failed check). So, for now,
-    # does Windows, until Robin runs there.
+    # with a warning, rather than showing as a failed check).
     strategy:
       fail-fast: false
       matrix:
@@ -25,7 +24,11 @@ jobs:
         exclude:
           - { os: windows-latest, ruby: truffleruby-head } # (TruffleRuby has no Windows build)
     env:
-      ADVISORY: ${{ endsWith(matrix.ruby, '-head') || matrix.os == 'windows-latest' }}
+      ADVISORY: ${{ endsWith(matrix.ruby, '-head') }}
+      # Coverage is held to 100% on Linux (see the coverage job). Windows
+      # skips what it can't run (signals, swarms, systemd, the profiler), so
+      # it measures none.
+      COVERAGE: ${{ matrix.os == 'windows-latest' && 'false' || 'true' }}
     steps:
       - uses: actions/checkout@v7
       - id: redis
@@ -56,7 +59,7 @@ jobs:
         run: bundle exec rake test
       - name: Note an advisory failure
         if: steps.redis.outcome == 'failure' || steps.ruby.outcome == 'failure' || steps.compile.outcome == 'failure' || steps.tests.outcome == 'failure'
-        run: echo "::warning title=${{ matrix.ruby }} on ${{ matrix.os }} (advisory)::The tests failed on ${{ matrix.ruby }} on ${{ matrix.os }}, which can't fail the build yet"
+        run: echo "::warning title=${{ matrix.ruby }} on ${{ matrix.os }} (advisory)::The tests failed on ${{ matrix.ruby }} on ${{ matrix.os }}, a development version"
 
   # The Rails integration against every Rails release line still getting
   # patches (gemfiles/rails_*/Gemfile pin each one's latest release). The

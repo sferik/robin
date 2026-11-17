@@ -332,6 +332,7 @@ class CronParseTest < Minitest::Test
   private
 
   def with_tz(zone)
+    skip "Windows doesn't read IANA zone names from TZ" if Gem.win_platform?
     previous = ENV["TZ"]
     ENV["TZ"] = zone
     yield

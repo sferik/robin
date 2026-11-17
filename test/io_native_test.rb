@@ -5,6 +5,7 @@ require "robin"
 require "minitest/autorun"
 require "minitest/strict"
 require "socket"
+require_relative "support/socket_pair"
 
 begin
   require "robin_resp/robin_resp"
@@ -19,7 +20,7 @@ class IONativeTest < Minitest::Test
     # C only: JRuby has no GVL to save releasing, so the Java extension
     # leaves sending to Ruby.
     skip "NativeIO.roundtrip is C only" if name.include?("roundtrip") && !Robin::Redis::NativeIO.respond_to?(:roundtrip)
-    @ours, @theirs = UNIXSocket.pair
+    @ours, @theirs = SocketPair.open
   end
 
   def teardown
@@ -101,8 +102,10 @@ class IONativeTest < Minitest::Test
   end
 
   def test_failed_reads_raise
-    File.open(__dir__) do |dir|
-      assert_raises(Errno::EISDIR) { fill(+"", 1, io: dir) }
+    unless Gem.win_platform? # (which can't open a directory as a file)
+      File.open(__dir__) do |dir|
+        assert_raises(Errno::EISDIR) { fill(+"", 1, io: dir) }
+      end
     end
     @ours.close
 
@@ -213,7 +216,7 @@ class IONativeTest < Minitest::Test
     @theirs.close
 
     assert_equal :stale, roundtrip("PING"), "closed before it started"
-    @ours, @theirs = UNIXSocket.pair
+    @ours, @theirs = SocketPair.open
 
     assert_false roundtrip("PING", read_timeout: 0.05)
     # That PING, unanswered, so the closer waits for the next one.

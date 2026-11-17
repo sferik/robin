@@ -25,6 +25,7 @@ class ReliablePushTest < RobinTest
     @cfg = Robin::Config.new
     @cfg.key_prefix = "#{key_prefix_for_test}rp#{SecureRandom.hex(4)}:"
     @instances = []
+    @gates = []
     @cfg.logger = Logger.new(@log, formatter: ->(sev, _, _, msg) { "#{sev}: #{msg}\n" })
     up!
   end
@@ -41,6 +42,7 @@ class ReliablePushTest < RobinTest
   def stop_retrier(rp)
     thread = retrier(rp) or return
     rp.define_singleton_method(:pause) { |_seconds| Thread.exit }
+    @gates.each(&:close) # (a held retrier's pause returns, for its next one to exit)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 1
     thread.join(0.05) while thread.alive? && Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline
     thread.kill
@@ -77,6 +79,18 @@ class ReliablePushTest < RobinTest
     rp = track(Robin::ReliablePush.new(config, **))
     rp.define_singleton_method(:pause) { |_| sleep }
     rp
+  end
+
+  # A ReliablePush whose retrier waits at each pause until the test lets it
+  # through (gate << true), so only the test's own pushes and drains reach
+  # Redis till then, however slow the runner. (A retrier that brought Redis
+  # back after so many quick pauses could, on a slow one, get there first.)
+  def held(**)
+    rp = track(Robin::ReliablePush.new(config, **))
+    gate = Thread::Queue.new
+    @gates << gate
+    rp.define_singleton_method(:pause) { |_seconds| gate.pop }
+    [rp, gate]
   end
 
   # A ReliablePush whose retrier doesn't sleep; it records each delay and
@@ -192,7 +206,7 @@ class ReliablePushTest < RobinTest
   end
 
   def test_later_pushes_queue_behind_the_buffer_in_order
-    rp, = instant(recover_after: 100)
+    rp, gate = held
     down!
     rp.push(payloads(1..1)) { raise Robin::Redis::ConnectionError, "down" }
     called = false
@@ -204,6 +218,7 @@ class ReliablePushTest < RobinTest
 
     assert_true rp.drain
     assert_equal [1, 2, 3], queued_args
+    gate << true
     eventually { retrier(rp).nil? }
   end
 
@@ -228,7 +243,7 @@ class ReliablePushTest < RobinTest
   end
 
   def test_drain_failure_returns_false
-    rp, = instant(recover_after: 100)
+    rp, = held
     down!
     rp.push(payloads(1..1)) { raise Robin::Redis::ConnectionError, "down" }
 
@@ -237,7 +252,7 @@ class ReliablePushTest < RobinTest
   end
 
   def test_buffer_is_bounded_and_drops_oldest
-    rp, = instant(recover_after: 100, limit: 3)
+    rp, = held(limit: 3)
     down!
     rp.push(payloads(1..2)) { raise Robin::Redis::ConnectionError, "down" }
     rp.push(payloads(3..5)) { nil }
@@ -252,7 +267,7 @@ class ReliablePushTest < RobinTest
   end
 
   def test_buffer_one_over_drops_one
-    rp, = instant(recover_after: 100, limit: 2)
+    rp, = held(limit: 2)
     down!
     rp.push(payloads(1..3)) { raise Robin::Redis::ConnectionError, "down" }
 
@@ -270,7 +285,7 @@ class ReliablePushTest < RobinTest
 
   def test_buffering_draining_and_dropping_are_events
     events
-    rp, = instant(recover_after: 100, limit: 2)
+    rp, gate = held(limit: 2)
     down!
     error = Robin::Redis::ConnectionError.new("down")
     batch = payloads(1..3)
@@ -278,8 +293,7 @@ class ReliablePushTest < RobinTest
     retrying = retrier(rp)
     up!
     rp.drain
-    # The retrier may drain first (in parallel, on JRuby), and reports
-    # what it pushed once it lets go of the buffer: it's done when it ends.
+    gate << true
     assert retrying.join(5), "the retrier should end once the buffer is empty"
 
     # The error by its class and message: JRuby can hand on another
@@ -294,7 +308,7 @@ class ReliablePushTest < RobinTest
 
   def test_dropped_jobs_are_reported_as_errors
     errors
-    rp, = instant(recover_after: 100, limit: 1)
+    rp, = held(limit: 1)
     down!
     rp.push(payloads(1..2)) { raise Robin::Redis::ConnectionError, "down" }
     (ex, ctx), = errors
@@ -309,7 +323,7 @@ class ReliablePushTest < RobinTest
   # An error handler that pushes a job of its own while the buffer is
   # full mustn't deadlock on the buffer's lock.
   def test_drops_are_reported_outside_the_lock
-    rp, = instant(recover_after: 100, limit: 1)
+    rp, = held(limit: 1)
     down!
     reported = 0
     @cfg.error_handlers << lambda do |_ex, _ctx, _cfg|
@@ -345,7 +359,7 @@ class ReliablePushTest < RobinTest
 
   def test_finish_pushes_what_is_buffered
     errors
-    rp, = instant(recover_after: 100)
+    rp, = held
     down!
     rp.push(payloads(1..2)) { raise Robin::Redis::ConnectionError, "down" }
     up!
@@ -358,7 +372,7 @@ class ReliablePushTest < RobinTest
   def test_finish_reports_jobs_it_could_not_push
     errors
     events
-    rp, = instant(recover_after: 100)
+    rp, = held
     down!
     batch = payloads(1..2)
     rp.push(batch) { raise Robin::Redis::ConnectionError, "down" }
@@ -377,7 +391,7 @@ class ReliablePushTest < RobinTest
   def test_the_exit_hook_is_installed_once_when_buffering_starts
     hooked = []
     Robin::ReliablePush.exit_hook = ->(rp) { hooked << rp && nil }
-    rp, = instant(recover_after: 100)
+    rp, = held
     rp.push(payloads(1..1)) { nil }
 
     assert_empty hooked
@@ -475,7 +489,7 @@ class ReliablePushTest < RobinTest
   end
 
   def test_buffer_exactly_full_drops_nothing
-    rp, = instant(recover_after: 100, limit: 2)
+    rp, = held(limit: 2)
     down!
     rp.push(payloads(1..2)) { raise Robin::Redis::ConnectionError, "down" }
 
