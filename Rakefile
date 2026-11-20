@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
+require "bundler/gem_tasks"
 require "rake/testtask"
+
+# `rake release` builds the gem, tags the release and pushes the tag. The
+# push workflow (.github/workflows/push.yml) then builds the ruby and java
+# gems, signs them and pushes them to RubyGems.org, with attestations,
+# from CI.
+ENV["gem_push"] = "no"
 
 if RUBY_ENGINE == "ruby"
   begin
