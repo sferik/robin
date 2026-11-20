@@ -15,8 +15,10 @@ if RUBY_ENGINE == "ruby"
   if try_compile("int main(void) { return 0; }")
     $CFLAGS << " -O3 -std=c99 -Wall -Wno-declaration-after-statement" # rubocop:disable Style/GlobalVars -- mkmf API
     if ENV["ROBIN_EXT_COVERAGE"]
-      # Instrumented build for `rake c:coverage`.
-      $CFLAGS << " -O0 -g --coverage" # rubocop:disable Style/GlobalVars -- mkmf API
+      # Instrumented build for `rake c:coverage`. The counters are atomic:
+      # several threads run this code at once, and lost updates would drop
+      # branches from the report.
+      $CFLAGS << " -O0 -g --coverage -fprofile-update=atomic" # rubocop:disable Style/GlobalVars -- mkmf API
       $LDFLAGS << " --coverage" # rubocop:disable Style/GlobalVars -- mkmf API
     end
     have_header("poll.h") # for Robin::Redis::NativeIO (not on Windows)
