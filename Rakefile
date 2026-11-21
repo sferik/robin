@@ -364,12 +364,23 @@ namespace :bench do
 end
 
 namespace :bundle do
-  # `rake bundle:update[rack,puma]` updates just those gems.
-  desc "Update the main Gemfile.lock and each gemfiles/*/Gemfile.lock (all gems, or the ones given)"
+  # The gems of +given+ that +gemfile+'s lockfile has, to update: every one
+  # (--all) where none are given, and nil where it has none of them, as
+  # Bundler fails on a gem the bundle doesn't have.
+  gems_to_update = lambda do |gemfile, given|
+    next ["--all"] if given.empty?
+
+    locked = Bundler::LockfileParser.new(File.read("#{gemfile}.lock")).specs.map(&:name)
+    (given & locked).then { |gems| gems unless gems.empty? }
+  end
+
+  # `rake bundle:update[rack,puma]` updates just those gems, in each
+  # bundle that has them.
+  desc "Update the main Gemfile.lock, each gemfiles/*/Gemfile.lock, and the benchmarks' and the demo's (all gems, or the ones given)"
   task :update do |_task, args|
     require "bundler"
-    gems = args.extras.empty? ? ["--all"] : args.extras
-    ["Gemfile", *Dir["gemfiles/*/Gemfile"].sort].each do |gemfile|
+    ["Gemfile", *Dir["gemfiles/*/Gemfile"].sort, "bench/compare/Gemfile", "demo/Gemfile"].each do |gemfile|
+      gems = gems_to_update.call(gemfile, args.extras) or next
       Bundler.with_unbundled_env do
         sh({"BUNDLE_GEMFILE" => File.expand_path(gemfile, __dir__)}, "bundle", "update", *gems)
       end

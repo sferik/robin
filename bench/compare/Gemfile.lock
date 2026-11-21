@@ -8,13 +8,13 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    connection_pool (3.0.2)
+    connection_pool (3.0.3)
     hiredis-client (0.31.0)
       redis-client (= 0.31.0)
     json (3.1.0)
     json (3.1.0-java)
     logger (1.7.0)
-    rack (3.2.7)
+    rack (3.2.9)
     redis-client (0.31.0)
       connection_pool
     sidekiq (8.1.7)
@@ -35,16 +35,15 @@ DEPENDENCIES
   sidekiq (~> 8.1)
 
 CHECKSUMS
-  bundler (4.0.21) sha256=7cbf5499b426076aa16c8d28a59e4c2c3aad5a438402abcd961f0119f29f1dd0
-  connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
+  connection_pool (3.0.3) sha256=e0f8ee3ee0039396753e06e8a2dde0ef028e40f7df29e97f57da7577c489cb5e
   hiredis-client (0.31.0) sha256=4d22e4761687aa16cfd9440121841f72d52685aa47171563338776b929a04355
   json (3.1.0) sha256=3ce7ccf8fde58960177a3a756c31f292a4c1e1dedee884547096a5b0604e3bd8
   json (3.1.0-java) sha256=5052301b8f7fa676608d9470da9cde02931a9824e02f462b635d07bf2fcc5bfc
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
-  rack (3.2.7) sha256=93e13e1c24f93556671d85d2d79fa228c3485815c50d7e2f265b5330c6528fb7
+  rack (3.2.9) sha256=8235c1d08f0c461bedcff4413bbeba888173e5b09e1332ae951c98f0ee460dcc
   redis-client (0.31.0) sha256=6820cb2a21e6795a823141f50fd25e655de2b8dc8ff833b43509a27b0263fd75
   robin (0.1.0)
   sidekiq (8.1.7) sha256=91ad48c7e6c32e1846bf1d5b74c27948758049b93fed0cb539f8d586c7de3415
 
 BUNDLED WITH
-  4.0.21
+  4.1.0
