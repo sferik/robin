@@ -18,7 +18,7 @@ end
 
 teardown { @launcher.stop }
 
-duel "run: a server with 10 workers", only: :timing do |n|
+duel "run: a server with 10 workers", judge: :timed do |n|
   # Pushed out of the workers' sight, then handed to them all at once.
   untimed { @job.set(queue: "staging").perform_bulk(Array.new(n) { |i| [i] }) }
   Robin.redis { |c| c.call("RENAME", Robin.config.key("queue", "staging"), Robin.config.key("queue", "default")) }

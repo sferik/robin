@@ -32,10 +32,10 @@ gem "simplecov", ">= 1.3"
 gem "opentelemetry-sdk"
 
 # Duel (`rake perf`) and its plugins.
-gem "duel", "~> 0.2"
-gem "duel-redis", "~> 0.2"
-gem "duel-gvl", "~> 0.2"
-gem "duel-retained", "~> 0.2"
+gem "duel", "~> 0.3"
+gem "duel-redis", "~> 0.3"
+gem "duel-gvl", "~> 0.3"
+gem "duel-retained", "~> 0.3"
 
 platforms :mri do
   gem "mutant-minitest"

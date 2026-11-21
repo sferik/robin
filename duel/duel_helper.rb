@@ -30,7 +30,7 @@ def configure_robin(**settings)
     config.logger = Logger.new(File::NULL, level: Logger::INFO)
     settings.each { |key, value| config.public_send(:"#{key}=", value) }
   end
-  Duel::Redis.flush
+  Duel::Redis.reset
   Robin.config
 end
 

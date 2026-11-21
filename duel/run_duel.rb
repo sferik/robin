@@ -17,7 +17,7 @@ duel "run: fetch, run and acknowledge a job" do |n|
   run_jobs(n)
 end
 
-duel "run: a job with a 10 KB argument", peak_memory: true do |n|
+duel "run: a job with a 10 KB argument", judge: %i[timed counted peak_memory] do |n|
   once do
     @job = define_job(:RunLargeJob)
     @arg = "x" * 10_240

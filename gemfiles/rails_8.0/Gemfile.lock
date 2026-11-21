@@ -303,10 +303,10 @@ PLATFORMS
 
 DEPENDENCIES
   activejob (~> 8.0.0, >= 8.0.5.1)
-  duel (~> 0.2)
-  duel-gvl (~> 0.2)
-  duel-redis (~> 0.2)
-  duel-retained (~> 0.2)
+  duel (~> 0.3)
+  duel-gvl (~> 0.3)
+  duel-redis (~> 0.3)
+  duel-retained (~> 0.3)
   minitest
   minitest-memory (>= 1.1.1)
   minitest-strict

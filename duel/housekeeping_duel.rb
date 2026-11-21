@@ -26,7 +26,7 @@ end
 
 # An idle worker's wait for a job that doesn't come: its CPU is too
 # little to judge, but its round trips and commands count.
-duel "idle: a fetch that waits for nothing", only: :count do
+duel "idle: a fetch that waits for nothing", judge: :counted do
   once do
     configure_robin(fetch_timeout: 0.01)
     @fetcher = Robin::Fetcher.new(Robin.config.default_capsule, "perf")

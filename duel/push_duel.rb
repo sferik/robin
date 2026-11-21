@@ -22,7 +22,7 @@ duel "push: 100 jobs in bulk" do
   @job.perform_bulk(@args)
 end
 
-duel "push: one job with a 10 KB argument", peak_memory: true do
+duel "push: one job with a 10 KB argument", judge: %i[timed counted peak_memory] do
   once { @large = "x" * 10_240 }
   @job.perform_async(@large)
 end
