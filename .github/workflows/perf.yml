@@ -29,7 +29,7 @@ jobs:
   # each runtime Robin runs on, each a check and a report of its own,
   # which the Perf comment workflow comments with together.
   yjit:
-    uses: sferik/duel-ruby/.github/workflows/duel.yml@v0.3.0
+    uses: sferik/duel-ruby/.github/workflows/duel.yml@v0.3.1
     permissions:
       contents: read
       pull-requests: read # for the pull request's labels (see c.accept_label)
@@ -45,7 +45,7 @@ jobs:
         sudo systemctl stop redis-server
 
   interpreter:
-    uses: sferik/duel-ruby/.github/workflows/duel.yml@v0.3.0
+    uses: sferik/duel-ruby/.github/workflows/duel.yml@v0.3.1
     permissions:
       contents: read
       pull-requests: read # for the pull request's labels (see c.accept_label)
@@ -60,7 +60,7 @@ jobs:
         sudo systemctl stop redis-server
 
   jruby:
-    uses: sferik/duel-ruby/.github/workflows/duel.yml@v0.3.0
+    uses: sferik/duel-ruby/.github/workflows/duel.yml@v0.3.1
     permissions:
       contents: read
       pull-requests: read # for the pull request's labels (see c.accept_label)
@@ -87,7 +87,7 @@ jobs:
   yjit-push:
     needs: [yjit, interpreter, jruby]
     if: ${{ !cancelled() && github.event_name == 'push' }}
-    uses: sferik/duel-ruby/.github/workflows/duel-push.yml@v0.3.0
+    uses: sferik/duel-ruby/.github/workflows/duel-push.yml@v0.3.1
     permissions:
       contents: write # to comment on the commit, move the passed branch, and the badge's
     with:
@@ -101,7 +101,7 @@ jobs:
   interpreter-push:
     needs: interpreter
     if: ${{ !cancelled() && github.event_name == 'push' }}
-    uses: sferik/duel-ruby/.github/workflows/duel-push.yml@v0.3.0
+    uses: sferik/duel-ruby/.github/workflows/duel-push.yml@v0.3.1
     permissions:
       contents: write # to comment on the commit
     with:
@@ -113,7 +113,7 @@ jobs:
   jruby-push:
     needs: jruby
     if: ${{ !cancelled() && github.event_name == 'push' }}
-    uses: sferik/duel-ruby/.github/workflows/duel-push.yml@v0.3.0
+    uses: sferik/duel-ruby/.github/workflows/duel-push.yml@v0.3.1
     permissions:
       contents: write # to comment on the commit
     with:
