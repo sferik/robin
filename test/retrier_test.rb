@@ -327,6 +327,11 @@ class RetrierTest < RobinTest
     assert_equal lines, Robin::Retrier.unpack_backtrace(packed)
     # Older versions prefixed it.
     assert_equal lines, Robin::Retrier.unpack_backtrace("deflate:#{packed}")
+    # Other tools may break the Base64 into lines.
+    wrapped = [Zlib.deflate(JSON.generate(lines))].pack("m")
+
+    assert_includes wrapped, "\n"
+    assert_equal lines, Robin::Retrier.unpack_backtrace(wrapped)
     assert_equal [], Robin::Retrier.pack_backtrace([])
     # Backtraces stored uncompressed read as they are.
     assert_equal %w[a b], Robin::Retrier.unpack_backtrace(%w[a b])

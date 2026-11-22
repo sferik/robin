@@ -25,8 +25,10 @@ module Robin
     def self.unpack_backtrace(value)
       return value unless value.instance_of?(String)
 
-      # (unpack1("m0") returns a String; Steep can't tell from the format.)
-      deflated = value.delete_prefix(BACKTRACE_PREFIX).unpack1("m0") #: String
+      # Base64 with or without line breaks (some tools write it with them,
+      # every 60 characters). (unpack1 returns a String; Steep can't tell
+      # from the format.)
+      deflated = value.delete_prefix(BACKTRACE_PREFIX).unpack1("m") #: String
       Robin.load_json(Zlib.inflate(deflated))
     rescue Zlib::Error, ArgumentError, JSON::ParserError
       ["(unreadable backtrace)"]
