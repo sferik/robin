@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-22
+
 ### Added
 
 - `config.job_timestamps = :seconds` records a job's times (`created_at`,
