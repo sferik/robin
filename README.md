@@ -683,9 +683,22 @@ Robin.configure_server do |config|
     cron.register "*/5 * * * *", "PruneSessions"
     cron.register "0 9 * * MON-FRI", "DailyDigest", queue: "mailers", tz: "America/New_York"
     cron.register "@hourly", "SyncInventory", args: ["warehouse-1"], description: "Pull stock levels"
+    cron.register "0 9 * * MON#1", "MonthlyReport" # the first Monday of each month
+    cron.register "@every 90s", "PollFeeds"
   end
 end
 ```
+
+Schedules are cron expressions (five fields, or six with seconds first)
+or `@every` and an interval. Besides the standard syntax, cron
+expressions take `L` or `-1` for the last day of the month (`-2` for
+the one before it), `MON#2` for the second Monday of the month (`#-1` or
+`#L` for the last), and `TUE%2` for Tuesdays of even weeks (`TUE%2+1` for
+odd ones), as sidekiq-cron and sidekiq-scheduler do. `@every` takes days,
+hours, minutes and seconds (`@every 1h30m`) and fires at the multiples
+of its interval since the Unix epoch: `@every 15m` at :00, :15, :30 and
+:45, and `@every 1d` at midnight UTC. So the ticks are the same whenever
+a process starts.
 
 Only the elected leader enqueues periodic jobs, and each tick is
 deduplicated in Redis, so a job runs once per tick no matter how many

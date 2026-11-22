@@ -77,7 +77,9 @@ class CronParseTest < Minitest::Test
     bad = ["1/2/3 * * * *", "1-2-3 * * * *", "1/2/x * * * *", "*/08 * * * *".sub("08", "0x8"), "", "* * * *", "* * * * * * *", "60 * * * *", "* 24 * * *", "* * 0 * *", "* * 32 * *",
       "* * * 0 *", "* * * 13 *", "* * * * 8", "*/0 * * * *", "*/-1 * * * *", "*/x * * * *",
       "5-1 * * * *", "* * * * FUNDAY", "a * * * *", "1.5 * * * *", "0x1 * * * *", "-1 * * * *",
-      "1- * * * *", "* * * JANUARY *", "61 * * * * *"]
+      "1- * * * *", "* * * JANUARY *", "61 * * * * *", "* * -32 * *", "* * -0 * *", "* * L-2 * *",
+      "* * * * MON#6", "* * * * MON#0", "* * * * MON#-6", "* * * * 8#1", "* * * * X#1", "* * * * 1-5#1",
+      "* * * * TUE%0", "* * * * TUE%x", "* * * * 8%2", "* * * * TUE%2+x", "* * * * #1", "* * * * MON#1#2"]
 
     bad.each do |expr|
       assert_raises(Robin::Cron::ParseError, expr) { cron(expr) }
@@ -94,6 +96,16 @@ class CronParseTest < Minitest::Test
     e = assert_raises(Robin::Cron::ParseError) { cron("x * * * *") }
     assert_equal 'invalid cron value "x" in "x * * * *"', e.message
     assert_kind_of ArgumentError, e
+    {
+      "0 0 -32 * *" => '"-32" is out of range -31 to -1',
+      "0 0 * * TUE%0" => 'bad cycle in "TUE%0"',
+      "0 0 * * 8#1" => '"8#1" is out of range 0-7',
+      "0 0 * * 8%2" => '"8%2" is out of range 0-7',
+      "0 0 * * MON#6" => %("MON#6" isn't a weekday with #1 to #5, #-1 to #-5, #L or %n),
+      "0 0 * * TUE%x" => %("TUE%x" isn't a weekday with #1 to #5, #-1 to #-5, #L or %n)
+    }.each do |expr, message|
+      assert_equal message, assert_raises(Robin::Cron::ParseError) { cron(expr) }.message
+    end
   end
 
   def test_shortcuts
@@ -121,6 +133,158 @@ class CronParseTest < Minitest::Test
     refute_fires c, utc(2028, 2, 28)
     assert_fires c, utc(2027, 2, 28)
     assert_fires cron("0 0 l * *"), utc(2026, 1, 31)
+  end
+
+  def test_days_counted_from_the_end_of_the_month
+    c = cron("0 0 -2,5,L,last * *")
+
+    assert_equal [5], c.days
+    assert_equal [-2, -1], c.days_from_end
+    assert_equal [-31, -1], cron("0 0 -31,-1 * *").days_from_end
+    assert_equal [-1], cron("0 0 l * *").days_from_end
+    assert_empty cron("0 0 1 * *").days_from_end
+    assert_fires c, utc(2026, 4, 29)
+    assert_fires c, utc(2026, 4, 30)
+    assert_fires c, utc(2026, 4, 5)
+    refute_fires c, utc(2026, 4, 28)
+    assert_fires c, utc(2028, 2, 28)
+    refute_fires c, utc(2027, 2, 28 - 2)
+    assert_fires cron("0 0 -31 * *"), utc(2026, 1, 1)
+    refute_fires cron("0 0 -31 * *"), utc(2026, 2, 1)
+    assert_fires cron("0 0 L * *"), utc(2028, 3, 31) # not February: 31 days in a leap year too
+    refute_fires cron("0 0 L * *"), utc(2028, 3, 29)
+  end
+
+  def test_nth_weekdays_of_the_month
+    c = cron("0 0 * * MON#2,fri#L,0#-2,7#1,3#last,2#1")
+
+    assert_equal [[0, -2], [0, 1], [1, 2], [2, 1], [3, -1], [5, -1]], c.nth_weekdays
+    assert_empty c.weekdays
+    assert_empty cron("0 0 * * 1").nth_weekdays
+    assert_fires c, utc(2026, 11, 9) # the 2nd Monday
+    refute_fires c, utc(2026, 11, 2)
+    refute_fires c, utc(2026, 11, 16)
+    assert_fires c, utc(2026, 11, 27) # the last Friday
+    refute_fires c, utc(2026, 11, 20)
+    assert_fires c, utc(2026, 11, 22) # the 2nd-to-last Sunday
+    refute_fires c, utc(2026, 11, 29)
+    assert_fires c, utc(2026, 11, 1) # the 1st Sunday
+    assert_fires c, utc(2026, 11, 3) # the 1st Tuesday
+    refute_fires c, utc(2026, 11, 10)
+  end
+
+  def test_fifth_weekdays_and_weekdays_with_nth_ones
+    assert_fires cron("0 0 * * 1#5"), utc(2026, 11, 30)
+    assert_fires cron("0 0 * * 6#1"), utc(2026, 11, 7)
+    assert_fires cron("0 0 * * 2#-1"), utc(2026, 11, 24) # 6 days before the end
+    assert_equal [-8], cron("0 0 -08 * *").days_from_end
+    refute_fires cron("0 0 * * 6#2"), utc(2026, 11, 7)
+    assert_fires cron("0 0 * * 1#-5"), utc(2026, 11, 2)
+    refute_fires cron("0 0 * * 1#-5"), utc(2026, 11, 9)
+    assert_fires cron("0 0 * * 1,5#1"), utc(2026, 11, 16)
+  end
+
+  def test_weekdays_in_cycles_of_weeks
+    c = cron("0 0 * * TUE%2,thu%3+4")
+
+    assert_equal [[2, 2, 0], [4, 3, 1]], c.weekday_cycles
+    assert_empty c.weekdays
+    assert_empty cron("0 0 * * 1").weekday_cycles
+    assert_equal [[0, 1, 0]], cron("0 0 * * 7%1").weekday_cycles
+    assert_equal [[2, 10, 2]], cron("0 0 * * TUE%10+12").weekday_cycles
+    assert_equal [[2, 10, 0], [3, 10, 2]], cron("0 0 * * TUE%010,WED%10+012").weekday_cycles
+  end
+
+  def test_repeated_and_unordered_day_parts
+    repeated = cron("0 0 -1,L * WED%2,TUE%2,2%2+2,MON#2,1#2")
+
+    assert_equal [[[2, 2, 0], [3, 2, 0]], [[1, 2]], [-1]], [repeated.weekday_cycles, repeated.nth_weekdays, repeated.days_from_end]
+  end
+
+  def test_weekdays_in_cycles_of_weeks_match
+    c = cron("0 0 * * TUE%2,thu%3+4")
+
+    assert_fires c, utc(2019, 1, 1) # week 0, starting Monday 2018-12-31
+    refute_fires c, utc(2019, 1, 8)
+    assert_fires c, utc(2019, 1, 15)
+    assert_fires c, utc(2018, 12, 18) # week -2
+    refute_fires c, utc(2018, 12, 25)
+    assert_fires c, utc(2019, 1, 10) # week 1
+    refute_fires c, utc(2019, 1, 3)
+    assert_fires c, utc(2019, 1, 31) # week 4
+    assert_fires cron("0 0 * * SUN%2"), utc(2019, 1, 6) # week 0's Sunday
+    refute_fires cron("0 0 * * SUN%2"), utc(2019, 1, 13)
+    assert_fires cron("0 23 * * SUN%2"), utc(2019, 1, 6, 23) # late on week 0's last day
+    assert_fires cron("0 0 * * MON%2+1"), utc(2019, 1, 7) # the first moment of week 1
+  end
+
+  def test_parse_returns_an_every_or_a_cron
+    every = Robin::Cron.parse("  @EVERY 1h30m ")
+
+    assert_instance_of Robin::Cron::Every, every
+    assert_equal ["@EVERY 1h30m", "@EVERY 1h30m", 5_400], [every.expression, every.to_s, every.interval]
+    assert_equal '#<Robin::Cron::Every "@EVERY 1h30m">', every.inspect
+    assert_equal cron("5 4 * * *").inspect, Robin::Cron.parse("5 4 * * *", tz: "UTC").inspect
+    assert_equal Robin::Cron.new("* * * * *").inspect, Robin::Cron.parse(:"* * * * *").inspect
+    assert_equal 60, Robin::Cron.parse(:"@every 1m").interval
+    e = assert_raises(Robin::Cron::ParseError) { Robin::Cron.parse(" @every 5m ", tz: "UTC") }
+    assert_equal '"@every 5m" counts from the Unix epoch and takes no time zone', e.message
+    assert_raises(Robin::Cron::ParseError) { Robin::Cron.parse("@everyday") }
+  end
+
+  def test_every_intervals
+    {"@every 5m" => 300, "@every 1D" => 86_400, "@every 2d3h4m5s" => 183_845, "@every 90S" => 90, "@every 0m5s" => 5,
+     "@every 1h  " => 3_600, "@every\t10h" => 36_000, "@every 08m" => 480}.each do |expr, interval|
+      assert_equal interval, Robin::Cron.parse(expr).interval, expr
+    end
+    ["@every", "@every 5", "@every 5x", "@every 5m extra", "@every m", "@every 5m5", "x@every 5m"].each do |expr|
+      assert_raises(Robin::Cron::ParseError, expr) { Robin::Cron::Every.new(expr) }
+    end
+    assert_equal ["@every 5m", 60], [Robin::Cron::Every.new(" @every 5m ").expression, Robin::Cron::Every.new(:"@every 1m").interval]
+    e = assert_raises(Robin::Cron::ParseError) { Robin::Cron::Every.new("@every 5") }
+    assert_equal %("@every 5" isn't "@every" and an interval, like "@every 5m" or "@every 1h30m"), e.message
+    assert_equal '"@every 0m0s" has no interval', assert_raises(Robin::Cron::ParseError) { Robin::Cron::Every.new("@every 0m0s") }.message
+  end
+
+  def test_every_ticks_at_multiples_of_its_interval_since_the_epoch
+    every = Robin::Cron.parse("@every 90s")
+    at = Time.at(1_800_000_000) # a multiple of 90
+
+    assert_fires every, at
+    assert_fires every, at + 90.5
+    refute_fires every, at + 89
+    assert_equal [at + 90, at + 90, at + 90], [every.next_time(at), every.next_time(at + 89.9), every.next_time(at + 0.1)]
+    assert_equal [at - 90, at, at, at + 90], [every.previous_time(at), every.previous_time(at + 0.1), every.previous_time(at + 90), every.previous_time(at + 90.5)]
+    assert_predicate every.next_time(at), :utc? # in UTC, not a local zone that might be UTC
+    assert_predicate every.previous_time(at), :utc?
+    assert_in_delta Time.now + 45, every.next_time, 45
+    assert_in_delta Time.now - 45, every.previous_time, 45
+  end
+
+  def test_every_descriptions
+    {"@every 5m" => "every 5 minutes", "@every 1h" => "every hour", "@every 60m" => "every hour", "@every 1d" => "every day",
+     "@every 1s" => "every second", "@every 10h" => "every 10 hours", "@every 1h30m" => "every 1 hour 30 minutes",
+     "@every 90s" => "every 1 minute 30 seconds", "@every 2d1s" => "every 2 days 1 second", "@every 1d1h1m1s" => "every 1 day 1 hour 1 minute 1 second",
+     "@every 11m" => "every 11 minutes"}.each do |expr, text|
+      assert_equal text, Robin::Cron.parse(expr).description, expr
+    end
+  end
+
+  # Times fugit gives for these.
+  def test_fugit_forms_against_fugit
+    from = utc(2026, 1, 1)
+
+    {
+      "0 9 * * MON#2" => [utc(2026, 1, 12, 9), utc(2026, 2, 9, 9)],
+      "0 9 * * 1#-1" => [utc(2026, 1, 26, 9), utc(2026, 2, 23, 9)],
+      "0 9 -2 * *" => [utc(2026, 1, 30, 9), utc(2026, 2, 27, 9)],
+      "0 9 * * TUE%2+1" => [utc(2026, 1, 13, 9), utc(2026, 1, 27, 9)]
+    }.each do |expr, times|
+      c = cron(expr)
+
+      assert_equal times, [c.next_time(from), c.next_time(times.first)], expr
+      assert_equal times.first, c.previous_time(times.last), expr
+    end
   end
 
   def test_match_checks_every_field
@@ -317,7 +481,20 @@ class CronParseTest < Minitest::Test
       "0 0-23/2 * * *" => "every 2 hours at :00",
       "0 1-23/2 * * *" => "0 1-23/2 * * *",
       "1,2 5 * * *" => "1,2 5 * * *",
-      "*/59 * * * * *" => "every 59 seconds"
+      "*/59 * * * * *" => "every 59 seconds",
+      "0 9 -2 * *" => "at 09:00 on the 2nd-to-last day of the month",
+      "0 9 1,15,-3,L * *" => "at 09:00 on day 1, 15 and the 3rd-to-last day and the last day of the month",
+      "0 9 -21,-22,-23,-11 * *" => "at 09:00 on the 23rd-to-last day and the 22nd-to-last day and " \
+                                   "the 21st-to-last day and the 11th-to-last day of the month",
+      "0 9 -31,-2,-1 * *" => "at 09:00 on the 31st-to-last day and the 2nd-to-last day and the last day of the month",
+      "0 9 -12,-13,-4 * *" => "at 09:00 on the 13th-to-last day and the 12th-to-last day and the 4th-to-last day of the month",
+      "0 9 * * MON#2" => "at 09:00 on the 2nd Monday of the month",
+      "0 9 * * FRI#L,1#1,3#3" => "at 09:00 on the 1st Monday of the month or on the 3rd Wednesday of the month or " \
+                                 "on the last Friday of the month",
+      "0 9 * * 1,3#-2" => "at 09:00 on Monday or on the 2nd-to-last Wednesday of the month",
+      "0 9 * * TUE%2" => "at 09:00 on Tuesday every 2 weeks (week 0)",
+      "0 9 * * 0,6,TUE%3+4" => "at 09:00 on weekends or on Tuesday every 3 weeks (week 1)",
+      "0 9 L * 1#1" => "at 09:00 on the last day of the month or on the 1st Monday of the month"
     }.each do |expr, text|
       label = (text == expr) ? text : "#{text} (UTC)"
 

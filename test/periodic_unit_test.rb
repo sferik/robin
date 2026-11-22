@@ -26,7 +26,7 @@ class PeriodicUnitTest < RobinTest
       registry.register(*args, **(opts || {}))
     end
     entries = registry.entries
-    crons = entries.to_h { |id, e| [id, Robin::Cron.new(e["cron"], tz: e["tz"])] }
+    crons = entries.to_h { |id, e| [id, Robin::Cron.parse(e["cron"], tz: e["tz"])] }
     [ids, entries, crons]
   end
 
@@ -75,6 +75,34 @@ class PeriodicUnitTest < RobinTest
     assert_nil lenient.register("bogus", "X")
     assert_empty lenient.entries
     assert_equal ['X: cron expression must have 5 or 6 fields: "bogus"'], problems
+  end
+
+  def test_register_takes_every_schedules
+    registry = Robin::Periodic::Registry.new
+    id = registry.register("@every 15m", PeriodicJob)
+
+    assert_equal "@every 15m", registry.entries.fetch(id).fetch("cron")
+    e = assert_raises(Robin::Cron::ParseError) { registry.register("@every 15m", "X", tz: "UTC") }
+    assert_equal '"@every 15m" counts from the Unix epoch and takes no time zone', e.message
+  end
+
+  def test_tick_enqueues_every_schedules_once_per_interval
+    ids, entries, crons = setup_entries([["@every 10s", PeriodicJob]])
+    store(entries, 0)
+    now = Time.at(1_800_000_005)
+
+    assert_equal 1, periodic.tick(config, entries, crons, now).size
+    assert_equal [1_800_000_000_000], periodic.history(ids.first, config: config).map { |run| run["at"] }
+    assert_empty periodic.tick(config, entries, crons, now + 4)
+    assert_equal 1, periodic.tick(config, entries, crons, now + 5).size
+  end
+
+  def test_list_describes_every_schedules
+    _, entries, = setup_entries([["@every 1h30m", PeriodicJob]])
+    store(entries, 0)
+    row = periodic.list(config: config).first
+
+    assert_equal ["every 1 hour 30 minutes", Robin::Cron.parse("@every 1h30m").next_time.to_i * 1000], row.values_at("description", "next_at")
   end
 
   # -- tick --------------------------------------------------------------------
@@ -382,7 +410,7 @@ class PeriodicUnitTest < RobinTest
   # -- list --------------------------------------------------------------------
 
   def test_list
-    ids, entries, = setup_entries([["0 3 * * *", PeriodicJob], {description: "nightly", args: [1], tz: "UTC"}],
+    ids, entries, = setup_entries([["0 3 * * *", PeriodicJob], {description: "nightly", args: [1], tz: "Asia/Kathmandu"}],
       [["*/5 * * * *", "Other"], {queue: "q"}])
     store(entries, 123)
     periodic.pause!(ids[1], config: config)
@@ -393,10 +421,10 @@ class PeriodicUnitTest < RobinTest
     assert_equal ids.sort, rows.map { |r| r["id"] }
     nightly = rows.find { |r| r["id"] == ids[0] }
     other = rows.find { |r| r["id"] == ids[1] }
-    next_at = Robin::Cron.new("0 3 * * *", tz: "UTC").next_time
+    next_at = Robin::Cron.new("0 3 * * *", tz: "Asia/Kathmandu").next_time
 
     assert_equal({"id" => ids[0], "cron" => "0 3 * * *", "class" => "PeriodicJob", "queue" => "default", "args" => [1],
-                  "tz" => "UTC", "description" => "nightly", "next_at" => next_at.to_i * 1000, "last_at" => last_at,
+                  "tz" => "Asia/Kathmandu", "description" => "nightly", "next_at" => next_at.to_i * 1000, "last_at" => last_at,
                   "last_jid" => jid, "paused" => false, "armed_at" => 123}, nightly)
     assert_equal ["q", "every 5 minutes", nil, nil, true], other.values_at("queue", "description", "last_at", "last_jid", "paused")
   end
@@ -521,6 +549,18 @@ class PeriodicUnitTest < RobinTest
                                               "tz" => nil, "description" => nil, "options" => {}}, JSON.parse(stored[yearly]))
     assert_equal 2, Robin::Queue.new("cron").size
     assert_equal 1_800_000, periodic.history(half_hourly, config: config).first["at"] % 3_600_000
+  end
+
+  def test_attach_runs_every_schedules
+    config.periodic { |r| r.register("@every 1s", PeriodicJob) }
+    redis("HSET", key("armed"), Robin::Periodic::Registry.new.register("@every 1s", PeriodicJob), 0)
+    with_fake_sleep do |sleeps|
+      periodic.attach(FakeLauncher.new(config, true, 1)).join
+
+      assert_operator sleeps.first, :<=, 1
+    end
+
+    assert_equal 1, Robin::Queue.new("cron").size
   end
 
   def test_arming_time_is_kept_across_restarts

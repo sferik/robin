@@ -2115,11 +2115,13 @@ class LauncherLifecycleTest < RobinTest
     config.heartbeat_interval = 0.05
     beats = 0
     @launcher.define_singleton_method(:beat) { beats += 1 }
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     @launcher.run
-    sleep 0.3
+    sleep 0.01 until beats >= 3 || Process.clock_gettime(Process::CLOCK_MONOTONIC) - started > 10
 
-    assert_operator beats, :<, 15
     assert_operator beats, :>=, 3
+    # Three beats take at least the two naps between them.
+    assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :>=, 0.1
   ensure
     @launcher.stop
   end

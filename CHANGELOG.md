@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Cron expressions take fugit's additions: days counted from the end of
+  the month (`-2`), the nth weekday of the month (`MON#2`, `FRI#L`) and
+  weekdays of every nth week (`TUE%2`).
+- `@every` schedules for periodic jobs (`@every 90s`, `@every 1h30m`),
+  firing at the multiples of their interval since the Unix epoch.
+- `Robin::Cron.parse`, which returns a `Robin::Cron` or, for an `@every`
+  schedule, a `Robin::Cron::Every`.
+
 ## [0.1.0] - 2026-10-24
 
 The first release. Everything is open source under the LGPL-3.0.

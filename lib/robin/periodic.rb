@@ -10,6 +10,7 @@ module Robin
   #       cron.register "*/5 * * * *", "CleanupJob"
   #       cron.register "0 3 * * *", "NightlyReport", queue: "low", args: ["daily"],
   #         tz: "America/Chicago", description: "Email the nightly report"
+  #       cron.register "@every 90s", "PollFeeds" # see Cron::Every
   #     end
   #   end
   #
@@ -68,7 +69,7 @@ module Robin
       def register(cron, klass, queue: nil, args: [], tz: nil, description: nil, **options)
         # @type ivar @problems: Array[String]
         begin
-          Cron.new(cron, tz: tz) # validate early
+          Cron.parse(cron, tz: tz) # validate early
         rescue Cron::ParseError => e
           raise unless @problems
 
@@ -115,7 +116,7 @@ module Robin
         return if entries.empty?
 
         write_registry(config, entries)
-        crons = entries.transform_values { |e| Cron.new(e.fetch("cron"), tz: e.fetch("tz")) }
+        crons = entries.transform_values { |e| Cron.parse(e.fetch("cron"), tz: e.fetch("tz")) }
         Thread.new do
           Thread.current.name = "robin.periodic"
           run_loop(launcher, entries, crons)
@@ -318,7 +319,7 @@ module Robin
 
       # nil for definitions this version can't parse.
       def parse(entry)
-        Cron.new(entry.fetch("cron"), tz: entry["tz"])
+        Cron.parse(entry.fetch("cron"), tz: entry["tz"])
       rescue Cron::ParseError
         nil
       end

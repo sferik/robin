@@ -12,8 +12,13 @@ module Robin
     MONTH_NAMES: Array[String]
     ANY: Array[String]
     MAX_STEPS: Integer
+    FROM_END: Regexp
+    NTH: Regexp
+    CYCLE: Regexp
+    ORDINAL_SUFFIXES: Hash[Integer, String]
+    WEEK_ZERO: Integer
+    MONTH_DAYS: Array[Integer]
 
-    @last_dom: bool
     @dom_any: bool
     @dow_any: bool
 
@@ -31,6 +36,22 @@ module Robin
     attr_reader days: Array[Integer]
     attr_reader months: Array[Integer]
     attr_reader weekdays: Array[Integer]
+
+    # Days of the month counted from its end: -1 for the last.
+    attr_reader days_from_end: Array[Integer]
+
+    # The nth weekdays of the month: [weekday, n], n from 1 to 5 or -1
+    # (the last) to -5.
+    attr_reader nth_weekdays: Array[[Integer, Integer]]
+
+    # Weekdays in cycles of weeks: [weekday, every, offset].
+    attr_reader weekday_cycles: Array[[Integer, Integer, Integer]]
+
+    # A cron expression's schedule or an @every one.
+    type schedule = Cron | Every
+
+    # A Cron, or an Every for "@every" schedules (which take no zone).
+    def self.parse: (_ToS expression, ?tz: String?) -> schedule
 
     def initialize: (_ToS expression, ?tz: String?) -> void
 
@@ -69,17 +90,63 @@ module Robin
 
     def describe_dom: () -> String?
 
-    def describe_dow: () -> String?
+    def describe_dow: () -> Array[String]
+
+    def describe_weekdays: () -> String
+
+    def from_end: (Integer n) -> String
+
+    def ordinal: (Integer n) -> String
 
     def describe_months: () -> String?
 
     def parse: (String expr) -> void
+
+    def days_of_month: (String text) -> [Array[Integer], Array[Integer]]
+
+    def days_of_week: (String text) -> [Array[Integer], Array[[Integer, Integer]], Array[[Integer, Integer, Integer]]]
+
+    def weekday: (MatchData match) -> Integer
 
     def field: (String text, Integer min, Integer max, ?Hash[String, Integer] names) -> Array[Integer]
 
     def value: (String text, Hash[String, Integer] names) -> Integer
 
     def day_match?: (Time w) -> bool
+
+    def weekday_match?: (Time w) -> bool
+
+    def last_day: (Time w) -> Integer
+
+    def week: (Time w) -> Integer
+
+    # A schedule firing at the multiples of an interval since the Unix
+    # epoch ("@every 5m").
+    class Every
+      PREFIX: Regexp
+      FORMAT: Regexp
+      UNITS: Hash[String, Integer]
+      UNIT_NAMES: Hash[Integer, String]
+
+      attr_reader expression: String
+
+      # In seconds.
+      attr_reader interval: Integer
+
+      def initialize: (_ToS expression) -> void
+
+      def to_s: () -> String
+
+      def inspect: () -> String
+
+      def match?: (Time time) -> bool
+
+      def next_time: (?Time from) -> Time
+
+      def previous_time: (?Time from) -> Time
+
+      def description: () -> String
+    end
 
     # Converts between UTC instants and "wall clock" times (UTC Times
     # holding the local fields).

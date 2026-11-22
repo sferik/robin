@@ -249,8 +249,12 @@ class IONativeTest < Minitest::Test
     # Once the first bytes arrive, the rest back up and the writer waits in
     # poll(): a wakeup any sooner, on a slow machine, would interrupt nothing.
     @theirs.wait_readable(5) || flunk("the write never started")
-    sleep 0.1
-    waiter.wakeup # while writing
+    # While writing: a few times, so one lands in poll() rather than
+    # between the writes.
+    5.times do
+      sleep 0.05
+      waiter.wakeup
+    end
     got = +""
     got << @theirs.readpartial(65_536) while got.bytesize < data.bytesize
     sleep 0.1

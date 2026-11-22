@@ -57,16 +57,16 @@ module Robin
 
     # Enqueues the entries whose latest tick hasn't been claimed yet;
     # returns their jids.
-    def self.tick: (Config config, Hash[String, entry] entries, Hash[String, Cron] crons, ?Time now, ?Hash[String, Integer] claimed) -> Array[String?]
+    def self.tick: (Config config, Hash[String, entry] entries, Hash[String, Cron::schedule] crons, ?Time now, ?Hash[String, Integer] claimed) -> Array[String?]
 
     # Writes the entries to Redis as the periodic jobs, arming new ones.
     def self.write_registry: (Config config, Hash[String, entry] entries) -> void
 
-    private def self.claim: (Config config, Array[tick] dues, Hash[String, Cron] crons, Time now, Hash[String, Integer] claimed) -> Array[tick]
+    private def self.claim: (Config config, Array[tick] dues, Hash[String, Cron::schedule] crons, Time now, Hash[String, Integer] claimed) -> Array[tick]
 
-    private def self.run_loop: (Launcher launcher, Hash[String, entry] entries, Hash[String, Cron] crons) -> void
+    private def self.run_loop: (Launcher launcher, Hash[String, entry] entries, Hash[String, Cron::schedule] crons) -> void
 
-    private def self.seconds_until_next: (Hash[String, Cron] crons, Time now) -> (Float | Integer)
+    private def self.seconds_until_next: (Hash[String, Cron::schedule] crons, Time now) -> (Float | Integer)
 
     private def self.entry_problems: (entry entry) -> Array[String]
 
@@ -76,6 +76,6 @@ module Robin
 
     private def self.record: (Config config, Array[[String, Integer, String?]] pushed, ?manual: bool) -> void
 
-    private def self.parse: (entry entry) -> Cron?
+    private def self.parse: (entry entry) -> Cron::schedule?
   end
 end

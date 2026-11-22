@@ -12,11 +12,21 @@ module Robin
   #
   # Five fields (minute hour day-of-month month day-of-week), or six with a
   # leading seconds field. Supports *, lists (1,2), ranges (1-5), steps
-  # (*/5, 10-40/10, 5/15), month and weekday names, ? (same as *), L in the
-  # day-of-month field (last day of the month), 7 as Sunday, and the
-  # @yearly, @annually, @monthly, @weekly, @daily, @midnight and @hourly
-  # shortcuts. When both day fields are restricted, a day matches if
-  # either does.
+  # (*/5, 10-40/10, 5/15), month and weekday names, ? (same as *), 7 as
+  # Sunday, and the @yearly, @annually, @monthly, @weekly, @daily,
+  # @midnight and @hourly shortcuts. When both day fields are restricted,
+  # a day matches if either does.
+  #
+  # Also fugit's additions, so schedules written for sidekiq-cron or
+  # sidekiq-scheduler read the same:
+  #
+  #   L or -1 (day of month)   the last day of the month, -2 the one
+  #                            before it, and so on
+  #   MON#2, 1#-1, FRI#L       the second Monday of the month, the last
+  #                            Monday, the last Friday (#1 to #5, #-1 to
+  #                            #-5)
+  #   TUE%2, TUE%2+1           Tuesdays of even weeks, of odd weeks
+  #                            (weeks counted from Monday, 2018-12-31)
   #
   # Time zones: nil (the system zone), "UTC", fixed offsets ("+05:30"), or
   # IANA names ("Europe/Berlin", needs the tzinfo gem). Wall-clock times
@@ -33,13 +43,37 @@ module Robin
     DAY_NAMES = %w[Sunday Monday Tuesday Wednesday Thursday Friday Saturday].freeze
     MONTH_NAMES = %w[January February March April May June July August September October November December].freeze
     ANY = %w[* ?].freeze
+    # A day of the month counted from its end: L (or LAST) is -1.
+    FROM_END = /\A(?:-(?<n>\d+)|L|LAST)\z/i
+    # MON#2, MON#-1, MON#L: the nth weekday of the month.
+    NTH = /\A(?<day>\w+)#(?:(?<n>-?[1-5])|L|LAST)\z/i
+    # TUE%2, TUE%3+1: that weekday in the weeks whose number modulo
+    # +every+ is +offset+.
+    CYCLE = /\A(?<day>\w+)%(?<every>\d+)(?:\+(?<offset>\d+))?\z/
+    # The days of the month whose ordinal doesn't end in "th".
+    ORDINAL_SUFFIXES = {1 => "st", 2 => "nd", 3 => "rd", 21 => "st", 22 => "nd", 23 => "rd", 31 => "st"}.freeze
+    # Week 0 of those cycles: fugit's (et-orbi's) reference Monday,
+    # 2018-12-31, in days since the Unix epoch.
+    WEEK_ZERO = 17_896
+    # The months' lengths, outside leap years.
+    MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31].freeze
 
     # Upper bound on search steps. Every step moves to the next candidate
     # month, day, hour, minute or second, so this spans decades even for
     # the sparsest expressions; impossible ones (Feb 30) give up with nil.
     MAX_STEPS = 20_000
 
-    attr_reader :expression, :tz, :zone, :seconds, :minutes, :hours, :days, :months, :weekdays
+    attr_reader :expression, :tz, :zone, :seconds, :minutes, :hours, :days, :months, :weekdays,
+      :days_from_end, :nth_weekdays, :weekday_cycles
+
+    # A Cron, or an Every for "@every" schedules (which take no zone).
+    def self.parse(expression, tz: nil)
+      text = expression.to_s.strip
+      return new(text, tz: tz) unless Every::PREFIX.match?(text)
+      raise ParseError, "#{text.inspect} counts from the Unix epoch and takes no time zone" if tz
+
+      Every.new(text)
+    end
 
     def initialize(expression, tz: nil)
       @expression = expression.to_s.strip
@@ -160,19 +194,39 @@ module Robin
     def every(step, unit) = (step == 1) ? "every #{unit}" : "every #{step} #{unit}s"
 
     def describe_days
-      days = [describe_dom, describe_dow].compact
+      days = [describe_dom].compact.concat(describe_dow)
       days.join(" or ") unless days.empty?
     end
 
     def describe_dom
-      return "on the last day of the month" if @last_dom
+      return if @dom_any
 
-      "on day #{@days.join(", ")} of the month" unless @dom_any
+      days = @days_from_end.map { |n| "the #{from_end(n)} day" }
+      days.unshift("day #{@days.join(", ")}") unless @days.empty?
+      "on #{days.join(" and ")} of the month"
     end
 
+    # A phrase for each kind of weekday.
     def describe_dow
-      return if @dow_any
+      return [] if @dow_any
 
+      days = @nth_weekdays.map { |day, n| "on the #{from_end(n)} #{DAY_NAMES.fetch(day)} of the month" }
+      days.concat(@weekday_cycles.map { |day, every, offset| "on #{DAY_NAMES.fetch(day)} every #{every} weeks (week #{offset})" })
+      days.unshift(describe_weekdays) unless @weekdays.empty?
+      days
+    end
+
+    # "1st" or "2nd" for 1 or 2, "last" for -1, "2nd-to-last" for -2.
+    def from_end(n)
+      return ordinal(n) if n.positive?
+
+      (n == -1) ? "last" : "#{ordinal(-n)}-to-last"
+    end
+
+    # 1 to 31 only.
+    def ordinal(n) = "#{n}#{ORDINAL_SUFFIXES.fetch(n, "th")}"
+
+    def describe_weekdays
       case @weekdays
       when [1, 2, 3, 4, 5] then "on weekdays"
       when [0, 6] then "on weekends"
@@ -193,13 +247,55 @@ module Robin
       @seconds = field(sec, 0, 59)
       @minutes = field(min, 0, 59)
       @hours = field(hour, 0, 23)
-      @last_dom = dom.casecmp?("L")
-      @days = @last_dom ? [] : field(dom, 1, 31)
+      @days, @days_from_end = days_of_month(dom)
       @months = field(month, 1, 12, MONTHS)
-      weekdays = field(dow, 0, 7, DAYS)
-      @weekdays = weekdays.include?(7) ? ((weekdays - [7]) | [0]).sort : weekdays
+      @weekdays, @nth_weekdays, @weekday_cycles = days_of_week(dow)
       @dom_any = ANY.include?(dom)
       @dow_any = ANY.include?(dow)
+    end
+
+    # The days counted from the start of the month, and those counted from
+    # its end (-1 for the last).
+    def days_of_month(text)
+      from_end, days = text.split(",").partition { |part| FROM_END.match?(part) }
+      from_end = from_end.map do |part|
+        n = (count = part[FROM_END, :n]) ? Integer(count, 10) : 1
+        raise ParseError, "#{part.inspect} is out of range -31 to -1" unless n.between?(1, 31)
+
+        -n
+      end
+      [field(days.join(","), 1, 31), from_end.uniq.sort]
+    end
+
+    # The weekdays, the nth weekdays of the month ([day, n] each), and the
+    # weekdays in cycles of weeks ([day, every, offset] each).
+    def days_of_week(text)
+      nth = [] #: Array[[Integer, Integer]]
+      cycles = [] #: Array[[Integer, Integer, Integer]]
+      plain = text.split(",").reject do |part|
+        if (m = NTH.match(part))
+          nth << [weekday(m), (n = m[:n]) ? Integer(n) : -1]
+        elsif (m = CYCLE.match(part))
+          every = m[:every] #: String
+          every = Integer(every, 10)
+          raise ParseError, "bad cycle in #{part.inspect}" unless every.positive?
+
+          cycles << [weekday(m), every, Integer(m[:offset] || "0", 10) % every]
+        elsif part.match?(/[#%]/)
+          raise ParseError, "#{part.inspect} isn't a weekday with #1 to #5, #-1 to #-5, #L or %n"
+        end
+      end
+      weekdays = field(plain.join(","), 0, 7, DAYS)
+      [weekdays.include?(7) ? ((weekdays - [7]) | [0]).sort : weekdays, nth.uniq.sort, cycles.uniq.sort]
+    end
+
+    # The weekday (0 for Sunday) a #n or %n part names.
+    def weekday(match)
+      name = match[:day] #: String
+      day = value(name, DAYS)
+      raise ParseError, "#{match.string.inspect} is out of range 0-7" unless day <= 7
+
+      day % 7
     end
 
     def field(text, min, max, names = {})
@@ -231,11 +327,79 @@ module Robin
     end
 
     def day_match?(w)
-      dom = @last_dom ? Date.new(w.year, w.month, -1).day == w.day : @days.include?(w.day)
-      dow = @weekdays.include?(w.wday)
+      dom = @days.include?(w.day) || @days_from_end.include?(w.day - last_day(w) - 1)
+      dow = @weekdays.include?(w.wday) || weekday_match?(w)
       if @dom_any then dow
       elsif @dow_any then dom
       else dom || dow
+      end
+    end
+
+    # Whether +w+ is one of the nth weekdays of its month, or a weekday in
+    # one of the cycles of weeks.
+    def weekday_match?(w)
+      wday = w.wday
+      @nth_weekdays.any? { |day, n| day == wday && n == (n.positive? ? ((w.day - 1) / 7) + 1 : -((last_day(w) - w.day) / 7) - 1) } ||
+        @weekday_cycles.any? { |day, every, offset| day == wday && week(w) % every == offset }
+    end
+
+    # The last day of +w+'s month (without allocating, as a Date would).
+    def last_day(w) = (w.month == 2 && Date.gregorian_leap?(w.year)) ? 29 : MONTH_DAYS.fetch(w.month - 1)
+
+    # The number of +w+'s week (Monday to Sunday) since WEEK_ZERO. +w+ is
+    # a wall clock time, so its seconds since the epoch count its local
+    # days.
+    def week(w) = ((Integer(w) / 86_400) - WEEK_ZERO) / 7
+
+    # A schedule that fires every so often, at the multiples of its
+    # interval since the Unix epoch: "@every 5m" fires at :00, :05, :10
+    # and so on of every hour, "@every 90s" at 00:00:00, 00:01:30 and so
+    # on, and "@every 1d" at midnight UTC. So every process works out the
+    # same ticks, whenever it started. Intervals are days, hours, minutes
+    # and seconds, in any combination ("@every 1h30m").
+    #
+    #   every = Robin::Cron.parse("@every 15m")
+    #   every.interval     # => 900
+    #   every.description  # => "every 15 minutes"
+    class Every
+      PREFIX = /\A@every\b/i
+      FORMAT = /\A@every\s+(?<interval>(?:\d+[dhms])+)\z/i
+      UNITS = {"d" => 86_400, "h" => 3_600, "m" => 60, "s" => 1}.freeze
+      UNIT_NAMES = {86_400 => "day", 3_600 => "hour", 60 => "minute", 1 => "second"}.freeze
+
+      attr_reader :expression, :interval
+
+      def initialize(expression)
+        @expression = expression.to_s.strip
+        interval = FORMAT.match(@expression)&.[](:interval)
+        raise ParseError, %(#{@expression.inspect} isn't "@every" and an interval, like "@every 5m" or "@every 1h30m") unless interval
+
+        parts = interval.scan(/(\d+)(\w)/) #: Array[[String, String]]
+        @interval = parts.sum { |count, unit| Integer(count, 10) * UNITS.fetch(unit.downcase) }
+        raise ParseError, "#{@expression.inspect} has no interval" unless @interval.positive?
+      end
+
+      def to_s = @expression
+
+      def inspect = "#<Robin::Cron::Every #{@expression.inspect}>"
+
+      # Whether +time+ (to the second) is a tick.
+      def match?(time) = (Integer(time) % @interval).zero?
+
+      # The first tick strictly after +from+, in UTC.
+      def next_time(from = Time.now) = Time.at(((Integer(from) / @interval) + 1) * @interval).utc
+
+      # The last tick strictly before +from+, in UTC.
+      def previous_time(from = Time.now) = Time.at(((from.to_r.ceil - 1) / @interval) * @interval).utc
+
+      # "every 5 minutes", "every hour", "every 1 hour 30 minutes".
+      def description
+        rest = @interval
+        parts = UNIT_NAMES.filter_map do |size, name|
+          count, rest = rest.divmod(size)
+          "#{count} #{name}#{"s" unless count == 1}" if count.positive?
+        end
+        "every #{parts.one? ? parts.join.delete_prefix("1 ") : parts.join(" ")}"
       end
     end
 

@@ -229,7 +229,7 @@ class EncryptionIntegrationTest < RobinTest
     SecretJob.perform_async("4242424242424242", 100)
     raw = redis("LINDEX", "#{key_prefix_for_test}queue:default", 0)
 
-    refute_includes raw, "4242"
+    refute_includes raw, "4242424242424242" # (a timestamp may hold "4242")
     assert_equal 1, JSON.parse(raw)["encrypted"]
     assert_equal ["[encrypted]"], Robin::Queue.new.first.display_args
   end
