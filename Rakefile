@@ -363,6 +363,32 @@ namespace :bench do
   end
 end
 
+# The bundles: the main one, each gemfiles/*/Gemfile, and the benchmarks'
+# and the demo's.
+bundles = ["Gemfile", *Dir["gemfiles/*/Gemfile"].sort, "bench/compare/Gemfile", "demo/Gemfile"]
+
+# `rake bump[0.1.1]` sets Robin's version, relocks each bundle with it and
+# turns the CHANGELOG's Unreleased section into that version's, dated
+# today.
+desc "Set Robin's version, relock the bundles and date the CHANGELOG (rake bump[0.1.1])"
+task :bump, [:version] do |_task, args|
+  version = args[:version] or abort "Usage: rake bump[VERSION]"
+  abort "#{version.inspect} isn't a version like 0.1.1" unless version.match?(/\A\d+\.\d+\.\d+\z/)
+  changelog = File.read("CHANGELOG.md")
+  abort "CHANGELOG.md has no ## [Unreleased] section" unless changelog.include?("\n## [Unreleased]\n")
+
+  require "date"
+  File.write("CHANGELOG.md", changelog.sub("\n## [Unreleased]\n", "\n## [Unreleased]\n\n## [#{version}] - #{Date.today.iso8601}\n"))
+  path = "lib/robin/version.rb"
+  File.write(path, File.read(path).sub(/VERSION = "[^"]*"/, %(VERSION = "#{version}")))
+  require "bundler"
+  bundles.each do |gemfile|
+    Bundler.with_unbundled_env do
+      sh({"BUNDLE_GEMFILE" => File.expand_path(gemfile, __dir__)}, "bundle", "install", "--quiet")
+    end
+  end
+end
+
 namespace :bundle do
   # The gems of +given+ that +gemfile+'s lockfile has, to update: every one
   # (--all) where none are given, and nil where it has none of them, as
@@ -379,7 +405,7 @@ namespace :bundle do
   desc "Update the main Gemfile.lock, each gemfiles/*/Gemfile.lock, and the benchmarks' and the demo's (all gems, or the ones given)"
   task :update do |_task, args|
     require "bundler"
-    ["Gemfile", *Dir["gemfiles/*/Gemfile"].sort, "bench/compare/Gemfile", "demo/Gemfile"].each do |gemfile|
+    bundles.each do |gemfile|
       gems = gems_to_update.call(gemfile, args.extras) or next
       Bundler.with_unbundled_env do
         sh({"BUNDLE_GEMFILE" => File.expand_path(gemfile, __dir__)}, "bundle", "update", *gems)
