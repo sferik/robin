@@ -53,6 +53,15 @@ const UNITS: [Intl.RelativeTimeFormatUnit, number, number][] = [
   ["year", 86400 * 365, Infinity],
 ];
 
+/**
+ * Epoch ms, from epoch ms or seconds: a job's times are in seconds when
+ * another tool (or `config.job_timestamps = :seconds`) recorded them.
+ * Below 1e11, a time is in seconds (as milliseconds, it'd be 1973).
+ */
+export function epochMs(at: number): number {
+  return at < 1e11 ? at * 1000 : at;
+}
+
 /** Epoch ms → "in 5 minutes" / "3 hours ago" relative to `now`. */
 export function relative(at: number | null | undefined, now = Date.now()): string {
   if (!at) return "–";

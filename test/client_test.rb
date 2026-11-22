@@ -617,6 +617,27 @@ class ClientTest < RobinTest
       scheduled.map { |i, score| [*i.values_at("args", "expires_at"), score] }
   end
 
+  # Float epoch seconds, as config.job_timestamps = :seconds records them;
+  # expiry still counts in milliseconds, from them.
+  def test_job_timestamps_in_seconds
+    config.job_timestamps = :seconds
+    with_now(1_700_000_000_123) do
+      Client.new.push("class" => "T", "args" => [1], "expires_in" => 10)
+      Client.new.push_bulk("class" => "T", "args" => [[2]], "at" => [1_700_000_100], "expires_in" => 10)
+    end
+    item = queue_items.first
+    later, = scheduled.first
+
+    assert_instance_of Float, item["created_at"]
+    assert_instance_of Float, item["enqueued_at"]
+    assert_in_delta 1_700_000_000.123, item["created_at"], 0
+    assert_in_delta 1_700_000_000.123, item["enqueued_at"], 0
+    assert_equal 1_700_000_010_123, item["expires_at"]
+    assert_in_delta 1_700_000_000.123, later["created_at"], 0
+    assert_equal 1_700_000_110_000, later["expires_at"]
+    refute later.key?("enqueued_at")
+  end
+
   def test_normalize_classes
     assert_equal "ClientTestJobs::Bare", Client.new.normalize("class" => ClientTestJobs::Bare, "args" => [])["class"]
     assert_equal "Thing", Client.new.normalize("class" => :Thing, "args" => [])["class"]

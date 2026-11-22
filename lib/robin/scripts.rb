@@ -47,7 +47,7 @@ module Robin
     #
     # KEYS: sorted set, queues set
     # ARGV: now (epoch seconds), queue key prefix ("<prefix>queue:"), max
-    # jobs per call, now (epoch ms)
+    # jobs per call, now as jobs record it (Config#job_timestamp)
     ENQUEUE_DUE = Redis::Script.new(<<~LUA)
       local jobs = redis.call('ZRANGE', KEYS[1], '-inf', ARGV[1], 'BYSCORE', 'LIMIT', 0, tonumber(ARGV[3]))
       for _, job in ipairs(jobs) do

@@ -30,6 +30,16 @@ class SchedulerTest < RobinTest
 
   def moved(raw, now) = raw.sub(/}\z/, %(,"enqueued_at":#{now}}))
 
+  def test_enqueue_due_records_enqueued_at_as_jobs_record_times
+    config.job_timestamps = :seconds
+    add("schedule", 1_700_000_000.113, job("s1"))
+    @scheduler.enqueue_due(1_700_000_000_123)
+    item = JSON.parse(redis("LINDEX", config.key("queue", "default"), 0))
+
+    assert_instance_of Float, item["enqueued_at"]
+    assert_in_delta 1_700_000_000.123, item["enqueued_at"], 0
+  end
+
   def test_enqueue_due_moves_due_jobs_from_both_sets
     now = 1_700_000_000_123
     add("schedule", 1_700_000_000.113, job("s1"))

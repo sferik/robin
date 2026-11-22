@@ -208,6 +208,18 @@ class RecoveryTest < RobinTest
     assert_equal 0, redis("LLEN", config.key("queue", "default"))
   end
 
+  def test_poison_pills_record_failed_at_as_jobs_record_times
+    config.max_recoveries = 0
+    config.job_timestamps = :seconds
+    orphan("ghost:5", job("q"))
+    capture_logs
+    Robin::Recovery.run(config)
+    item = JSON.parse(redis("ZRANGE", config.key("dead"), 0, -1).first)
+
+    assert_instance_of Float, item["failed_at"]
+    assert_in_delta Robin.now_ms / 1000.0, item["failed_at"], 5
+  end
+
   def orphan_count(jid) = redis("GET", config.key("orphan", jid))
 
   def test_shutdown_drain_does_not_count_toward_poison_pills

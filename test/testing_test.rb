@@ -184,6 +184,13 @@ class TestingModeTest < Minitest::Test
     push({"class" => "X", "queue" => "q", "args" => [], "at" => nil, "jid" => "n"})
 
     assert_kind_of Integer, Robin::Testing.jobs.first["enqueued_at"]
+    Robin.config.job_timestamps = :seconds
+    push({"class" => "X", "queue" => "q", "args" => [], "jid" => "s"})
+
+    assert_instance_of Float, Robin::Testing.jobs.last["enqueued_at"]
+    assert_in_delta Robin.now_ms / 1000.0, Robin::Testing.jobs.last["enqueued_at"], 5
+  ensure
+    Robin.config.job_timestamps = :milliseconds
   end
 
   def undated(queue, tag) = Robin::Testing.queues[queue] << {"class" => "TestingTest::Plain", "queue" => queue, "args" => [tag], "jid" => tag}
@@ -238,13 +245,14 @@ class TestingModeTest < Minitest::Test
   end
 
   def test_drain_order_uses_enqueued_at_then_at
-    push({"class" => "TestingTest::Plain", "queue" => "b", "args" => [:late], "enqueued_at" => 30, "jid" => "1"},
+    push({"class" => "TestingTest::Plain", "queue" => "b", "args" => [:late], "enqueued_at" => 0.03, "jid" => "1"},
       {"class" => "TestingTest::Plain", "queue" => "a", "args" => [:scheduled], "at" => 0.02, "jid" => "2"},
-      {"class" => "TestingTest::Plain", "queue" => "b", "args" => [:early], "enqueued_at" => 10, "jid" => "3"})
+      {"class" => "TestingTest::Plain", "queue" => "b", "args" => [:early], "enqueued_at" => 10, "jid" => "3"},
+      {"class" => "TestingTest::Plain", "queue" => "c", "args" => [:nil_at], "at" => nil, "enqueued_at" => 5, "jid" => "5"})
     Robin::Testing.queues["c"] << {"class" => "TestingTest::Plain", "queue" => "c", "args" => ["undated"], "jid" => "4"}
     Robin::Testing.drain_all
 
-    assert_equal [[:plain, "undated"], [:plain, "early"], [:plain, "scheduled"], [:plain, "late"]], CALLS
+    assert_equal [[:plain, "undated"], [:plain, "nil_at"], [:plain, "early"], [:plain, "scheduled"], [:plain, "late"]], CALLS
   end
 
   def test_perform_one

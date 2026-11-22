@@ -1405,7 +1405,10 @@ process's record at its identity) keep the formats common Ruby job tools
 share: queues are lists pushed at the head and taken from the tail; the
 schedule, retry and dead sets are scored in epoch seconds; jobs are JSON
 with `created_at` and `enqueued_at` in epoch milliseconds, a 0-based
-`retry_count` and a compressed `error_backtrace`. Robin's own keys
+`retry_count` and a compressed `error_backtrace`. Tools that expect a
+job's times (`created_at`, `enqueued_at`, `failed_at` and `retried_at`)
+in Float epoch seconds can have them, with `config.job_timestamps =
+:seconds`. Robin reads either. Robin's own keys
 (batches, limiters, metrics, in-flight jobs...) can get a prefix of
 their own with `config.internal_key_prefix`, so with `key_prefix = ""` the
 job keys sit at the top level, where other tools look for them.

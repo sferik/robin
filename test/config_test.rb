@@ -84,6 +84,27 @@ class ConfigTest < Minitest::Test
 
   # -- defaults -------------------------------------------------------------
 
+  def test_job_timestamps
+    c = Robin::Config.new
+
+    assert_equal :milliseconds, c.job_timestamps
+    # (Equal, not the same object: on Windows, an Integer this large is a
+    # new one each time.)
+    assert_equal 1_700_000_000_123, c.job_timestamp(1_700_000_000_123)
+    assert_instance_of Integer, c.job_timestamp(1_700_000_000_123)
+    assert_equal :seconds, (c.job_timestamps = :seconds)
+    assert_equal :seconds, c.job_timestamps
+    assert_in_delta 1_700_000_000.123, c.job_timestamp(1_700_000_000_123), 0
+    assert_instance_of Float, c.job_timestamp(5)
+    c.job_timestamps = :milliseconds
+
+    assert_same 5, c.job_timestamp(5)
+    error = assert_raises(ArgumentError) { c.job_timestamps = "seconds" }
+
+    assert_equal 'job_timestamps is :milliseconds or :seconds, not "seconds"', error.message
+    assert_equal :milliseconds, c.job_timestamps
+  end
+
   def test_defaults
     c = Robin::Config.new
 

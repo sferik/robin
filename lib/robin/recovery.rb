@@ -116,7 +116,7 @@ module Robin
           payload = Robin.load_json(raw).except("enqueued_at")
           payload["error_class"] = "Robin::PoisonPill"
           payload["error_message"] = "job was running when its process died #{config.max_recoveries + 1} times"
-          payload["failed_at"] ||= Robin.now_ms
+          payload["failed_at"] ||= config.job_timestamp(Robin.now_ms)
           payload
         end
         conn.multi do |tx|

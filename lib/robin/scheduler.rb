@@ -64,7 +64,7 @@ module Robin
           *replies, @processes = conn.pipelined do |p|
             sets.each do |set|
               p.evalsha(Scripts::ENQUEUE_DUE, [@config.key(set), @config.key("queues")],
-                [Robin.epoch_seconds(now), "#{@config.key("queue")}:", BATCH, now])
+                [Robin.epoch_seconds(now), "#{@config.key("queue")}:", BATCH, @config.job_timestamp(now)])
             end
             p.call("SCARD", @config.key("processes"))
           end

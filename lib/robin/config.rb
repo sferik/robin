@@ -100,6 +100,25 @@ module Robin
       :metrics_retention_days, :reliable_push, :shutdown_requeue, :job_wrapper,
       :health_bind
 
+    # How a job records when it was created, enqueued, failed and retried
+    # ("created_at", "enqueued_at", "failed_at" and "retried_at"):
+    # :milliseconds (the default), Integer epoch milliseconds, or :seconds,
+    # Float epoch seconds, for other programs reading the jobs in Redis that
+    # expect those. Robin reads both.
+    attr_reader :job_timestamps
+
+    JOB_TIMESTAMPS = %i[milliseconds seconds].freeze
+
+    def job_timestamps=(unit)
+      raise ArgumentError, "job_timestamps is :milliseconds or :seconds, not #{unit.inspect}" unless JOB_TIMESTAMPS.include?(unit)
+
+      @job_timestamps = unit
+    end
+
+    # The time +ms+ (epoch milliseconds) as a job records it (see
+    # #job_timestamps).
+    def job_timestamp(ms) = @job_timestamps.equal?(:seconds) ? Robin.epoch_seconds(ms) : ms
+
     # How long to wait before running a job again that hit a rate limit:
     # a callable taking (count, error, payload), where count is how many
     # times the job has hit a limit and error the Robin::Limiter::OverLimit,
@@ -259,6 +278,7 @@ module Robin
       @metrics_retention_days = 90
       @reliable_push = false
       @shutdown_requeue = true
+      @job_timestamps = :milliseconds
       @gvl_monitoring = true
       @idle_gc = false
       @jit_warmup = JIT_WARMUP

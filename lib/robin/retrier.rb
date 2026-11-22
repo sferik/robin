@@ -92,11 +92,11 @@ module Robin
       payload["error_class"] = exception.class.name
       payload["error_message"] = truncate(self.class.message_of(exception))
       now = Robin.now_ms
-      payload["failed_at"] ||= now
+      payload["failed_at"] ||= config.job_timestamp(now)
       # retry_count is 0 after the first failure, then counts the retries
       # that failed too.
       if payload["retry_count"]
-        payload["retried_at"] = now
+        payload["retried_at"] = config.job_timestamp(now)
         payload["retry_count"] = Integer(payload.fetch("retry_count")) + 1
       else
         payload["retry_count"] = 0

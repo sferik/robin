@@ -390,6 +390,16 @@ class IterableJobUnitTest < RobinTest
     refute item.key?("iteration_interrupted")
   end
 
+  def test_requeue_records_enqueued_at_as_its_config_records_times
+    @alt.job_timestamps = :seconds
+    Job.on_each = ->(job, _) { job.interrupt_requested = true }
+    build_job.perform
+    item = Robin.load_json(alt("RPOP", @alt.key("queue", "default")))
+
+    assert_instance_of Float, item["enqueued_at"]
+    assert_in_delta Robin.now_ms / 1000.0, item["enqueued_at"], 5
+  end
+
   def test_requeue_puts_job_at_the_front
     alt("LPUSH", @alt.key("queue", "default"), "older")
     Job.on_each = ->(job, _) { job.interrupt_requested = true }

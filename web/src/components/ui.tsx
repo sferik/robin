@@ -1,6 +1,6 @@
 import type { ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { absolute, duration, num, relative } from "../format";
+import { absolute, duration, epochMs, num, relative } from "../format";
 import { t } from "../i18n";
 import { Link } from "./link";
 import { confirmStore, toast, toastStore, useStore } from "../state";
@@ -17,12 +17,14 @@ export function useNow(seconds = 15): number {
   return now;
 }
 
+/** A time in epoch ms (or seconds: see epochMs). */
 export function Time({ at }: { at?: number | null }) {
   const now = useNow();
   if (!at) return <span class="dim">–</span>;
+  const ms = epochMs(at);
   return (
-    <time dateTime={new Date(at).toISOString()} title={absolute(at)}>
-      {relative(at, now)}
+    <time dateTime={new Date(ms).toISOString()} title={absolute(ms)}>
+      {relative(ms, now)}
     </time>
   );
 }

@@ -83,6 +83,9 @@ module Robin
     include _Object
   end
 
+  # Config#job_timestamps.
+  type job_timestamps = :milliseconds | :seconds
+
   type job_wrapper = ^(job_hash payload) { () -> void } -> void | _JobWrapper
 
   # A group of worker threads with its own queues and concurrency.
@@ -198,6 +201,16 @@ module Robin
     attr_accessor reliable_push: bool | Integer
 
     attr_accessor shutdown_requeue: bool
+
+    JOB_TIMESTAMPS: Array[Symbol]
+
+    # How jobs record their times.
+    attr_reader job_timestamps: job_timestamps
+
+    def job_timestamps=: (job_timestamps unit) -> job_timestamps
+
+    # +ms+ (epoch ms) as a job records it: Integer ms or Float seconds.
+    def job_timestamp: (Integer ms) -> (Integer | Float)
 
     attr_accessor job_wrapper: job_wrapper?
 

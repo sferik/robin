@@ -208,6 +208,22 @@ class RetrierTest < RobinTest
     assert_equal [2], retries.map { |(stored, _)| stored["retry_count"] }
   end
 
+  def test_failure_times_as_jobs_record_times
+    config.job_timestamps = :seconds
+    first = payload
+    later = payload(retry_count: 0, failed_at: 1_700_000_000.5)
+    before = Robin.now_ms / 1000.0
+    @retrier.handle(unit_for(first), first, Plain, error)
+    @retrier.handle(unit_for(later), later, Plain, error)
+
+    assert_instance_of Float, first["failed_at"]
+    assert_in_delta before, first["failed_at"], 5
+    refute first.key?("retried_at")
+    assert_in_delta 1_700_000_000.5, later["failed_at"], 0
+    assert_instance_of Float, later["retried_at"]
+    assert_in_delta before, later["retried_at"], 5
+  end
+
   def test_a_retry_count_stored_by_another_tool_as_a_string_is_incremented
     item = payload(retry_count: "3")
     @retrier.handle(unit_for(item), item, Plain, error)

@@ -194,13 +194,13 @@ module Robin
       item["queue"] = queue.empty? ? "default" : queue
       item["retry"] = true unless item.key?("retry")
       item["jid"] ||= Robin.generate_jid
-      item["created_at"] ||= Robin.now_ms
+      item["created_at"] ||= @config.job_timestamp(Robin.now_ms)
       at = item.delete("at")
       at_ms = self.class.timestamp_ms(at) if at
       item["at"] = Robin.epoch_seconds(at_ms) if at_ms
       if (expires_in = item.delete("expires_in"))
         # The clock starts when the job is due to run.
-        item["expires_at"] = [at_ms, item.fetch("created_at")].compact.max + Integer(expires_in.to_f * 1000)
+        item["expires_at"] = [at_ms, Robin.ms_of(item.fetch("created_at"))].compact.max + Integer(expires_in.to_f * 1000)
       end
       if (window = item["retry_for"]) && !(window.is_a?(Numeric) && window.positive?)
         raise ArgumentError, "job 'retry_for' must be a positive number of seconds"
@@ -240,7 +240,8 @@ module Robin
     # counts from then (the template's counted from its creation).
     def schedule(payload, at_ms)
       payload["at"] = Robin.epoch_seconds(at_ms)
-      payload["expires_at"] += [at_ms - payload.fetch("created_at"), 0].max if payload["expires_at"]
+      # (created_at is an Integer or a Float; Steep picks neither of Integer#-'s overloads.)
+      payload["expires_at"] += [at_ms - Robin.ms_of(payload.fetch("created_at")), 0].max if payload["expires_at"] # steep:ignore UnresolvedOverloading
     end
 
     # Config#push_deferrer may take over delivery (e.g. until a database
@@ -311,9 +312,10 @@ module Robin
           args = group.flat_map { |p| [p.fetch("at"), Robin.dump_json(p.except("at", "enqueued_at"))] }
           pipe.call("ZADD", @config.key("schedule"), *args)
         else
+          enqueued_at = @config.job_timestamp(now)
           entries = group.map do |p|
             p.delete("at")
-            p["enqueued_at"] = now
+            p["enqueued_at"] = enqueued_at
             Robin.dump_json(p)
           end
           pipe.call("SADD", @config.key("queues"), queue)

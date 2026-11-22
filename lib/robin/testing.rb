@@ -88,7 +88,7 @@ module Robin
       def push(payloads)
         payloads.each do |payload|
           job = Robin.load_json(Robin.dump_json(payload))
-          job["enqueued_at"] ||= Robin.now_ms unless job["at"]
+          job["enqueued_at"] ||= Robin.config.job_timestamp(Robin.now_ms) unless job["at"]
           if inline?
             execute(job)
           else
@@ -129,7 +129,7 @@ module Robin
         @mutex.synchronize do
           candidates = @queues.values.flatten
           candidates = candidates.select { |j| j.fetch("class") == class_name } if class_name
-          job = candidates.min_by { |j| j["at"] ? Robin.epoch_ms(j["at"]) : j["enqueued_at"] || 0 }
+          job = candidates.min_by { |j| j["at"] ? Robin.epoch_ms(j.fetch("at")) : Robin.ms_of(j["enqueued_at"]) || 0 }
           @queues.fetch(job.fetch("queue")).delete(job) if job
         end
       end

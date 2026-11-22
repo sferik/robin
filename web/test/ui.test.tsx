@@ -33,6 +33,12 @@ describe("useNow and Time", () => {
     expect(container.innerHTML).toBe('<span class="dim">–</span>');
   });
 
+  test("reads a time in epoch seconds too", () => {
+    frozen();
+    const { container } = render(<UI.m.Time at={(NOW - 10_000) / 1000} />);
+    expect(container.innerHTML).toBe('<time datetime="2026-10-14T09:29:50.000Z" title="2026-10-14 09:29:50">10 seconds ago</time>');
+  });
+
   test("shows relative time and keeps it fresh", async () => {
     frozen();
     const { container, unmount } = render(<UI.m.Time at={NOW - 10_000} />);

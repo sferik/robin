@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `config.job_timestamps = :seconds` records a job's times (`created_at`,
+  `enqueued_at`, `failed_at` and `retried_at`) in Float epoch seconds,
+  for other tools reading the jobs in Redis that expect them.
+
 ### Fixed
 
+- Job times in Float epoch seconds (written by another tool) show
+  correctly on the dashboard, and a job's expiry counts from them
+  correctly.
 - A compressed `error_backtrace` whose Base64 is broken into lines (as
   some tools write it) is read, rather than shown as unreadable.
 

@@ -94,6 +94,15 @@ describe("ms", () => {
   });
 });
 
+describe("epochMs", () => {
+  test("keeps milliseconds and converts seconds", () => {
+    expect(F.m.epochMs(1_760_434_212_123)).toBe(1_760_434_212_123);
+    expect(F.m.epochMs(1_760_434_212.123)).toBeCloseTo(1_760_434_212_123, 3);
+    expect(F.m.epochMs(1e11)).toBe(1e11);
+    expect(F.m.epochMs(1e11 - 1)).toBe((1e11 - 1) * 1000);
+  });
+});
+
 describe("relative", () => {
   const now = 1_000_000_000_000;
   const at = (seconds: number) => F.m.relative(now + seconds * 1000, now);

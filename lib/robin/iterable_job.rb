@@ -265,7 +265,7 @@ module Robin
       # As stored, so decrypted (or mutated) arguments never are.
       item = Robin.pristine(payload).dup
       %w[at error_class error_message error_backtrace failed_at retried_at].each { |k| item.delete(k) }
-      item["enqueued_at"] = Robin.now_ms
+      item["enqueued_at"] = config.job_timestamp(Robin.now_ms)
       queue = item["queue"] || "default"
       checkpoint(config, key, total) do |tx|
         tx.call("SADD", config.key("queues"), queue)
