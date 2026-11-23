@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Searching the schedule, retry and dead sets (`JobSet#scan`, and
+  `find_job` with it) returns each job once on Redis 8.12, whose large
+  sorted sets a scan can return a member of more than once.
+
 ## [0.1.2] - 2026-11-22
 
 ### Added

@@ -2117,7 +2117,11 @@ class LauncherLifecycleTest < RobinTest
     @launcher.define_singleton_method(:beat) { beats += 1 }
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     @launcher.run
-    sleep 0.01 until beats >= 3 || Process.clock_gettime(Process::CLOCK_MONOTONIC) - started > 10
+    # The wait counts from when #run returns: on a busy machine #run alone
+    # can take seconds (JRuby warms up its JIT in it), and the heartbeat
+    # thread only starts at its end.
+    running = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    sleep 0.01 until beats >= 3 || Process.clock_gettime(Process::CLOCK_MONOTONIC) - running > 10
 
     assert_operator beats, :>=, 3
     # Three beats take at least the two naps between them.

@@ -424,16 +424,18 @@ module Robin
       return [] if term.to_s.empty?
 
       pattern = "*#{term.to_s.gsub(/[\\*?\[\]]/) { |m| "\\#{m}" }}*"
-      results = [] #: Array[SortedEntry]
+      # By member: a scan may return one more than once (Redis 8.12's
+      # B+ tree sorted sets do), and it counts once.
+      results = {} #: Hash[String, SortedEntry]
       cursor = "0"
       @config.redis do |c|
         loop do
           cursor, pairs = c.call("ZSCAN", key, cursor, "MATCH", pattern, "COUNT", 1000)
-          pairs.each_slice(2) { |value, score| results << entry(score, value) }
+          pairs.each_slice(2) { |value, score| results[value] = entry(score, value) }
           break if cursor == "0" || results.size >= limit
         end
       end
-      results.first(limit).sort_by(&:score)
+      results.values.first(limit).sort_by(&:score)
     end
 
     def find_job(jid)

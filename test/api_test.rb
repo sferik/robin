@@ -765,6 +765,21 @@ class JobSetApiTest < RobinTest
     assert_equal 3, set.scan("big-", limit: 3).size
   end
 
+  # A member a scan returns more than once (as Redis 8.12's B+ tree sorted
+  # sets can) counts once, toward the limit too.
+  def test_scan_counts_a_member_returned_twice_once
+    a, b, c = %w[a b c].map { |jid| Robin.dump_json(job("dup-#{jid}")) }
+    replies = [["7", [b, "2", a, "1"]], ["0", [b, "2", c, "0.5"]], ["7", [a, "1", a, "1"]], ["0", [b, "2"]]]
+    real = alt_config.redis_pool
+    alt_config.redis_pool = RecordingPool.new(real, ->(_kind, args) { (args.first == "ZSCAN") ? replies.shift : :forward })
+
+    assert_equal %w[dup-c dup-a dup-b], set.scan("dup-").map(&:jid) # by score
+    assert_equal %w[dup-a dup-b], set.scan("dup-", limit: 2).map(&:jid)
+    assert_empty replies
+  ensure
+    alt_config.redis_pool = real
+  end
+
   def test_scan_stops_as_soon_as_the_limit_is_reached
     2_000.times { |i| add("retry", i, job("big-#{i}", "pad" => "x" * 64)) }
     _, first_batch = alt("ZSCAN", alt_key("retry"), "0", "MATCH", "*big-*", "COUNT", 1000)

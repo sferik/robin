@@ -122,7 +122,7 @@ gem "robin"
 
 Robin needs Ruby 3.4+ (or JRuby 10) and Redis 6.2+, Valkey or Dragonfly.
 CI runs every test on Ruby 3.4 and 4.0 (and Ruby's development version),
-JRuby 10.1, Redis 6.2, 7.2, 7.4, 8.2 and 8.10, Valkey 9.1 and
+JRuby 10.1, Redis 6.2, 7.2, 7.4, 8.2, 8.10 and 8.12, Valkey 9.1 and
 Dragonfly 2.0. CI runs them on TruffleRuby 40 too, where Robin uses pure
 Ruby, but TruffleRuby isn't supported yet: a few of its bugs fail tests
 (a refused connection is reported as `EINVAL`, for one).
