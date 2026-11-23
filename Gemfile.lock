@@ -51,13 +51,13 @@ GEM
     csv (3.3.7)
     diff-lcs (2.0.0)
     drb (2.2.3)
-    duel (0.3.0)
+    duel (0.3.1)
       fiddle (~> 1.1)
-    duel-gvl (0.3.0)
+    duel-gvl (0.3.1)
       duel (~> 0.3.0)
-    duel-redis (0.3.0)
+    duel-redis (0.3.1)
       duel (~> 0.3.0)
-    duel-retained (0.3.0)
+    duel-retained (0.3.1)
       duel (~> 0.3.0)
     erb (6.0.7)
     erb (6.0.7-java)
@@ -344,10 +344,10 @@ CHECKSUMS
   csv (3.3.7) sha256=15a3f16f6628da8664d455eb634e7f22031bcf53044923caf56975109e71b9f8
   diff-lcs (2.0.0) sha256=708a5d52ec2945b50f8f53a181174aa1ef2c496edf81c05957fe956dabb363d5
   drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
-  duel (0.3.0) sha256=f16184f3d428bc18731ea35f2cb46ee23bd153ce1b9660990c807b33dc44ee91
-  duel-gvl (0.3.0) sha256=dfb2d609cac7a04fb6edb85125871de360f0cff9dfc2e2c7af21bc93ddb0c60c
-  duel-redis (0.3.0) sha256=6529fd0b93049543678d24ef5bee6b11044673a1709246350283d6e59bba04e1
-  duel-retained (0.3.0) sha256=68d431ea54d9faffb6ebc121e309132adbc305041dd545f5e7845b0c4c5e4e3b
+  duel (0.3.1) sha256=6a5363b2ce2dd6c2eaaff99740c5b88ef14cb6dadec06ac71a8dd98563e53355
+  duel-gvl (0.3.1) sha256=6665bb1eab889821c88f2e1f4a7f74348034229c54a4a80ac0f3866b3fd7a1da
+  duel-redis (0.3.1) sha256=cd08b80756dd09136ee9f2201c10e32316aa8c8e344b1e3a2292bbc22d3c6bdb
+  duel-retained (0.3.1) sha256=c168f19e4d78b4fb907a14249b4de36ca1c9153db085d693d11a5f6922a0f41f
   erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
   erb (6.0.7-java) sha256=ef8339f928aa33be9205534be19e9c0daf310c4cc4eb85fd409141c094c57d61
   erubi (1.13.1) sha256=a082103b0885dbc5ecf1172fede897f9ebdb745a4b97a5e8dc63953db1ee4ad9
