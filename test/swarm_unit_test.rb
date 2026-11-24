@@ -231,6 +231,26 @@ class SwarmUnitTest < RobinTest
     assert_includes @log.string, "swarm child 1 started (pid 1001)"
   end
 
+  def test_before_fork_hooks_run_in_the_parent_before_each_fork
+    seen = []
+    config.on(:before_fork) { seen << @os.forks.size }
+    s = swarm
+    s.start_child(0)
+    s.start_child(1)
+
+    assert_equal [0, 1], seen
+  end
+
+  def test_before_fork_hooks_dont_run_for_spawned_children
+    @os.fork_available = false
+    seen = []
+    config.on(:before_fork) { seen << :ran }
+    swarm.start_child(0)
+
+    assert_empty seen
+    assert_equal 1, @os.spawns.size
+  end
+
   def test_start_child_spawns
     @os.fork_available = false
     s = swarm({processes: 1, concurrency: 3})

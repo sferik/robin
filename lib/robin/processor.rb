@@ -122,6 +122,7 @@ module Robin
       if (started = @outage_started)
         @config.logger.info(format("Redis is back after %.1fs", monotonic - started))
         @outage_started = nil
+        @manager.redis_recovered
         @failures = 0
         @backoff = MIN_BACKOFF
       end
@@ -129,6 +130,7 @@ module Robin
     rescue => e
       @outage_started ||= monotonic
       @failures += 1
+      @manager.redis_failing(e) if @failures == 1
       @config.handle_exception(e, {context: "fetch"}) if @failures == 1 || (@failures % 30).zero?
       @backoff = [@backoff * 2, MAX_BACKOFF].min
       interruptible { sleep @backoff } unless @done

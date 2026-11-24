@@ -266,7 +266,7 @@ class ConfigTest < Minitest::Test
     assert_nil c.retry_backoff
     assert_empty c.periodic_blocks
     assert_equal Robin::Config::LIFECYCLE_EVENTS.to_h { |e| [e, []] }, c.lifecycle
-    assert_equal %i[startup quiet shutdown leader follower heartbeat exit fork], Robin::Config::LIFECYCLE_EVENTS
+    assert_equal %i[startup ready quiet shutdown leader follower heartbeat exit before_fork fork], Robin::Config::LIFECYCLE_EVENTS
     assert_equal ["default"], c.capsules.keys
     assert_empty c.redis_options
   end

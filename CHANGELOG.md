@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Events for when a condition Robin reports ends, so each has a pair:
+  `redis.slow_ended` after a `redis.slow`, `gvl.contention_ended` after
+  a `gvl.contended`, and `worker.stopped` for a worker that stops without
+  dying (every `worker.started` gets a `worker.stopped` or a
+  `worker.died`).
+- `redis.failing` and `redis.recovered` events: when a process's fetches
+  from Redis start failing (it's unreachable, or answers with errors),
+  and when one works again, with how long the spell lasted. They're
+  reported once per process, however many workers notice.
+- A `:ready` lifecycle event, once a server's workers and housekeeping
+  threads have started (`:startup` runs before they start), and
+  `:before_fork`, in a swarm's parent before it forks each child (`:fork`
+  runs in the child).
 - EXTENDING.md documents Robin's API for gems that build on it: the
   registries Robin consults, the classes they may subclass, the methods
   Robin calls that a subclass may override, and the rest of what they

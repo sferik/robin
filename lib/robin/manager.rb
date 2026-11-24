@@ -75,9 +75,12 @@ module Robin
       remaining.each { |p| p.thread&.join([hard_deadline - monotonic, 0].max) }
     end
 
+    # On the worker's thread, as it ends (every worker.started gets a
+    # worker.stopped, or a worker.died from #processor_died).
     def processor_stopped(processor)
       @mutex.synchronize { @processors.delete(processor) }
       @launcher.work_finished_cleanup(processor)
+      Events.emit(@config, "worker.stopped", capsule: capsule.name)
     end
 
     def processor_died(processor, exception)
@@ -98,6 +101,10 @@ module Robin
     def work_started(processor, unit)
       @launcher.work_started(processor, unit)
     end
+
+    def redis_failing(error) = @launcher.redis_failing(error)
+
+    def redis_recovered = @launcher.redis_recovered
 
     def work_finished(processor, payload, elapsed_ms, ok)
       @launcher.work_finished(processor, payload, elapsed_ms, ok)

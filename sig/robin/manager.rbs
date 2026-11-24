@@ -43,6 +43,10 @@ module Robin
 
     def work_started: (Processor processor, Fetcher::UnitOfWork unit) -> void
 
+    def redis_failing: (Exception error) -> void
+
+    def redis_recovered: () -> void
+
     def work_finished: (Processor processor, job_hash payload, Float | Integer elapsed_ms, bool ok) -> void
 
     private

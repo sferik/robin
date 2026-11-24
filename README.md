@@ -270,7 +270,9 @@ like a web process: its `configure_client` blocks run, not its
 `robin swarm -n` takes a number of processes, or a decimal meaning that
 many per CPU core (`-n 1.5` on 8 cores starts 12). `ROBIN_SWARM_COUNT`
 works too, and the default is one per core. Each child runs
-`config.on(:fork)` hooks first, e.g. to reconnect to a database.
+`config.on(:fork)` hooks first, e.g. to reconnect to a database, and the
+parent runs `config.on(:before_fork)` hooks before it forks each one,
+e.g. to close a connection the children mustn't share.
 
 **Capsules** isolate work inside one process, each with its own threads and queues:
 
@@ -540,7 +542,8 @@ At boot, Robin refuses to start on Redis older than 6.2, with a concurrency
 or shutdown timeout of 0, a Redis pool smaller than the worker count plus
 two, or a queue listed twice. It warns if Redis may evict keys
 (`maxmemory-policy` other than `noeviction`). An exception in a `:startup`
-hook stops the boot.
+hook stops the boot. `:ready` hooks run once the workers and housekeeping
+threads have started.
 
 ## Batches and workflows
 
@@ -914,8 +917,9 @@ batch and tags). The default handler logs each error as one entry: the
 error, its context and the start of its backtrace.
 
 Things that aren't errors but are worth knowing about (a job expired,
-skipped or rate limited, a worker died, Redis is slow, the heartbeat
-lapsed, a reliable push was buffered or lost, and so on) are events.
+skipped or rate limited, a worker started, stopped or died, Redis is slow
+or failing and when that ends, the heartbeat lapsed, a reliable push was
+buffered or lost, and so on) are events.
 `config.event_handlers` are called with each event's name and a Hash
 about it; `Robin::Events` lists them. In a Rails app they're published through
 `ActiveSupport::Notifications` as `"<event>.robin"`.
@@ -1013,7 +1017,8 @@ The dashboard shows each process's contention, StatsD gets it as the
 `gvl.contention` gauge, Prometheus as
 `robin_process_gvl_contention_percent`, and a process whose contention stays at 50% or
 more for three heartbeats in a row logs a warning (at most every 10
-minutes) and emits a `gvl.contended` event. When it's persistently high,
+minutes) and emits a `gvl.contended` event, then a `gvl.contention_ended`
+event once a heartbeat measures it under 50%. When it's persistently high,
 CPU-heavy jobs would finish sooner with fewer threads per process and
 more processes (or `robin swarm`). Robin doesn't change your concurrency
 itself. Measuring costs under 2% even in code that does nothing but

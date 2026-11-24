@@ -30,13 +30,27 @@ module Robin
   #                    longer than the shutdown timeout
   # worker.started::   capsule (its name): a worker thread started; handlers
   #                    run on that thread
+  # worker.stopped::   capsule: a worker thread stopped (when its process
+  #                    stops, or its capsule shrinks); handlers run on that
+  #                    thread. Every worker.started gets a worker.stopped
+  #                    or a worker.died.
   # worker.died::      error, delay (seconds before its replacement starts;
   #                    nil when stopping, with no replacement)
   # workers.resized::  capsule, from, to: a capsule's worker count changed
   #                    (Robin::Launcher#resize)
-  # redis.slow::       rtt_us: Redis round trips take over 50ms
+  # redis.slow::       rtt_us: Redis round trips take over 50ms (at most
+  #                    every 10 minutes while they do)
+  # redis.slow_ended:: rtt_us: a round trip under 50ms after a redis.slow
+  # redis.failing::    error: this process's fetches from Redis started
+  #                    failing (it's unreachable, or answers with errors),
+  #                    once however many workers notice
+  # redis.recovered::  seconds: a fetch worked again, ending the spell of
+  #                    failures (how long it lasted)
   # gvl.contended::    percent: GVL contention (see Robin::GVL) stayed at 50%
-  #                    or more for three heartbeats in a row
+  #                    or more for three heartbeats in a row (at most every
+  #                    10 minutes while it does)
+  # gvl.contention_ended:: percent: a heartbeat under 50% after a
+  #                    gvl.contended
   # heartbeat.lapsed:: (nothing): no heartbeat for longer than process_ttl
   # memory.exceeded::  rss_mb, limit_mb: the process restarts gracefully
   # swarm.child_exited:: index, pid, status (exit status or signal), delay

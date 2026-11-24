@@ -133,6 +133,10 @@ class ProcessorTest < RobinTest
 
     def processor_stopped(processor) = @events << [:stopped, processor]
 
+    def redis_failing(error) = @events << [:failing, error]
+
+    def redis_recovered = @events << [:recovered]
+
     def processor_died(processor, ex) = @events << [:died, processor, ex]
   end
 
@@ -1185,7 +1189,9 @@ class ProcessorTest < RobinTest
     # The outage started with the first failed fetch and ended with the
     # first successful one, four fetches later.
     assert_equal ["INFO: Redis is back after 6.0s\n", "INFO: Redis is back after 1.5s\n"], logs.string.lines
-    assert_equal [:stopped, proc], @manager.events.last
+    # Each spell is reported once: its first failure and the fetch that
+    # ended it (the launcher makes one report of every worker's).
+    assert_equal [[:failing, errors.first], [:recovered], [:failing, errors.first], [:recovered], [:stopped, proc]], @manager.events
   end
 
   # -- acknowledgement with the next fetch -------------------------------------

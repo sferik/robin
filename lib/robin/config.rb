@@ -91,7 +91,7 @@ module Robin
     # CRuby.
     JIT_WARMUP = !RUBY_ENGINE.eql?("ruby")
 
-    LIFECYCLE_EVENTS = %i[startup quiet shutdown leader follower heartbeat exit fork].freeze
+    LIFECYCLE_EVENTS = %i[startup ready quiet shutdown leader follower heartbeat exit before_fork fork].freeze
 
     attr_accessor :timeout, :poll_interval, :max_retries, :dead_max_jobs, :dead_timeout,
       :strict_args, :key_prefix, :tag, :labels, :environment,
@@ -430,8 +430,19 @@ module Robin
       @server_chain
     end
 
-    # Register a lifecycle callback: :startup, :quiet, :shutdown, :leader,
-    # :follower, :heartbeat or :exit.
+    # Register a lifecycle callback, for one of a server's events:
+    #
+    # :startup::     booting, before the workers start (one that raises
+    #                stops the boot)
+    # :ready::       once the workers and housekeeping threads have started
+    # :quiet::       it stops taking new jobs
+    # :shutdown::    stopping, once its workers have stopped
+    # :exit::        the robin command, as it exits
+    # :leader::      it became the cluster's leader
+    # :follower::    it stopped being the leader
+    # :heartbeat::   after each heartbeat
+    # :before_fork:: in a swarm's parent, before it forks each child
+    # :fork::        in each forked swarm child, before it serves
     def on(event, &block)
       raise ArgumentError, "unknown event #{event.inspect}" unless @lifecycle.key?(event)
 

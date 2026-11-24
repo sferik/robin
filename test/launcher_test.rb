@@ -328,6 +328,116 @@ class LauncherTest < RobinTest
     assert_same 1600.0, @launcher.instance_variable_get(:@last).fetch(:slow_redis)
   end
 
+  # A heartbeat stub: each beat's round trip takes the next of +rtts+
+  # (microseconds), and the monotonic clock reads +clock+.
+  def with_round_trips(rtts, clock)
+    calls = 0
+    rtt = lambda do |*args|
+      next clock.call unless args.last == :microsecond
+
+      calls += 1
+      calls.odd? ? 0 : rtts.fetch((calls / 2) - 1)
+    end
+    stub_method(Process, :clock_gettime, rtt) { yield }
+  end
+
+  def test_slow_redis_ends_once_round_trips_are_fast_again
+    logs = capture_logs
+    events = capture_events
+    now = 1000.0
+    with_round_trips([70_000, 10_000, 10_000, 70_000, 10_000, 80_000, 20_000], -> { now }) do
+      beat # slow
+      beat # fast: ends it
+      beat # still fast: nothing
+      beat # slow, but within ten minutes of the last warning: not reported
+      beat # so its end isn't either
+      now += 600
+      beat # slow again, reported
+      beat # and ended
+    end
+
+    assert_equal [["redis.slow", {rtt_us: 70_000}], ["redis.slow_ended", {rtt_us: 10_000}],
+      ["redis.slow", {rtt_us: 80_000}], ["redis.slow_ended", {rtt_us: 20_000}]], events
+    assert_equal ["INFO: Redis round trips are back to 10.0ms", "INFO: Redis round trips are back to 20.0ms"],
+      logs.string.lines(chomp: true).grep(/back to/)
+  end
+
+  def test_gvl_contention_ends_once_it_drops
+    logs = capture_logs
+    events = capture_events
+    fake_gvl(60.0, 60.0, 60.0, 40.0, 40.0, 60.0, 60.0, 60.0, 40.0, 70.0, 70.0, 70.0, 49.9)
+    clock = 1000.0
+    stub_method(Process, :clock_gettime, ->(*args) { (args.size == 1) ? clock : 1 }) do
+      3.times { beat } # contended
+      2.times { beat } # ended, then nothing
+      3.times { beat } # contended again, within ten minutes: not reported
+      beat # so its end isn't either
+      clock += 600
+      4.times { beat } # reported, then ended
+    end
+
+    assert_equal [["gvl.contended", {percent: 60.0}], ["gvl.contention_ended", {percent: 40.0}],
+      ["gvl.contended", {percent: 70.0}], ["gvl.contention_ended", {percent: 49.9}]], events
+    assert_equal ["INFO: GVL contention is back down to 40.0%", "INFO: GVL contention is back down to 49.9%"],
+      logs.string.lines(chomp: true).grep(/back down/)
+  end
+
+  def test_a_spell_of_redis_failures_is_reported_once
+    events = capture_events
+    now = 50.0
+    @launcher.define_singleton_method(:monotonic) { now }
+    error = RuntimeError.new("down")
+    @launcher.redis_recovered # nothing was failing
+    @launcher.redis_failing(error)
+    now += 2.25
+    @launcher.redis_failing(RuntimeError.new("another worker"))
+    @launcher.redis_recovered
+    @launcher.redis_recovered # another worker's fetch works too
+    @launcher.redis_failing(error)
+
+    assert_equal [["redis.failing", {error: error}], ["redis.recovered", {seconds: 2.3}],
+      ["redis.failing", {error: error}]], events
+  end
+
+  # Workers report on their own threads, so the spell's start is read and
+  # changed under a lock: two can't both start or end it.
+  # A thread running +report+, which returns what it raised (nil if
+  # nothing), rather than dying of it.
+  def reporting_thread(report)
+    Thread.new do
+      Thread.current.report_on_exception = false
+      report.call
+      nil
+    rescue => e
+      e
+    end
+  end
+
+  def test_redis_failures_and_recoveries_take_the_lock
+    mutex = @launcher.instance_variable_get(:@redis_mutex)
+    [-> { @launcher.redis_failing(RuntimeError.new("down")) }, -> { @launcher.redis_recovered }].each do |report|
+      thread = nil
+      mutex.synchronize do
+        thread = reporting_thread(report)
+        sleep 0.01 until thread.status == "sleep" || !thread.alive?
+
+        assert_equal "sleep", thread.status
+      end
+
+      assert_nil thread.value
+    end
+  end
+
+  def test_workers_failing_at_once_report_one_spell
+    events = capture_events
+
+    [-> { @launcher.redis_failing(RuntimeError.new("down")) }, -> { @launcher.redis_recovered }].each do |report|
+      assert_empty Array.new(8) { reporting_thread(report) }.filter_map(&:value)
+    end
+
+    assert_equal %w[redis.failing redis.recovered], events.map(&:first)
+  end
+
   def test_fast_redis_is_not_reported
     logs = capture_logs
     us = 0
@@ -2108,6 +2218,21 @@ class LauncherLifecycleTest < RobinTest
     refute_includes beats, true
   ensure
     @launcher.instance_variable_set(:@done, false)
+    @launcher.stop
+  end
+
+  def test_ready_fires_once_everything_has_started
+    config.heartbeat_interval = 0.05
+    order = []
+    config.on(:startup) { order << :startup }
+    config.on(:ready) do
+      threads = %i[@heartbeat @chores @acker].map { |name| @launcher.instance_variable_get(name)&.alive? }
+      order << [:ready, threads, @launcher.managers.flat_map(&:processors).all?(&:alive?)]
+    end
+    @launcher.run
+
+    assert_equal [:startup, [:ready, [true, true, true], true]], order
+  ensure
     @launcher.stop
   end
 

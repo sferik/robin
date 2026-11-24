@@ -31,6 +31,10 @@ module Robin
     @suspects: Array[[String, String?]]
     @gvl: GVL
     @gvl_high: Integer
+    @gvl_contended: bool?
+    @redis_slow: bool?
+    @redis_failing_since: Float?
+    @redis_mutex: Thread::Mutex
     @wake_mutex: Thread::Mutex
     @wake: Thread::ConditionVariable
     @on_stop_request: (^() -> void)?
@@ -108,6 +112,10 @@ module Robin
 
     def work_started: (Processor processor, Fetcher::UnitOfWork unit) -> void
 
+    def redis_failing: (Exception error) -> void
+
+    def redis_recovered: () -> void
+
     def work_finished: (Processor processor, job_hash payload, Float | Integer elapsed_ms, bool ok) -> void
 
     def work_finished_cleanup: (Processor processor) -> void
@@ -166,7 +174,11 @@ module Robin
 
     def warn_about_slow_redis: (Integer rtt_us) -> void
 
+    def end_slow_redis: (Integer rtt_us) -> void
+
     def check_gvl: (Float percent) -> void
+
+    def end_gvl_contention: (Float percent) -> void
 
     def warn_about_lapse: () -> void
 

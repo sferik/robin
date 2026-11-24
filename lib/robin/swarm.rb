@@ -227,8 +227,13 @@ module Robin
        "RUBYLIB" => [LIB, ENV["RUBYLIB"]].compact.join(File::PATH_SEPARATOR)}
     end
 
+    # In fork mode, the parent's :before_fork hooks run before each fork
+    # (to close what a child mustn't share, say), and the child's :fork
+    # hooks after it.
     def start_child(index)
-      pid = (@mode == "fork") ? @os.fork { child_main(index) } : @os.spawn(child_env(index), *child_command)
+      fork = @mode == "fork"
+      @cli.config.fire_event(:before_fork) if fork
+      pid = fork ? @os.fork { child_main(index) } : @os.spawn(child_env(index), *child_command)
       child = Child.new(pid, index, @os.now, false)
       @children[pid] = child
       logger.info("swarm child #{index} started (pid #{pid})")

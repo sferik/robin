@@ -48,6 +48,8 @@ module Robin
       @suspects = []
       @gvl = GVL.new
       @gvl_high = 0
+      # Guards when this process's fetches started failing (see #redis_failing).
+      @redis_mutex = Mutex.new
       @wake_mutex = Mutex.new
       @wake = ConditionVariable.new
     end
@@ -128,6 +130,7 @@ module Robin
       @acker.name = "robin.acks"
       @acker.priority = 1 # outranks worker threads, like housekeeping
       Systemd.notify("READY=1") unless @embedded
+      config.fire_event(:ready)
       self
     end
 
@@ -216,6 +219,22 @@ module Robin
     # (JRuby) a shared one would serialize every worker twice per job.
     def work_started(processor, unit)
       processor.work = [unit.queue, unit.raw, Robin.now_ms, unit.key]
+    end
+
+    # A worker's fetch failed after working (Redis is unreachable, or
+    # answers with errors). The first of a spell in this process emits
+    # "redis.failing": each worker notices on its own, but the process
+    # reports the spell once.
+    def redis_failing(error)
+      started = @redis_mutex.synchronize { !@redis_failing_since && (@redis_failing_since = monotonic) }
+      Events.emit(config, "redis.failing", error: error) if started
+    end
+
+    # A worker's fetch worked after failing. The first since the spell
+    # began emits "redis.recovered", with how long it lasted.
+    def redis_recovered
+      started = @redis_mutex.synchronize { @redis_failing_since.tap { @redis_failing_since = nil } }
+      Events.emit(config, "redis.recovered", seconds: (monotonic - started).round(1)) if started
     end
 
     def work_finished(processor, payload, elapsed_ms, ok)
@@ -315,7 +334,9 @@ module Robin
         @beat_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         signals, _, cancelled, paused, paused_classes = replies.drop(at.fetch(:signals)) #: [Array[String], Integer, Array[String], Array[String], Array[String]]
         @rtt = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond) - rtt_start
-        warn_about_slow_redis(@rtt) if @rtt > SLOW_REDIS_US
+        if @rtt > SLOW_REDIS_US then warn_about_slow_redis(@rtt)
+        elsif @redis_slow then end_slow_redis(@rtt)
+        end
         check_gvl(gvl) if gvl
 
         @leader.settle(replies.fetch(at.fetch(:lease))) if candidate
@@ -538,9 +559,18 @@ module Robin
     # At most every 10 minutes: a slow Redis slows every job down.
     def warn_about_slow_redis(rtt_us)
       every(600, :slow_redis) do
+        @redis_slow = true
         config.logger.warn(format("Redis round trips take %.1fms; jobs will be slow (is Redis far away, or overloaded?)", rtt_us / 1000.0))
         Events.emit(config, "redis.slow", rtt_us: rtt_us)
       end
+    end
+
+    # The first fast round trip after a "redis.slow" ends it, with
+    # "redis.slow_ended" (so every redis.slow gets one).
+    def end_slow_redis(rtt_us)
+      @redis_slow = false
+      config.logger.info(format("Redis round trips are back to %.1fms", rtt_us / 1000.0))
+      Events.emit(config, "redis.slow_ended", rtt_us: rtt_us)
     end
 
     # Contention is reported every heartbeat (StatsD's gvl.contention);
@@ -548,13 +578,23 @@ module Robin
     def check_gvl(percent)
       config.statsd&.gauge("gvl.contention", percent)
       @gvl_high = (percent >= GVL_HIGH) ? @gvl_high + 1 : 0
+      end_gvl_contention(percent) if @gvl_contended && @gvl_high.zero?
       return if @gvl_high < GVL_HIGH_BEATS
 
       every(600, :gvl) do
+        @gvl_contended = true
         config.logger.warn("GVL contention is #{percent}%: threads spend most of their time waiting for each other; " \
           "fewer threads per process (and more processes) would run CPU-heavy jobs faster")
         Events.emit(config, "gvl.contended", percent: percent)
       end
+    end
+
+    # The first heartbeat under GVL_HIGH after a "gvl.contended" ends it,
+    # with "gvl.contention_ended" (so every gvl.contended gets one).
+    def end_gvl_contention(percent)
+      @gvl_contended = false
+      config.logger.info("GVL contention is back down to #{percent}%")
+      Events.emit(config, "gvl.contention_ended", percent: percent)
     end
 
     def warn_about_lapse

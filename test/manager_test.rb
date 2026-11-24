@@ -20,6 +20,10 @@ class ManagerTest < RobinTest
 
     def work_started(*args) = @events << [:started, *args]
 
+    def redis_failing(error) = @events << [:failing, error]
+
+    def redis_recovered = @events << [:recovered]
+
     def work_finished(*args) = @events << [:finished, *args]
   end
 
@@ -210,6 +214,7 @@ class ManagerTest < RobinTest
   end
 
   def test_processor_stopped
+    events = capture_events
     a = FakeProcessor.new
     b = FakeProcessor.new
     fake!(a, b)
@@ -217,6 +222,15 @@ class ManagerTest < RobinTest
 
     assert_equal [b], @manager.processors
     assert_equal [[:cleanup, a]], @launcher.events
+    assert_equal [["worker.stopped", {capsule: "default"}]], events
+  end
+
+  def test_redis_failures_and_recoveries_go_to_the_launcher
+    error = RuntimeError.new("down")
+    @manager.redis_failing(error)
+    @manager.redis_recovered
+
+    assert_equal [[:failing, error], [:recovered]], @launcher.events
   end
 
   def test_processor_died_is_replaced_in_its_slot
