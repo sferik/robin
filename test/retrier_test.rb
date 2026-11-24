@@ -620,6 +620,29 @@ class RetrierTest < RobinTest
     assert_equal({context: "robin_retry_in block", job: item}, ctx)
   end
 
+  # Part of the extension API (EXTENDING.md): a subclass or a prepended
+  # module decides a job's retry limit with #max_retries.
+  def test_max_retries_decides_when_a_job_dies
+    no_retries = Class.new(Robin::Retrier) { def max_retries(_payload) = 0 }.new(config)
+    item = payload(retry: true)
+
+    assert_equal :dead, no_retries.handle(unit_for(item), item, Plain, error)
+    assert_equal ["j1"], dead.map { |d| d["jid"] }
+  end
+
+  # Part of the extension API: the errors Robin reports go through
+  # Config#handle_exception, which a prepended module may replace.
+  def test_reported_errors_go_through_handle_exception
+    seen = []
+    config.singleton_class.prepend(Module.new { define_method(:handle_exception) { |ex, context = {}| seen << [ex.message, context] } })
+    Hooked.retry_in = ->(*) { raise ArgumentError, "bad block" }
+    item = payload
+    with_rand(0.5) { @retrier.handle(unit_for(item), item, Hooked, error) }
+
+    assert_equal [["bad block", {context: "robin_retry_in block", job: item}]], seen
+    assert_empty @errors, "the prepended handle_exception replaced the error handlers"
+  end
+
   def test_unusable_retry_in_values_fall_back_to_the_default_and_are_reported
     [" 60", "60", Time.now, :later, -1, -0.5, Float::NAN, Float::INFINITY, Complex(1, 1), [5]].each do |value|
       @errors.clear

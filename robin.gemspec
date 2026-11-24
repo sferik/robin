@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
     "rubygems_mfa_required" => "true"
   }
 
-  files = Dir["lib/**/*", "sig/**/*.{rbs,yaml}", "exe/*", "assets/*.svg", "LICENSE", "COPYING", "README.md", "CHANGELOG.md"]
+  files = Dir["lib/**/*", "sig/**/*.{rbs,yaml}", "exe/*", "assets/*.svg", "LICENSE", "COPYING", "README.md", "EXTENDING.md", "CHANGELOG.md"]
     .select { |f| File.file?(f) }.reject { |f| f.end_with?(".bundle", ".so", ".dll", ".jar") }
   # Two gems: the default one builds the C extension on install; the
   # java-platform one (built under JRuby with ROBIN_PLATFORM=java, after

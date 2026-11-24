@@ -94,6 +94,7 @@ their queues 61x as fast, with an eighth of the Redis CPU per job
 - [Testing](#testing)
 - [The data API](#the-data-api)
 - [Performance](#performance)
+- [Versioning and extending Robin](#versioning-and-extending-robin)
 - [Development](#development)
 - [License](#license)
 
@@ -1419,6 +1420,21 @@ A process keeps each job it has fetched in a list of its own,
 used again once its job is acknowledged. Recovery still reads the single
 `inflight:<identity>` list that processes of earlier development versions
 kept their jobs in.
+
+## Versioning and extending Robin
+
+Robin follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Before 1.0, a patch release (0.1.4, say) never removes or breaks
+anything this README documents, and a minor release (0.2.0) may, with
+the [CHANGELOG](CHANGELOG.md) naming each such change. So an app or a gem
+can depend on `"~> 0.1.3"` and take patch releases as they come.
+
+Gems that build on Robin (adapters, compatibility layers, dashboard pages
+and other plugins) can rely on more than an app needs: the registries
+Robin consults, the classes they may subclass, the methods Robin calls
+that a subclass may override, and the rest of the API they can call.
+[EXTENDING.md](EXTENDING.md) lists them, under the same promise, and
+Robin's tests pin every entry.
 
 ## Development
 

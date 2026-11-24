@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- EXTENDING.md documents Robin's API for gems that build on it: the
+  registries Robin consults, the classes they may subclass, the methods
+  Robin calls that a subclass may override, and the rest of what they
+  may call. From this release, a patch release never removes or breaks
+  any of it, or anything the README documents, and the tests pin every
+  entry.
+
 ### Fixed
 
 - Searching the schedule, retry and dead sets (`JobSet#scan`, and
