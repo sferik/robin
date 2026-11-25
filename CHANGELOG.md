@@ -46,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A server whose Redis pool was made before its concurrency was set (by
+  app code using Redis as it boots, as Chatwoot's initializer does to
+  load its cron schedule) grows the pool to fit its workers, as resizing
+  a capsule does. It refused to boot with "the Redis pool has 10
+  connections but 10 worker threads need at least 12". A pool whose
+  size was set (`:pool_size`) still has to be big enough.
 - An iterable job run outside Robin (`perform` called on a new
   instance, as apps' tests do) runs. It failed with "undefined method
   '[]' for nil", reading its `max_iteration_runtime` from a job hash it

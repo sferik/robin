@@ -444,10 +444,11 @@ module Robin
       raise ArgumentError, "the shutdown timeout must be above 0 seconds" unless config.timeout.positive?
       raise ArgumentError, "the fetch timeout must be above 0 seconds" unless config.fetch_timeout.positive?
 
-      needed = config.total_concurrency + 2
-      if config.redis_pool.size < needed
+      # A pool Robin sized grows to fit (one may have been made before the
+      # concurrency was set, by app code using Redis as it boots).
+      unless config.fit_redis_pool(config.total_concurrency)
         raise ArgumentError, "the Redis pool has #{config.redis_pool.size} connections but #{config.total_concurrency} " \
-          "worker threads need at least #{needed}; raise :pool_size or leave it unset"
+          "worker threads need at least #{config.total_concurrency + 2}; raise :pool_size or leave it unset"
       end
 
       info, conn = config.redis { |c| [c.call("INFO"), c] }

@@ -1477,6 +1477,19 @@ class LauncherTest < RobinTest
     assert_equal "the fetch timeout must be above 0 seconds", error.message
   end
 
+  # A pool Robin sized may be made before the concurrency is set (an app's
+  # initializer used Redis as the server booted): it grows to fit.
+  def test_check_grows_a_pool_robin_sized_before_the_concurrency_was_set
+    Robin.server!
+    config.redis_pool
+    config.concurrency = 10
+    @launcher.send(:check!)
+
+    assert_equal 15, config.redis_pool.size
+  ensure
+    Robin.instance_variable_set(:@server, nil)
+  end
+
   def test_check_rejects_a_pool_too_small_for_the_workers
     config.concurrency = 5
     config.redis = {**TEST_REDIS, pool_size: 6}
