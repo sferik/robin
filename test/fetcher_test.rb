@@ -243,6 +243,43 @@ class FetcherTest < RobinTest
     assert_equal "high", blocked_on.call([])
   end
 
+  # config.queue_filter decides each fetch's queues (to leave one out
+  # for now, say).
+  def test_fetch_takes_from_the_queues_the_queue_filter_returns
+    push("high", "h1")
+    push("low", "l1")
+    seen = []
+    config.queue_filter = ->(capsule, queues) { (seen << [capsule, queues]) && queues - ["high"] }
+
+    assert_equal "low", @fetcher.fetch.queue
+    assert_equal [[@capsule, %w[high low]]], seen
+    assert_equal ["h1"], queue("high")
+  end
+
+  def test_blocking_fetch_waits_on_the_queues_the_queue_filter_returns
+    key, = warm(@fetcher, 1)
+    config.queue_filter = ->(_capsule, queues) { queues - ["high"] }
+    pool = recording_pool(no_script) { assert_nil @fetcher.fetch(0) }
+
+    assert_includes pool.calls, [:pipe, "BLMOVE", config.key("queue", "low"), key, "RIGHT", "LEFT", config.fetch_timeout]
+    refute(pool.calls.any? { |call| call.include?(config.key("queue", "high")) })
+  end
+
+  def test_a_queue_filter_leaving_no_queues_sleeps_then_returns_nil
+    config.fetch_timeout = 3
+    config.queue_filter = ->(*) { [] }
+    push("high", "h1")
+    warm(@fetcher, 1)
+    slept = []
+    @fetcher.define_singleton_method(:sleep) { |s| slept << s }
+    result = :unset
+    recording_pool(no_script) { result = @fetcher.fetch }
+
+    assert_nil result
+    assert_equal [3], slept
+    assert_equal ["h1"], queue("high")
+  end
+
   def test_blocking_fetch_skips_locally_paused_queues
     warm(@fetcher, 1)
     @fetcher.paused = ["high"]

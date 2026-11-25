@@ -75,6 +75,16 @@ module Robin
 
   type push_deferrer = ^(Array[job_hash] payloads) { () -> void } -> boolish | _PushDeferrer
 
+  # Config#queue_filter: the queues a fetch takes from, given its capsule
+  # and the queues in the order they'd be checked.
+  interface _QueueFilter
+    def call: (Capsule capsule, Array[String] queues) -> Array[String]
+
+    include _Object
+  end
+
+  type queue_filter = ^(Capsule capsule, Array[String] queues) -> Array[String] | _QueueFilter
+
   # Config#job_wrapper: runs the job (the block) inside something, such as
   # the Rails executor.
   interface _JobWrapper
@@ -265,6 +275,8 @@ module Robin
     def health_port=: (Integer | String | nil port) -> void
 
     attr_accessor push_deferrer: push_deferrer?
+
+    attr_accessor queue_filter: queue_filter?
 
     def logger=: (Logger logger) -> Logger
 

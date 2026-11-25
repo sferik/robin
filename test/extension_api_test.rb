@@ -120,6 +120,8 @@ class ExtensionAPITest < RobinTest
     "Robin::Config#process_key" => [[:req]],
     "Robin::Config#push_deferrer" => [],
     "Robin::Config#push_deferrer=" => [[:req]],
+    "Robin::Config#queue_filter" => [],
+    "Robin::Config#queue_filter=" => [[:req]],
     "Robin::Config#queues" => [],
     "Robin::Config#queues=" => [[:req]],
     "Robin::Config#redis" => [],

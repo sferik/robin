@@ -59,6 +59,10 @@ Robin consults these, so a gem can add to them as it loads.
   include `Robin::Job`. One that raises rejects the class.
 - `Robin::Client.interceptor`: a callable that may take over delivering
   pushed jobs, returning truthy when it did.
+- `config.queue_filter`: a callable run with each fetch's capsule and
+  its queues, in the order they'd be checked, that returns the queues to
+  fetch from (to leave one out for now, say). Jobs a fetch already took
+  for the capsule's other workers still run.
 - `config.push_deferrer`: a callable that may defer delivering pushed
   jobs (until a transaction commits, say), returning truthy when it took
   over delivery.

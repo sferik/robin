@@ -60,11 +60,12 @@ module Robin
       @strict
     end
 
-    # Queue names in the order they should be checked for the next fetch.
+    # Queue names in the order they should be checked for the next fetch:
+    # as the config's queue_filter returns them, when it has one.
     def queue_order
-      return queues if @strict
-
-      @expanded.shuffle.uniq
+      order = @strict ? queues : @expanded.shuffle.uniq
+      filter = @config.queue_filter
+      filter ? filter.call(self, order) : order
     end
 
     def freeze
@@ -252,6 +253,16 @@ module Robin
     #     true
     #   end
     attr_accessor :push_deferrer
+
+    # A callable given each fetch's capsule and its queues, in the order
+    # they'd be checked, which returns the queues to fetch from, in order:
+    # to leave one out for now, say. Jobs a fetch already took for the
+    # capsule's other workers (it takes several when several are fetching
+    # at once) still run. With no queues left, the fetch waits
+    # (config.fetch_timeout) and finds nothing.
+    #
+    #   config.queue_filter = ->(_capsule, queues) { Maintenance.on? ? queues - ["reports"] : queues }
+    attr_accessor :queue_filter
 
     attr_writer :logger, :redis_pool
     attr_reader :capsules, :error_handlers, :death_handlers, :lifecycle, :periodic_blocks

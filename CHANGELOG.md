@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `config.queue_filter`: a callable run with each fetch's capsule and
+  its queues, in the order they'd be checked, that returns the queues to
+  fetch from. An app can leave a queue out for a while with it (holding
+  low-priority jobs back while a single-threaded capsule is needed for
+  something else, say), and a compatibility layer can follow another
+  library's fetch.
 - Events for when a condition Robin reports ends, so each has a pair:
   `redis.slow_ended` after a `redis.slow`, `gvl.contention_ended` after
   a `gvl.contended`, and `worker.stopped` for a worker that stops without

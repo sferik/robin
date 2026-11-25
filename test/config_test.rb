@@ -62,6 +62,20 @@ class ConfigTest < Minitest::Test
     assert_raises(ArgumentError) { cap.queues = [["a", "x"]] }
   end
 
+  def test_queue_order_is_what_the_queue_filter_returns
+    cap = Robin::Capsule.new("x", @config)
+    cap.queues = %w[a b c]
+    seen = []
+    @config.queue_filter = ->(capsule, queues) { (seen << [capsule, queues]) && queues.reverse }
+
+    assert_equal %w[c b a], cap.queue_order
+    cap.queues = ["a,2", "b,1"]
+
+    assert_equal %w[a b], cap.queue_order.sort
+    assert_equal [[cap, %w[a b c]], [cap, seen.last.last]], seen
+    assert_equal %w[a b], seen.last.last.sort
+  end
+
   def test_weighted_queues
     cap = Robin::Capsule.new("x", @config)
     cap.queues = ["a,10", ["b", 1], "c"]
