@@ -23,6 +23,11 @@ module Robin
       include Robin::Job
       extend Robin::Job::ClassMethods
 
+      # What tells unique Active Job jobs apart: their class and arguments.
+      def self.robin_unique_args: ([Hash[String, untyped]] args) -> [String, untyped]
+
+      def self.constant: (String name) -> untyped
+
       def perform: (Hash[String, untyped] job_data) -> untyped
     end
 

@@ -60,6 +60,28 @@ module Robin
     class Wrapper
       include Robin::Job
 
+      # What tells unique jobs (unique_for) apart: the job's class and its
+      # arguments, not the job hash Active Job serializes it to, whose
+      # job_id is new every time. The job class's own robin_unique_args,
+      # if it has one, picks which of its arguments count.
+      def self.robin_unique_args(args)
+        job, = args
+        job_class = job.fetch("job_class")
+        arguments = job.fetch("arguments")
+        klass = constant(job_class)
+        [job_class, klass.respond_to?(:robin_unique_args) ? klass.robin_unique_args(arguments) : arguments]
+      end
+
+      # The job class named +name+, or nil when this process has none.
+      # mutant:disable -- `const_get` on Wrapper instead of Object differs
+      # only for constants nested in Wrapper, none of which are job classes.
+      def self.constant(name)
+        Object.const_get(name)
+      rescue NameError
+        nil
+      end
+      private_class_method :constant
+
       def perform(job_data)
         Thread.current[:robin_active_job] = self
         ::ActiveJob::Base.execute(job_data.merge({"provider_job_id" => jid}))

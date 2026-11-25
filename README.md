@@ -762,7 +762,10 @@ end
 
 - **Unique locks** are released when the job succeeds (the default) or, with
   `unique_until: :start`, when it starts. Define `robin_unique_args(args)` on
-  the class to choose which arguments count toward uniqueness.
+  the class to choose which arguments count toward uniqueness. Active Job
+  jobs can be unique too (`robin_options unique_for: 600`): they're told
+  apart by their class and arguments, and `robin_unique_args` on the job
+  class gets the job's arguments.
 - **Encryption** uses AES-256-GCM, with the job id as authenticated data.
   New jobs are encrypted with the highest-numbered key, and any listed key
   can decrypt, so you can rotate keys without downtime. Decrypted arguments

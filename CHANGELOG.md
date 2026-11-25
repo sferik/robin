@@ -46,6 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Unique Active Job jobs (`robin_options unique_for:` on the job class)
+  are unique. Their lock was keyed by the job hash Active Job builds,
+  whose `job_id` is new every time, so every push took a lock of its own
+  and duplicates ran. They're told apart by their class and arguments
+  now, and the job class's `robin_unique_args` gets the job's arguments.
 - A server whose Redis pool was made before its concurrency was set (by
   app code using Redis as it boots, as Chatwoot's initializer does to
   load its cron schedule) grows the pool to fit its workers, as resizing

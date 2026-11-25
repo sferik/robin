@@ -24,6 +24,18 @@ module AJUnit
 
   class ChildJob < OptionJob; end
 
+  # Unique for 10 minutes, by its arguments.
+  class OnceJob < BaseJob
+    robin_options unique_for: 600
+  end
+
+  class OtherOnceJob < OnceJob; end
+
+  # Unique by its first argument only.
+  class FirstArgJob < OnceJob
+    def self.robin_unique_args(arguments) = arguments.first(1)
+  end
+
   # Stands in for ActionMailer::MailDeliveryJob (ActionMailer isn't loaded).
   class MailDelivery < BaseJob
     def self.name = "ActionMailer::MailDeliveryJob"
@@ -87,6 +99,23 @@ class ActiveJobUnitTest < RobinTest
     assert_nil Thread.current[:robin_active_job]
     assert_raises(ArgumentError) { wrapper.perform(BaseJob.new("boom").serialize) }
     assert_nil Thread.current[:robin_active_job]
+  end
+
+  # Unique jobs are told apart by the job's class and arguments, not by the
+  # job hash Active Job builds (whose job_id is new every time).
+  def test_unique_active_job_jobs_are_told_apart_by_class_and_arguments
+    2.times { OnceJob.perform_later(1, "a") }
+    OnceJob.perform_later(2, "a")
+    OtherOnceJob.perform_later(1, "a")
+    2.times { |i| FirstArgJob.perform_later(1, i) }
+    FirstArgJob.perform_later(2, 0)
+
+    assert_equal [["AJUnit::OnceJob", [1, "a"]], ["AJUnit::OnceJob", [2, "a"]], ["AJUnit::OtherOnceJob", [1, "a"]], ["AJUnit::FirstArgJob", [1, 0]], ["AJUnit::FirstArgJob", [2, 0]]],
+      items.map { |item| item.args.first.values_at("job_class", "arguments") }
+    job = OnceJob.new(1, "a").serialize
+
+    assert_equal ["AJUnit::OnceJob", [1, "a"]], Robin::ActiveJob::Wrapper.robin_unique_args([job])
+    assert_equal ["Gone", [1]], Robin::ActiveJob::Wrapper.robin_unique_args([job.merge("job_class" => "Gone", "arguments" => [1])])
   end
 
   def test_robin_options
