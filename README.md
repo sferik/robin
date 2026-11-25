@@ -792,7 +792,10 @@ Also available: `array_enumerator`, `active_record_batches_enumerator` and
 (after an interruption or a cancellation) and `on_complete` hooks, and
 `around_iteration`, which wraps each iteration (yield to run it). Inside
 them and `each_iteration`, `cursor` is the last finished item's cursor and
-`current_object` the item being worked on.
+`current_object` the item being worked on. As in Sidekiq, `on_start` and
+`on_resume` run once `build_enumerator` has, so they can use what it set
+up, and a job whose `build_enumerator` returns nil has nothing to do: it
+runs none of the hooks.
 
 A long iteration can hold a worker for hours. Set
 `config.max_iteration_runtime` (seconds), or the `max_iteration_runtime`

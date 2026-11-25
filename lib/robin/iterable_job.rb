@@ -27,7 +27,10 @@ module Robin
   # Optional hooks: on_start, on_resume, on_cancel, on_stop (interrupted
   # or cancelled; after on_cancel), on_complete. Inside them and
   # each_iteration, +cursor+ is the last finished item's cursor and
-  # +current_object+ the item being (or last) worked on.
+  # +current_object+ the item being (or last) worked on. As in Sidekiq,
+  # on_start and on_resume run once build_enumerator has (so they see
+  # what it set up), and a job whose build_enumerator returns nil has
+  # nothing to do: it runs none of them.
   #
   # A run stops and requeues itself (resuming from its checkpoint, like
   # after a deploy) once it has run for +max_iteration_runtime+ seconds:
@@ -67,20 +70,23 @@ module Robin
       resumed = !state.empty?
       @cursor = (Robin.load_json(state.fetch("cursor")).fetch("c") if resumed)
       @iterations = state["iterations"].to_i
-      resumed ? on_resume : on_start
 
       enum = build_enumerator(*args, cursor: @cursor)
       if enum.nil?
-        finish(config, key, @iterations)
+        drop_state(config, key, @iterations)
         return
       end
       raise ArgumentError, "#{self.class}#build_enumerator must return an Enumerator" unless enum.respond_to?(:each)
+
+      resumed ? on_resume : on_start
 
       # Enumerator sizes count the remaining items (nil or Infinity when
       # unknown, and then progress is a count; see #progress_args).
       remaining = (enum.size if enum.respond_to?(:size))
       total = (remaining + @iterations if remaining.instance_of?(Integer))
-      max_runtime = robin_payload["max_iteration_runtime"] || config.max_iteration_runtime
+      # A job run outside Robin (perform called on a new instance, as
+      # tests do) has no job hash.
+      max_runtime = robin_payload&.fetch("max_iteration_runtime", nil) || config.max_iteration_runtime
       started = last_checkpoint = monotonic
       warned = false
       checkpointed = @iterations
@@ -126,7 +132,8 @@ module Robin
           return
         end
       end
-      finish(config, key, total)
+      drop_state(config, key, total)
+      on_complete
     end
 
     # Runs each iteration (the block): override to wrap them, e.g. in a
@@ -262,8 +269,13 @@ module Robin
     # it from the checkpoint. Bypasses client middleware: this isn't a new
     # job, so uniqueness and batch registration must not apply again.
     def requeue(config, key, total, reason)
+      payload = robin_payload
+      # A job run outside Robin has no job hash to put back: it stops at
+      # its checkpoint.
+      return checkpoint(config, key, total) unless payload
+
       # As stored, so decrypted (or mutated) arguments never are.
-      item = Robin.pristine(robin_payload).dup
+      item = Robin.pristine(payload).dup
       %w[at error_class error_message error_backtrace failed_at retried_at].each { |k| item.delete(k) }
       item["enqueued_at"] = config.job_timestamp(Robin.now_ms)
       queue = item["queue"] || "default"
@@ -271,13 +283,12 @@ module Robin
         tx.call("SADD", config.key("queues"), queue)
         tx.call("RPUSH", config.key("queue", queue), Robin.dump_json(item))
       end
-      robin_payload["iteration_interrupted"] = true
+      payload["iteration_interrupted"] = true
       logger.info { "#{self.class} jid=#{jid} #{reason} after #{@iterations} iterations; requeued" }
     end
 
-    # Drops the saved state (and reports 100%, or the count) before
-    # on_complete runs.
-    def finish(config, key, total)
+    # Drops the saved state, and reports 100% (or the count).
+    def drop_state(config, key, total)
       shared = config.equal?(Robin.config)
       config.redis do |c|
         c.pipelined do |p|
@@ -286,7 +297,6 @@ module Robin
         end
       end
       report_progress(total) unless shared
-      on_complete
     end
 
     def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)

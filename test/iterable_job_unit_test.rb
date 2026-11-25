@@ -165,7 +165,7 @@ class IterableJobUnitTest < RobinTest
     end
     job.perform(7, "z")
 
-    assert_equal [:start, [:build, [7, "z"], nil], :before, [:item, "a", [7, "z"]], :after, :before, [:item, "b", [7, "z"]],
+    assert_equal [[:build, [7, "z"], nil], :start, :before, [:item, "a", [7, "z"]], :after, :before, [:item, "b", [7, "z"]],
       :after, :before, [:item, "c", [7, "z"]], :after, :complete], job.events
   end
 
@@ -173,7 +173,7 @@ class IterableJobUnitTest < RobinTest
     job = build_job
     job.perform(7, "z")
 
-    assert_equal [:start, [:build, [7, "z"], nil], [:item, "a", [7, "z"]], [:item, "b", [7, "z"]],
+    assert_equal [[:build, [7, "z"], nil], :start, [:item, "a", [7, "z"]], [:item, "b", [7, "z"]],
       [:item, "c", [7, "z"]], :complete], job.events
     assert_equal 2, job.cursor
     assert_equal 3, job.iterations
@@ -205,7 +205,7 @@ class IterableJobUnitTest < RobinTest
     job = build_job
     job.perform
 
-    assert_equal [:start, [:build, [], nil], :complete], job.events
+    assert_equal [[:build, [], nil], :start, :complete], job.events
     assert_equal [100.0, "0/0"], Robin::Progress.fetch("j1").values_at("pct", "msg")
   end
 
@@ -221,18 +221,44 @@ class IterableJobUnitTest < RobinTest
     job = build_job
     job.perform
 
-    assert_equal [:resume, [:build, [], 0], [:item, "b", []], [:item, "c", []], :complete], job.events
+    assert_equal [[:build, [], 0], :resume, [:item, "b", []], [:item, "c", []], :complete], job.events
     assert_equal 3, job.iterations
     assert_equal 0, alt("EXISTS", iter_key("j1"))
   end
 
-  def test_nil_enumerator_finishes_immediately
+  # As in Sidekiq: a job whose build_enumerator returns nil has nothing
+  # to do, and runs none of the hooks (its saved state is dropped).
+  # on_start and on_resume run once build_enumerator has, as in Sidekiq,
+  # so they can use what it set up (Mastodon's workers do).
+  def test_on_start_and_on_resume_see_what_build_enumerator_set_up
+    klass = Class.new(Job) do
+      def build_enumerator(*, cursor:)
+        @record = [:record, cursor]
+        array_enumerator(%w[a], cursor: cursor)
+      end
+
+      def on_start = @events << [:start, @record]
+      def on_resume = @events << [:resume, @record]
+    end
+    started = klass.new.tap { |j| j.jid = "j1" }
+    started.robin_payload = {"jid" => "j1", "args" => []}
+    started.perform
+    alt("HSET", iter_key("j2"), "cursor", Robin.dump_json({"c" => nil}), "iterations", 0)
+    resumed = klass.new.tap { |j| j.jid = "j2" }
+    resumed.robin_payload = {"jid" => "j2", "args" => []}
+    resumed.perform
+
+    assert_equal [[:start, [:record, nil]], [:item, "a", []], :complete], started.events
+    assert_equal [[:resume, [:record, nil]], [:item, "a", []], :complete], resumed.events
+  end
+
+  def test_nil_enumerator_finishes_immediately_running_no_hooks
     Job.enumerator_override = ->(_) {}
     alt("HSET", iter_key("j1"), "cursor", Robin.dump_json({"c" => nil}), "iterations", 0)
     job = build_job
 
     assert_nil job.perform
-    assert_equal [:resume, [:build, [], nil], :complete], job.events
+    assert_equal [[:build, [], nil]], job.events
     assert_equal 0, alt("EXISTS", iter_key("j1"))
     assert_equal [100.0, "0/0"], Robin::Progress.fetch("j1").values_at("pct", "msg")
   end
@@ -311,7 +337,7 @@ class IterableJobUnitTest < RobinTest
                               "error_backtrace" => [], "failed_at" => 1, "retried_at" => 2, "failures" => 1})
 
     assert_nil job.perform(5)
-    assert_equal [:start, [:build, [5], nil], [:item, "a", [5]], [:item, "b", [5]], :stop], job.events
+    assert_equal [[:build, [5], nil], :start, [:item, "a", [5]], [:item, "b", [5]], :stop], job.events
     state = alt("HGETALL", iter_key("j1")).each_slice(2).to_h
 
     assert_equal({"c" => 1}, Robin.load_json(state["cursor"]))
@@ -352,11 +378,34 @@ class IterableJobUnitTest < RobinTest
     job = build_job(payload: {"queue" => "slow"}, step: 1)
 
     assert_nil job.perform
-    assert_equal [:start, [:build, [], nil], [:item, "a", []], [:item, "b", []], :stop], job.events
+    assert_equal [[:build, [], nil], :start, [:item, "a", []], [:item, "b", []], :stop], job.events
     assert_equal({"c" => 1}, Robin.load_json(alt("HGET", iter_key("j1"), "cursor")))
     assert_equal "j1", Robin.load_json(alt("LINDEX", @alt.key("queue", "slow"), 0))["jid"]
     assert job.payload["iteration_interrupted"]
     assert_includes @log.string, "IterUnit::Job jid=j1 reached its max_iteration_runtime (2s) after 2 iterations; requeued\n"
+  end
+
+  # A job run outside Robin (perform called on a new instance, as apps'
+  # tests do) has no job hash: it runs, and one that reaches its
+  # max_iteration_runtime stops at its checkpoint, as it has nothing to
+  # put back on a queue.
+  def test_a_job_run_outside_robin_runs_without_a_job_hash
+    Job.items = %w[a b]
+    job = build_job
+    job.robin_payload = nil
+    job.perform
+
+    assert_equal [[:build, [], nil], :start, [:item, "a", []], [:item, "b", []], :complete], job.events
+    @alt.max_iteration_runtime = 1
+    Job.items = %w[a b c]
+    stopped = build_job(jid: "j2", step: 1)
+    stopped.robin_payload = nil
+    stopped.perform
+
+    assert_equal [[:build, [], nil], :start, [:item, "a", []], :stop], stopped.events
+    assert_equal({"c" => 0}, Robin.load_json(alt("HGET", iter_key("j2"), "cursor")))
+    assert_equal "1/3", Robin::Progress.fetch("j2").fetch("msg")
+    assert_empty alt("KEYS", @alt.key("queue", "*"))
   end
 
   def test_max_iteration_runtime_option_beats_the_config
@@ -366,7 +415,7 @@ class IterableJobUnitTest < RobinTest
     job = build_job(payload: {"max_iteration_runtime" => 2}, step: 0.75)
     job.perform
 
-    assert_equal [:start, [:build, [], nil], [:item, "a", []], [:item, "b", []], [:item, "c", []], :stop], job.events
+    assert_equal [[:build, [], nil], :start, [:item, "a", []], [:item, "b", []], [:item, "c", []], :stop], job.events
   end
 
   def test_runs_under_max_iteration_runtime_finish
@@ -416,7 +465,7 @@ class IterableJobUnitTest < RobinTest
     job.perform
 
     # clock: 3 at loop start; reads 6 (a), 9 (b) -> checkpoint -> cancelled
-    assert_equal [:resume, [:build, [], nil], [:item, "a", []], [:item, "b", []], [:cancel, 1, "b"], :stop], job.events
+    assert_equal [[:build, [], nil], :resume, [:item, "a", []], [:item, "b", []], [:cancel, 1, "b"], :stop], job.events
     assert_equal 0, alt("EXISTS", iter_key("j1"))
     assert_includes @log.string, "IterUnit::Job jid=j1 cancelled after 2 iterations\n"
   end
@@ -427,7 +476,7 @@ class IterableJobUnitTest < RobinTest
     job = build_job(step: 2.5)
     job.perform
 
-    assert_equal [:start, [:build, [], nil], [:item, "a", []], [:item, "b", []], [:cancel, 1, "b"], :stop], job.events
+    assert_equal [[:build, [], nil], :start, [:item, "a", []], [:item, "b", []], [:cancel, 1, "b"], :stop], job.events
   end
 
   def test_cancellation_not_checked_before_a_checkpoint
@@ -487,7 +536,7 @@ class IterableJobUnitTest < RobinTest
     Robin.cancel!("j1")
     job, calls = shared_run(step: 2.5)
 
-    assert_equal [:start, [:build, [], nil], [:item, "a", []], [:item, "b", []], [:cancel, 1, "b"], :stop], job.events
+    assert_equal [[:build, [], nil], :start, [:item, "a", []], [:item, "b", []], [:cancel, 1, "b"], :stop], job.events
     assert_equal [[:call, "HGETALL"], *checkpoint_calls("SET", "ZMSCORE"), [:call, "DEL"]], calls
     assert_equal 0, redis("EXISTS", config.key("iter", "j1"))
     assert_includes @log.string, "IterUnit::Job jid=j1 cancelled after 2 iterations\n"
@@ -507,7 +556,7 @@ class IterableJobUnitTest < RobinTest
     job = build_job(payload: {"bid" => "b1"}, step: 5)
     job.perform
 
-    assert_equal [:start, [:build, [], nil], [:item, "a", []], [:cancel, 0, "a"], :stop], job.events
+    assert_equal [[:build, [], nil], :start, [:item, "a", []], [:cancel, 0, "a"], :stop], job.events
     zmscores.clear
     pool = recording_pool { build_job(step: 5).perform }
     pool.calls.each { |call| zmscores << call.drop(1) if call[0..1] == [:tx, "ZMSCORE"] }
@@ -520,7 +569,7 @@ class IterableJobUnitTest < RobinTest
     Job.on_each = ->(job, item) { job.interrupt_requested = true if item == "b" }
     job, calls = shared_run(payload: {"queue" => "slow"})
 
-    assert_equal [:start, [:build, [], nil], [:item, "a", []], [:item, "b", []], :stop], job.events
+    assert_equal [[:build, [], nil], :start, [:item, "a", []], [:item, "b", []], :stop], job.events
     assert_equal [[:call, "HGETALL"], *checkpoint_calls("SET", "SADD", "RPUSH")], calls
     assert_equal({"c" => 1}, Robin.load_json(redis("HGET", config.key("iter", "j1"), "cursor")))
     assert_equal "2/4", Robin::Progress.fetch("j1").fetch("msg")

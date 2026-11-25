@@ -39,9 +39,9 @@ module Robin
     # An iterable job's class is a job class.
     def class: () -> Job::ClassMethods
 
-    # The job as fetched: IterableJob only reads it while it runs, once
-    # it's set.
-    def robin_payload: () -> job_hash
+    # The job as fetched, or nil for a job run outside Robin (perform
+    # called on a new instance).
+    def robin_payload: () -> job_hash?
 
     def perform: (*untyped args) -> void
 
@@ -92,7 +92,7 @@ module Robin
 
     def requeue: (Config config, String key, Integer? total, String reason) -> void
 
-    def finish: (Config config, String key, Integer? total) -> void
+    def drop_state: (Config config, String key, Integer? total) -> void
 
     def monotonic: () -> Float
   end

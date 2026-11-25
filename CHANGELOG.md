@@ -29,8 +29,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   any of it, or anything the README documents, and the tests pin every
   entry.
 
+### Changed
+
+- An iterable job runs `on_start` (or `on_resume`) after
+  `build_enumerator`, as Sidekiq's do, so the hooks can use what it set
+  up. They ran before it, so a hook reading what `build_enumerator`
+  loads found nothing. A job whose `build_enumerator` returns nil runs
+  none of the hooks (it ran `on_start` or `on_resume`, and
+  `on_complete`), as in Sidekiq.
+
 ### Fixed
 
+- An iterable job run outside Robin (`perform` called on a new
+  instance, as apps' tests do) runs. It failed with "undefined method
+  '[]' for nil", reading its `max_iteration_runtime` from a job hash it
+  doesn't have. One that reaches its `max_iteration_runtime` stops at
+  its checkpoint, as it has no job hash to put back on a queue.
 - A job class with a `payload` of its own (a method, or an accessor and
   `@payload`, as jobs written for Sidekiq may have, since Sidekiq has
   no such method) no longer has it overwritten with the job hash, nor
