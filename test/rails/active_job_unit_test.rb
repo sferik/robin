@@ -370,6 +370,16 @@ class ActiveJobUnitTest < RobinTest
     assert_includes Module.new { include Robin::Job }.ancestors, Robin::Job
   end
 
+  # Before ActiveJob::Base loads, the check leaves it unloaded (see
+  # RailtieTest#test_an_initializers_active_job_settings_are_kept).
+  def test_the_inclusion_check_leaves_active_job_unloaded
+    ActiveJob.define_singleton_method(:autoload?) { |name| name == :Base && "active_job/base" }
+
+    assert_nil Robin::ActiveJob::REJECT_ACTIVE_JOB_CLASSES.call(Class.new(ActiveJob::Base))
+  ensure
+    ActiveJob.singleton_class.remove_method(:autoload?)
+  end
+
   def test_adapter_file_loads_the_integration
     assert require("active_job/queue_adapters/robin_adapter") || true
     assert_kind_of ActiveJob::QueueAdapters::RobinAdapter, BaseJob.queue_adapter

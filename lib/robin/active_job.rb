@@ -14,8 +14,13 @@ module Robin
   #   end
   module ActiveJob
     # A Robin::Job inclusion check: ActiveJob classes run on Robin through
-    # the adapter, not by including Robin::Job.
+    # the adapter, not by including Robin::Job. Until ActiveJob::Base has
+    # loaded no class is one, and it's left unloaded: loading it applies
+    # config.active_job as it stands, so a job class loaded before the
+    # app's initializers would have them ignored.
     REJECT_ACTIVE_JOB_CLASSES = lambda do |base|
+      return if ::ActiveJob.autoload?(:Base)
+
       raise ArgumentError, "Robin::Job can't be included in ActiveJob classes" if base <= ::ActiveJob::Base
     end
 

@@ -46,6 +46,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A Rails app's Active Job settings made in an initializer are kept.
+  Loading robin loaded `ActiveJob::Base`, which applies
+  `config.active_job` as it stands then, before the app's initializers
+  ran, so an adapter set in `config/initializers` was ignored: an app
+  setting it there ran its jobs on Active Job's default `:async` adapter,
+  in the web process, with no error. Including `Robin::Job` in a class
+  that loaded first (as a job class may) loaded it too. `ActiveJob::Base`
+  is now loaded only when `config.robin.current_attributes` needs it,
+  after the app's initializers.
 - Unique Active Job jobs (`robin_options unique_for:` on the job class)
   are unique. Their lock was keyed by the job hash Active Job builds,
   whose `job_id` is new every time, so every push took a lock of its own

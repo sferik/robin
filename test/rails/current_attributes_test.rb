@@ -131,15 +131,40 @@ class CurrentAttributesTests < Minitest::Test
   end
 
   def test_install
-    Robin::Rails::CurrentAttributes.install(@config, [])
-    Robin::Rails::CurrentAttributes.install(@config, nil)
+    required = []
+    installer = Robin::Rails::CurrentAttributes
+    installer.define_singleton_method(:require) { |path| required << path and super(path) }
+    installer.install(@config, [])
+    installer.install(@config, nil)
 
     refute @config.client_middleware.exists?(Robin::Rails::CurrentAttributes::Save)
     refute @config.server_middleware.exists?(Robin::Rails::CurrentAttributes::Load)
-    Robin::Rails::CurrentAttributes.install(@config, Current)
+    assert_empty required
+    installer.install(@config, Current)
 
     assert_equal Robin::Rails::CurrentAttributes::Save, @config.client_middleware.entries.last.klass
     assert_equal Robin::Rails::CurrentAttributes::Load, @config.server_middleware.entries.first.klass
+    assert_equal ["active_job/base"], required
+  ensure
+    installer.singleton_class.remove_method(:require)
+  end
+
+  # ActiveJob::Base is loaded once there are attributes to serialize, not
+  # before (see RailtieTest#test_an_initializers_active_job_settings_are_kept).
+  def test_install_loads_active_job_only_when_it_installs
+    lib = File.expand_path("../../lib", __dir__)
+    script = <<~RUBY
+      require "robin"
+      require "robin/rails"
+      loaded = -> { ActiveJob.autoload?(:Base).nil? }
+      seen = [loaded.call]
+      Robin::Rails::CurrentAttributes.install(Robin::Config.new, [])
+      seen << loaded.call
+      Robin::Rails::CurrentAttributes.install(Robin::Config.new, ["Object"])
+      p seen << loaded.call
+    RUBY
+
+    assert_equal "[false, false, true]\n", run_ruby(script, lib)
   end
 
   def test_through_the_chains

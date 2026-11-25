@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "active_job"
-require "active_job/base" # what ActiveJob::Arguments needs
 
 module Robin
   module Rails
@@ -79,6 +78,13 @@ module Robin
       def self.install(config, names)
         names = Array(names)
         return if names.empty?
+
+        # ActiveJob::Arguments serializes with what ActiveJob::Base loads.
+        # It's loaded here, once the app's initializers have run, and not
+        # as robin loads: loading ActiveJob::Base applies config.active_job
+        # as it stands then, so an initializer's queue adapter would be
+        # ignored.
+        require "active_job/base"
 
         config.client_middleware { |chain| chain.add(Save, names) }
         config.server_middleware { |chain| chain.prepend(Load, names) }

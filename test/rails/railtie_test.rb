@@ -295,4 +295,29 @@ class RailtieTest < Minitest::Test
     assert_equal %("constant"\n), run.call(script)
     assert_equal "[nil, nil]\n", run.call(without), "and nothing of it elsewhere"
   end
+
+  # Loading ActiveJob::Base applies config.active_job as it stands, so
+  # robin mustn't load it before the app's initializers (which may set
+  # the queue adapter) have run.
+  def test_an_initializers_active_job_settings_are_kept
+    lib = File.expand_path("../../lib", __dir__)
+    script = <<~RUBY
+      require "rails"
+      require "active_job/railtie"
+      require "robin"
+      require "robin/active_job"
+      Class.new { include Robin::Job } # as an app's job class may, as it boots
+      loaded = ActiveJob.autoload?(:Base).nil?
+      class App < Rails::Application
+        config.eager_load = false
+        config.logger = Logger.new(nil)
+        config.robin.current_attributes = ["Object"]
+        initializer("app.adapter", after: :load_config_initializers) { config.active_job.queue_adapter = :inline }
+      end
+      App.initialize!
+      p [loaded, ActiveJob::Base.queue_adapter_name]
+    RUBY
+
+    assert_equal %([false, "inline"]\n), run_ruby(script, lib)
+  end
 end
