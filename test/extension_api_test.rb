@@ -168,6 +168,7 @@ class ExtensionAPITest < RobinTest
     "Robin::Job#cancelled?" => [],
     "Robin::Job#jid" => [],
     "Robin::Job#payload" => [],
+    "Robin::Job#robin_payload" => [],
     "Robin::Job.inclusion_checks" => [],
     "Robin::Job::ClassMethods#perform_in" => [[:req], [:rest]],
     "Robin::Job::ClassMethods#robin_options" => [[:opt]],

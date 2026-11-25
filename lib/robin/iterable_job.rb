@@ -80,7 +80,7 @@ module Robin
       # unknown, and then progress is a count; see #progress_args).
       remaining = (enum.size if enum.respond_to?(:size))
       total = (remaining + @iterations if remaining.instance_of?(Integer))
-      max_runtime = payload["max_iteration_runtime"] || config.max_iteration_runtime
+      max_runtime = robin_payload["max_iteration_runtime"] || config.max_iteration_runtime
       started = last_checkpoint = monotonic
       warned = false
       checkpointed = @iterations
@@ -204,7 +204,7 @@ module Robin
     def safe_checkpoint(config, key, total)
       checkpoint(config, key, total)
     rescue => e
-      config.handle_exception(e, {context: "iterable job checkpoint", job: payload})
+      config.handle_exception(e, {context: "iterable job checkpoint", job: robin_payload})
     end
 
     # One iteration outlasted the shutdown timeout: a deploy could interrupt
@@ -212,7 +212,7 @@ module Robin
     def warn_slow(seconds, config)
       logger.warn("#{self.class} jid=#{jid}: one iteration took #{seconds.round(1)}s, longer than the " \
         "#{config.timeout}s shutdown timeout; it may be interrupted midway and repeated")
-      Events.emit(config, "iteration.slow", job: payload, seconds: seconds)
+      Events.emit(config, "iteration.slow", job: robin_payload, seconds: seconds)
     end
 
     # Saves the cursor in one MULTI, followed by whatever the block queues
@@ -263,7 +263,7 @@ module Robin
     # job, so uniqueness and batch registration must not apply again.
     def requeue(config, key, total, reason)
       # As stored, so decrypted (or mutated) arguments never are.
-      item = Robin.pristine(payload).dup
+      item = Robin.pristine(robin_payload).dup
       %w[at error_class error_message error_backtrace failed_at retried_at].each { |k| item.delete(k) }
       item["enqueued_at"] = config.job_timestamp(Robin.now_ms)
       queue = item["queue"] || "default"
@@ -271,7 +271,7 @@ module Robin
         tx.call("SADD", config.key("queues"), queue)
         tx.call("RPUSH", config.key("queue", queue), Robin.dump_json(item))
       end
-      payload["iteration_interrupted"] = true
+      robin_payload["iteration_interrupted"] = true
       logger.info { "#{self.class} jid=#{jid} #{reason} after #{@iterations} iterations; requeued" }
     end
 

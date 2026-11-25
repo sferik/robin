@@ -31,6 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A job class with a `payload` of its own (a method, or an accessor and
+  `@payload`, as jobs written for Sidekiq may have, since Sidekiq has
+  no such method) no longer has it overwritten with the job hash, nor
+  changes what Robin's own methods read (`queue`, `bid`, `failures` and
+  iterable jobs'). Robin keeps the job hash in `Job#robin_payload`, and
+  `#payload` is the same unless the class has its own. A class that
+  isn't a `Robin::Job` gets the job hash through `robin_payload=` if it
+  has one (not `payload=`).
 - Searching the schedule, retry and dead sets (`JobSet#scan`, and
   `find_job` with it) returns each job once on Redis 8.12, whose large
   sorted sets a scan can return a member of more than once.

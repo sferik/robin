@@ -108,6 +108,11 @@ the block with the job (without its `at` and `enqueued_at`) and returns
 true. Otherwise it returns false and runs nothing, so two processes
 acting on one entry never both act on it.
 
+A job's `#payload` is the job hash it runs, unless its class has a
+`payload` of its own (as jobs written for another library may). Robin
+reads and sets the job hash with `#robin_payload` (and
+`#robin_payload=`), which a gem should use too.
+
 ## Reference
 
 Everything in the extension API, by class, including what the README
@@ -138,7 +143,7 @@ the API (to subclass, rescue, include or pass to Robin).
 - `Robin::Deploy` (module): `.list(from:, to: …, config: …)`, `.mark!(label = …, at: …, config: …)`
 - `Robin::Discard` (class)
 - `Robin::IterableJob` (module): `#active_record_batches_enumerator(relation, cursor:, batch_size: …)`
-- `Robin::Job` (module): `.inclusion_checks`, `#bid`, `#cancelled?`, `#jid`, `#payload`
+- `Robin::Job` (module): `.inclusion_checks`, `#bid`, `#cancelled?`, `#jid`, `#payload`, `#robin_payload`
 - `Robin::Job::ClassMethods`: `#perform_in(interval, *args)`, `#robin_options(opts = …)`, `#robin_retries_exhausted { … }`, `#robin_retries_exhausted_block`, `#robin_retry_in { … }`
 - `Robin::Job::DEFAULT_OPTIONS` (constant)
 - `Robin::JobLogger::Formatter` (class)

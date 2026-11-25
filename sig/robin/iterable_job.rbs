@@ -41,7 +41,7 @@ module Robin
 
     # The job as fetched: IterableJob only reads it while it runs, once
     # it's set.
-    def payload: () -> job_hash
+    def robin_payload: () -> job_hash
 
     def perform: (*untyped args) -> void
 

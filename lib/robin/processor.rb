@@ -234,7 +234,7 @@ module Robin
       # @type ivar @batch_failure: Batch::HeldFailure
       job = job_class.new
       job.jid = payload["jid"] if job.respond_to?(:jid=)
-      job.payload = payload if job.respond_to?(:payload=)
+      job.robin_payload = payload if job.respond_to?(:robin_payload=)
       @job = job
       run_job = lambda do
         @job_logger.call(payload) do

@@ -61,14 +61,22 @@ module Robin
       hash.map { |k, v| [k.to_s, v.instance_of?(Symbol) ? v.to_s : v] }.to_h
     end
 
-    attr_accessor :jid, :payload, :interrupt_requested
+    attr_accessor :jid, :interrupt_requested
+
+    # The job as it was fetched (set before #perform runs). Robin's own
+    # methods read it here, so a job class's own +payload+ method (or
+    # @payload), as apps written for Sidekiq may have, doesn't change what
+    # they see. +payload+ is the same, unless the class has its own.
+    attr_accessor :robin_payload
+    alias_method :payload, :robin_payload
+    alias_method :payload=, :robin_payload=
 
     def logger
       Robin.logger
     end
 
     def queue
-      payload && payload["queue"]
+      robin_payload && robin_payload["queue"]
     end
 
     def batch
@@ -76,12 +84,12 @@ module Robin
     end
 
     def bid
-      payload && payload["bid"]
+      robin_payload && robin_payload["bid"]
     end
 
     # How many times this job has failed before.
     def failures
-      count = payload && payload["retry_count"]
+      count = robin_payload && robin_payload["retry_count"]
       count ? Integer(count) + 1 : 0
     end
 
@@ -239,7 +247,7 @@ module Robin
         payload = Robin.load_json(Robin.dump_json(payload))
         job = @klass.new
         job.jid = payload.fetch("jid")
-        job.payload = payload
+        job.robin_payload = payload
         job.perform(*payload.fetch("args"))
       end
 

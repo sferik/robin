@@ -102,7 +102,7 @@ module Robin
         klass = Object.const_get(payload.fetch("class"))
         job = klass.new
         job.jid = payload.fetch("jid") if job.respond_to?(:jid=)
-        job.payload = payload if job.respond_to?(:payload=)
+        job.robin_payload = payload if job.respond_to?(:robin_payload=)
         config.server_middleware.invoke(job, payload, payload["queue"]) do
           job.perform(*payload.fetch("args"))
         end

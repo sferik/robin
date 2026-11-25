@@ -3,6 +3,15 @@
 require_relative "test_helper"
 
 module JobTestJobs
+  # Has a payload of its own, as jobs written for Sidekiq may.
+  class OwnPayload
+    include Robin::Job
+
+    attr_accessor :payload
+
+    def perform(*args) = [payload, args, robin_payload.fetch("class")]
+  end
+
   class Plain
     include Robin::Job
 
@@ -108,6 +117,20 @@ class JobTest < RobinTest
     assert_equal 0, job.failures
     assert_false job.interrupted?
     assert_same Robin.logger, job.logger
+  end
+
+  # A job class's own payload (Mastodon's ActivityPub workers memoize
+  # one in @payload) doesn't change what Robin's methods read.
+  def test_instance_readers_read_robins_payload_whatever_the_class_calls_payload
+    job = Class.new(Plain) { def payload = @payload ||= "the job's own" }.new
+    job.robin_payload = {"queue" => "q", "bid" => "b1", "retry_count" => 1}
+
+    assert_equal ["q", "b1", 2, "the job's own"], [job.queue, job.bid, job.failures, job.payload]
+    plain = Plain.new
+    plain.payload = {"queue" => "p"}
+
+    assert_equal({"queue" => "p"}, plain.robin_payload)
+    assert_same plain.robin_payload, plain.payload
   end
 
   def test_instance_readers_with_payload
@@ -340,6 +363,12 @@ class JobTest < RobinTest
     assert_equal :performed, result[0]
     assert_equal [1, {"a" => [2]}], result[1]
     assert_empty queue_items
+  end
+
+  def test_perform_inline_leaves_a_jobs_own_payload_alone
+    seen = OwnPayload.perform_inline(1)
+
+    assert_equal [nil, [1], "JobTestJobs::OwnPayload"], seen
   end
 
   def test_perform_inline_round_trips_through_json

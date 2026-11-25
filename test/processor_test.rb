@@ -15,6 +15,16 @@ module ProcessorTestJobs
     end
   end
 
+  # Has a payload of its own (an accessor), as jobs written for Sidekiq
+  # may: Robin's leaves it alone.
+  class OwnPayload
+    include Robin::Job
+
+    attr_accessor :payload
+
+    def perform = LOG << [:own, payload, robin_payload.fetch("jid"), queue]
+  end
+
   class Fails
     include Robin::Job
 
@@ -233,6 +243,12 @@ class ProcessorTest < RobinTest
     assert_operator ms, :>=, 50
     assert_operator ms, :<, 1_000
     assert_equal ms, ms.round(1)
+  end
+
+  def test_a_jobs_own_payload_is_left_alone
+    process(job(ProcessorTestJobs::OwnPayload, jid: "own-1"))
+
+    assert_equal [[:own, nil, "own-1", "q1"]], ProcessorTestJobs::LOG
   end
 
   def test_sparse_payloads_run

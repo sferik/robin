@@ -53,8 +53,13 @@ module Robin
     # The job's id (set before #perform runs).
     attr_accessor jid: String?
 
-    # The job as it was fetched (set before #perform runs).
-    attr_accessor payload: job_hash?
+    # The job as it was fetched (set before #perform runs), where Robin's
+    # own methods read it.
+    attr_accessor robin_payload: job_hash?
+
+    # The same, unless the job class has a payload of its own.
+    alias payload robin_payload
+    alias payload= robin_payload=
 
     attr_accessor interrupt_requested: bool?
 

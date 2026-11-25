@@ -291,6 +291,21 @@ class TestingModeTest < Minitest::Test
     assert_equal 2, log.size
   end
 
+  def test_execute_leaves_a_jobs_own_payload_alone
+    seen = nil
+    klass = Class.new do
+      include Robin::Job
+
+      attr_accessor :payload
+
+      define_method(:perform) { seen = [payload, robin_payload["k"]] }
+    end
+    TestingTest.const_set(:OwnPayload, klass) unless TestingTest.const_defined?(:OwnPayload)
+    Robin::Testing.execute({"class" => "TestingTest::OwnPayload", "args" => [], "jid" => "J", "k" => "v"})
+
+    assert_equal [nil, "v"], seen
+  end
+
   def test_execute_sets_jid_and_payload
     seen = nil
     klass = Class.new do
