@@ -99,6 +99,22 @@ module Robin
       end
     end
 
+    # +value+ (anything #timestamp_ms takes) as epoch seconds, a Float. An
+    # epoch time in seconds or a Time keeps the fraction it was given, as
+    # Sidekiq keeps a job's "at" (apps' tests compare it exactly); the rest
+    # are to the millisecond.
+    def self.timestamp_seconds(value, now = Robin.now_ms)
+      return value.to_f if value.is_a?(Time)
+      return Float(value) if epoch_seconds?(value)
+
+      Robin.epoch_seconds(timestamp_ms(value, now))
+    end
+
+    # Is +value+ an epoch time in seconds (as #timestamp_ms tells them)?
+    # mutant:disable -- at 100_000_000_000 exactly, seconds and milliseconds
+    # give the same time
+    def self.epoch_seconds?(value) = value.is_a?(Numeric) && value > 1_000_000_000 && value <= 100_000_000_000
+
     # +count+ times spread evenly over +interval+ seconds, the first at
     # +start+ (anything #timestamp_ms takes; default now), as epoch
     # milliseconds.
@@ -196,8 +212,11 @@ module Robin
       item["jid"] ||= Robin.generate_jid
       item["created_at"] ||= @config.job_timestamp(Robin.now_ms)
       at = item.delete("at")
-      at_ms = self.class.timestamp_ms(at) if at
-      item["at"] = Robin.epoch_seconds(at_ms) if at_ms
+      if at
+        seconds = self.class.timestamp_seconds(at)
+        item["at"] = seconds
+        at_ms = Robin.epoch_ms(seconds)
+      end
       if (expires_in = item.delete("expires_in"))
         # The clock starts when the job is due to run.
         item["expires_at"] = [at_ms, Robin.ms_of(item.fetch("created_at"))].compact.max + Integer(expires_in.to_f * 1000)
@@ -221,7 +240,7 @@ module Robin
     # one) and time, if it has one.
     def build(template, args, jid, at)
       payload = template.merge({"args" => args, "jid" => jid || Robin.generate_jid})
-      schedule(payload, self.class.timestamp_ms(at)) if at
+      schedule(payload, self.class.timestamp_seconds(at)) if at
       payload
     end
 
@@ -236,10 +255,11 @@ module Robin
         .tap { |result| Debounce.carry(payload, result) }
     end
 
-    # Sets a bulk-pushed job's own time (epoch ms); its expiry, if any,
-    # counts from then (the template's counted from its creation).
-    def schedule(payload, at_ms)
-      payload["at"] = Robin.epoch_seconds(at_ms)
+    # Sets a bulk-pushed job's own time (epoch seconds); its expiry, if
+    # any, counts from then (the template's counted from its creation).
+    def schedule(payload, at)
+      payload["at"] = at
+      at_ms = Robin.epoch_ms(at)
       # (created_at is an Integer or a Float; Steep picks neither of Integer#-'s overloads.)
       payload["expires_at"] += [at_ms - Robin.ms_of(payload.fetch("created_at")), 0].max if payload["expires_at"] # steep:ignore UnresolvedOverloading
     end

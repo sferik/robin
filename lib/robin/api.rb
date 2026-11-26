@@ -323,7 +323,7 @@ module Robin
     def queued_item = bare_item
 
     def reschedule(at)
-      score = Robin.epoch_seconds(Client.timestamp_ms(at))
+      score = Client.timestamp_seconds(at)
       @config.redis do |c|
         c.multi do |tx|
           tx.call("ZREM", parent.key, value)
@@ -370,7 +370,7 @@ module Robin
     # Client.timestamp_ms takes).
     def schedule(at, payload)
       raw = payload.instance_of?(String) ? payload : Robin.dump_json(payload.except("at"))
-      @config.redis { |c| c.call("ZADD", key, Robin.epoch_seconds(Client.timestamp_ms(at)), raw) }
+      @config.redis { |c| c.call("ZADD", key, Client.timestamp_seconds(at), raw) }
     end
 
     # Iterates by score: soonest first, or latest first with +reverse+.

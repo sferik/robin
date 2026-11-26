@@ -49,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A scheduled job keeps the time it was given: an epoch time in seconds
+  or a `Time` keeps its fraction to the microsecond, in the job's `"at"`
+  and as its score, as Sidekiq keeps it. It was rounded to the
+  millisecond, so an app's test comparing a job's time with the one it
+  scheduled for (Discourse's compare `Time.now.to_f + delay` exactly)
+  found no job. `Robin::Client.timestamp_seconds` converts a time so.
 - Jobs run in a Rails app whose logger is tagged, as Rails' default
   logger is. The Rails integration handed each job to
   `Rails.logger.tagged`, which yields the logger, and the job, a lambda

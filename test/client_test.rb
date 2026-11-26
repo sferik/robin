@@ -107,6 +107,42 @@ class ClientTest < RobinTest
     assert_equal 1_800_000_000_250, Client.timestamp_ms(time, 0)
   end
 
+  # As Sidekiq keeps a job's "at", and apps' tests compare it exactly
+  # (Discourse's match Time.now.to_f + delay): an epoch time in seconds or
+  # a Time keeps its fraction; the rest are to the millisecond.
+  def test_timestamp_seconds_keeps_the_precision_it_was_given
+    seconds = 1_800_000_000.123456
+    time = Time.at(1_800_000_000, 123_456, :usec)
+    bare = BareTime.at(1_800_000_000, 123_456, :usec) # a Time of a class of its own
+    seconds_given = [[seconds, seconds], [1_800_000_000, 1_800_000_000], [time, time.to_f], [bare, bare.to_f],
+      [1_000_000_001, 1_000_000_001], [100_000_000_000, 100_000_000_000]]
+    to_the_ms = [[100_000_000_001, 100_000_000.001], [1_000_000_000, 1_000_000_000.007], [2.5004, 2.507],
+      [Date.new(2030, 1, 2), Date.new(2030, 1, 2).to_time.to_f]]
+
+    (seconds_given + to_the_ms).each do |value, expected|
+      actual = Client.timestamp_seconds(value, 7)
+
+      assert_instance_of Float, actual, value.inspect
+      assert_equal expected.to_f, actual, value.inspect
+    end
+    assert_kind_of Float, Client.timestamp_seconds(Struct.new(:to_f).new(1.5), 7)
+    delayed = with_now(1_000) { Client.timestamp_seconds(60) }
+
+    assert_equal 61, delayed
+  end
+
+  def test_scheduled_jobs_keep_the_time_they_were_given
+    at = 1_800_000_000.123456
+    Client.push("class" => "Job", "args" => [1], "at" => at)
+    Client.push("class" => "Job", "args" => [2], "at" => Time.at(at + 1), "expires_in" => 10)
+    Client.push_bulk("class" => "Job", "args" => [[3], [4]], "at" => [at + 2, at + 3])
+
+    assert_equal [[[1], at], [[2], Time.at(at + 1).to_f], [[3], at + 2], [[4], at + 3]],
+      scheduled.map { |item, score| [item.fetch("args"), score] }
+    assert_equal 1_800_000_011_123, scheduled.fetch(1).first.fetch("expires_at")
+    assert_equal at, Client.new.normalize("class" => "Job", "args" => [], "at" => at).fetch("at")
+  end
+
   def test_explicit_nil_at_pushes_immediately
     Client.push("class" => "Job", "args" => [4], "at" => nil)
 

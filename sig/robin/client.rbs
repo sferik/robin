@@ -53,6 +53,11 @@ module Robin
     # with #to_time or #to_f (and raises for nil).
     def self.timestamp_ms: (untyped value, ?Integer now) -> Integer
 
+    # +value+ as epoch seconds, to the precision it was given in.
+    def self.timestamp_seconds: (untyped value, ?Integer now) -> Float
+
+    def self.epoch_seconds?: (untyped value) -> bool
+
     # +count+ times spread evenly over +interval+ seconds, from +start+, as
     # epoch milliseconds.
     def self.spread: (Integer count, untyped interval, ?time start) -> Array[Integer]
@@ -100,7 +105,7 @@ module Robin
 
     def invoke_middleware: (job_hash payload) -> job_hash?
 
-    def schedule: (job_hash payload, Integer at_ms) -> void
+    def schedule: (job_hash payload, Float at) -> void
 
     def deliver: (Array[job_hash] payloads) -> void
 

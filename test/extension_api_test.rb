@@ -75,6 +75,7 @@ class ExtensionAPITest < RobinTest
     "Robin::Client.interceptor" => [],
     "Robin::Client.new" => [[:key, :config], [:key, :pool], [:key, :chain]],
     "Robin::Client.timestamp_ms" => [[:req], [:opt]],
+    "Robin::Client.timestamp_seconds" => [[:req], [:opt]],
     "Robin::Client.via" => [[:req]],
     "Robin::Config" => :class,
     "Robin::Config#backtrace_cleaner=" => [[:req]],
