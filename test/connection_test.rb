@@ -863,13 +863,17 @@ class ConnectionTest < ConnectionTestCase
   end
 
   def test_unsolicited_data_on_the_socket_marks_the_connection_stale
+    replied = Thread::Queue.new
     pushed = Thread::Queue.new
     srv = server do |cmd, index|
       if cmd.first == "LATER"
         lambda do |s|
           s.write("+ok\r\n")
+          # The push goes out once the reply has been read: sent with it, or
+          # read along with it, it would be in the connection's buffer, not
+          # waiting on the socket.
           Thread.new do
-            sleep 0.02
+            replied.pop
             s.write("+push\r\n")
             pushed << true
           end
@@ -881,6 +885,7 @@ class ConnectionTest < ConnectionTestCase
     conn = connect(srv)
 
     assert_equal "ok", conn.call("LATER")
+    replied << true
     pushed.pop(timeout: 5) || flunk("the server never sent its push")
     # Sent isn't yet readable (on Windows' loopback, say): the test is of
     # data waiting to be read.
