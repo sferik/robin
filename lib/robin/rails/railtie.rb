@@ -76,11 +76,15 @@ module Robin
         end
       end
 
-      def self.tagged(payload, &)
+      # The job, run with its class and jid tagging what's logged. Rails'
+      # tagged loggers yield themselves, and the job (a lambda, as the
+      # processor passes it) takes no arguments, so it's called, not
+      # passed on.
+      def self.tagged(payload)
         logger = ::Rails.logger
         return yield unless logger.respond_to?(:tagged)
 
-        logger.tagged("#{Robin.display_class(payload)} jid=#{payload.fetch("jid")}", &)
+        logger.tagged("#{Robin.display_class(payload)} jid=#{payload.fetch("jid")}") { yield }
       end
     end
   end

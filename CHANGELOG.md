@@ -46,6 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Jobs run in a Rails app whose logger is tagged, as Rails' default
+  logger is. The Rails integration handed each job to
+  `Rails.logger.tagged`, which yields the logger, and the job, a lambda
+  taking no arguments, raised `ArgumentError: wrong number of arguments
+  (given 1, expected 0)`, so every job a server ran failed.
 - A Rails app's Active Job settings made in an initializer are kept.
   Loading robin loaded `ActiveJob::Base`, which applies
   `config.active_job` as it stands then, before the app's initializers

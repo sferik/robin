@@ -142,8 +142,12 @@ class RailtieTest < Minitest::Test
     wrapper = Robin::Rails::Railtie.job_wrapper(fake_app)
     wrapper.call({"class" => "Wrapper", "display_class" => "SignupJob", "jid" => "j1"}) { Rails.logger.info("hello") }
     wrapper.call({"class" => "PlainJob", "jid" => "j2"}) { Rails.logger.info("again") }
+    # The processor passes the job as a lambda, which a tagged logger's
+    # yielding itself mustn't break.
+    result = wrapper.call({"class" => "LambdaJob", "jid" => "j3"}, &-> { Rails.logger.info("strict") && :ran })
 
-    assert_equal ["[SignupJob jid=j1] hello", "[PlainJob jid=j2] again"], io.string.lines(chomp: true)
+    assert_equal ["[SignupJob jid=j1] hello", "[PlainJob jid=j2] again", "[LambdaJob jid=j3] strict"], io.string.lines(chomp: true)
+    assert_equal :ran, result
   ensure
     Rails.logger = previous
   end
