@@ -124,6 +124,11 @@ class LimiterTest < RobinTest
   end
 
   def test_list_reset_delete
+    # In the middle of a minute: the bucket counts each calendar minute, so
+    # a use just before the next one would be gone by the time it's listed.
+    now = (Robin.now_ms / 60_000 * 60_000) + 30_000
+    real_now = Robin.method(:now_ms)
+    Robin.define_singleton_method(:now_ms) { now }
     a = Robin::Limiter.bucket("listed", 1, :minute, wait_timeout: 0)
     a.within_limit {}
     assert_raises(Robin::Limiter::OverLimit) { a.within_limit {} }
@@ -143,6 +148,8 @@ class LimiterTest < RobinTest
     Robin::Limiter.delete!("listed")
 
     assert_equal %w[other], Robin::Limiter.list.map { |l| l["name"] }
+  ensure
+    Robin.define_singleton_method(:now_ms, real_now) if real_now
   end
 
   def test_middleware_reschedules_without_failing
