@@ -783,10 +783,13 @@ class JobSetApiTest < RobinTest
   def test_scan_stops_as_soon_as_the_limit_is_reached
     2_000.times { |i| add("retry", i, job("big-#{i}", "pad" => "x" * 64)) }
     _, first_batch = alt("ZSCAN", alt_key("retry"), "0", "MATCH", "*big-*", "COUNT", 1000)
+    # The jobs it holds: a batch may return one more than once (Redis
+    # 8.12's B+ tree sorted sets do), and scan counts it once.
+    batch_jobs = first_batch.each_slice(2).map(&:first).uniq.size
     spy = ApiTestSupport::SpyPool.new(alt_config.redis_pool)
     alt_config.redis_pool = spy
 
-    assert_equal first_batch.size / 2, set.scan("big-", limit: first_batch.size / 2).size
+    assert_equal batch_jobs, set.scan("big-", limit: batch_jobs).size
     assert_equal [["ZSCAN", alt_key("retry"), "0", "MATCH", "*big-*", "COUNT", 1000]], spy.commands
     spy.commands.clear
 
