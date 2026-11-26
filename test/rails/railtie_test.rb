@@ -91,7 +91,10 @@ class RailtieTest < Minitest::Test
     assert_equal %w[robin.environment robin.active_job], Rails.application.initializers.map(&:name).grep(/\Arobin\./)
     assert_equal Rails.env, booted.environment
     refute_nil booted.job_wrapper
-    assert_equal [Robin::Config::DEFAULT_ERROR_HANDLER, Robin::Rails::ErrorReporter], booted.error_handlers.map { |h| h.is_a?(Proc) ? h : h.class }
+    # (Rails.error is there from Rails 7.0.)
+    reporters = Rails.respond_to?(:error) ? [Robin::Rails::ErrorReporter] : []
+
+    assert_equal [Robin::Config::DEFAULT_ERROR_HANDLER, *reporters], booted.error_handlers.map { |h| h.is_a?(Proc) ? h : h.class }
     assert_nil booted.push_deferrer
     assert_equal [Robin::Rails::Notifications], booted.event_handlers
     assert_equal({report_errors: true, transactional_push: false, current_attributes: [], notifications: true}, app.config.robin.to_h)
@@ -106,19 +109,32 @@ class RailtieTest < Minitest::Test
     assert_operator names.index("robin.active_job"), :<, names.index("active_job.set_configs")
   end
 
-  def test_jobs_run_in_the_apps_reloader_and_errors_skip_the_executor
-    app, = RailtieTestApp.boot
+  # Runs the block with a Subscriber to Rails.error (from Rails 7.0), and
+  # unsubscribes it: with unsubscribe, from Rails 7.1.
+  def subscribed
     subscriber = Subscriber.new
     Rails.error.subscribe(subscriber)
-    wrapper = Robin::Rails::Railtie.job_wrapper(app)
-    ran_inside = nil
-
-    assert_equal :done, wrapper.call({}) { ran_inside = app.executor.active? && :done }
-    assert_equal :done, ran_inside
-    assert_raises(Robin::Discard) { wrapper.call({}) { raise Robin::Discard } }
-    assert_empty subscriber.reports
+    yield subscriber
   ensure
-    Rails.error.unsubscribe(subscriber)
+    if Rails.error.respond_to?(:unsubscribe)
+      Rails.error.unsubscribe(subscriber)
+    else
+      Rails.error.instance_variable_get(:@subscribers).delete(subscriber)
+    end
+  end
+
+  def test_jobs_run_in_the_apps_reloader_and_errors_skip_the_executor
+    skip "Rails.error is from Rails 7.0" unless Rails.respond_to?(:error)
+    app, = RailtieTestApp.boot
+    subscribed do |subscriber|
+      wrapper = Robin::Rails::Railtie.job_wrapper(app)
+      ran_inside = nil
+
+      assert_equal :done, wrapper.call({}) { ran_inside = app.executor.active? && :done }
+      assert_equal :done, ran_inside
+      assert_raises(Robin::Discard) { wrapper.call({}) { raise Robin::Discard } }
+      assert_empty subscriber.reports
+    end
   end
 
   def test_job_wrapper
@@ -220,19 +236,32 @@ class RailtieTest < Minitest::Test
   end
 
   def test_integrate_reports_errors_to_rails_once
-    subscriber = Subscriber.new
-    Rails.error.subscribe(subscriber)
-    app = fake_app(report_errors: true)
-    Robin::Rails::Railtie.integrate(app, config: @config)
-    Robin::Rails::Railtie.integrate(app, config: @config)
-    reporters = @config.error_handlers.grep(Robin::Rails::ErrorReporter)
+    skip "Rails.error is from Rails 7.0" unless Rails.respond_to?(:error)
+    subscribed do |subscriber|
+      app = fake_app(report_errors: true)
+      Robin::Rails::Railtie.integrate(app, config: @config)
+      Robin::Rails::Railtie.integrate(app, config: @config)
+      reporters = @config.error_handlers.grep(Robin::Rails::ErrorReporter)
 
-    assert_equal 1, reporters.size
-    @config.handle_exception(RuntimeError.new("x"), {context: "fetch"})
+      assert_equal 1, reporters.size
+      @config.handle_exception(RuntimeError.new("x"), {context: "fetch"})
 
-    assert_equal ["x"], subscriber.reports.map { |error, _| error.message }
-  ensure
-    Rails.error.unsubscribe(subscriber)
+      assert_equal ["x"], subscriber.reports.map { |error, _| error.message }
+    end
+  end
+
+  # Before Rails 7.0, which has no Rails.error, there's nothing to report
+  # to.
+  def test_integrate_without_rails_error
+    rails = Struct.new(:logger, :backtrace_cleaner).new(nil, nil)
+    Robin::Rails::Railtie.integrate(fake_app(report_errors: true), config: @config, rails: rails)
+
+    assert_empty @config.error_handlers.grep(Robin::Rails::ErrorReporter)
+    reporter = Subscriber.new
+    rails.define_singleton_method(:error) { reporter }
+    Robin::Rails::Railtie.integrate(fake_app(report_errors: true), config: @config, rails: rails)
+
+    assert_same reporter, @config.error_handlers.grep(Robin::Rails::ErrorReporter).first.instance_variable_get(:@reporter)
   end
 
   def test_integrate_without_error_reporting

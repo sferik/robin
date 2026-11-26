@@ -42,6 +42,14 @@ module Robin
     end
 
     # The Robin job hash that runs +job+ through Wrapper.
+    # The adapter's superclass: Active Job's AbstractAdapter, from Rails
+    # 7.2, or else Object (before 7.2, an adapter is any object with
+    # enqueue and enqueue_at).
+    def self.adapter_base(queue_adapters = ::ActiveJob::QueueAdapters)
+      # (Steep can't follow a constant of a Module it's given.)
+      queue_adapters.const_defined?(:AbstractAdapter, false) ? queue_adapters::AbstractAdapter : Object # steep:ignore UnknownConstant
+    end
+
     def self.payload(job, timestamp, extra = {})
       options = job.class.respond_to?(:robin_options) ? job.class.robin_options.except(*IGNORED) : {} #: job_hash
       # The client defaults "retry" to true, accepts Time or epoch "at"
@@ -116,7 +124,7 @@ end
 module ActiveJob
   module QueueAdapters
     # The ActiveJob adapter, selected with +queue_adapter = :robin+.
-    class RobinAdapter < AbstractAdapter
+    class RobinAdapter < Robin::ActiveJob.adapter_base
       def enqueue(job)
         enqueue_at(job, nil)
       end

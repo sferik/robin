@@ -13,6 +13,8 @@ module Robin
     WRAP_ACTIVE_JOB_CLASSES: ^(job_hash item) -> job_hash
 
     # The Robin job hash that runs +job+ through Wrapper.
+    def self.adapter_base: (?Module queue_adapters) -> Class
+
     def self.payload: (::ActiveJob::Base job, time? timestamp, ?job_hash extra) -> job_hash
 
     # The class a job shows as: a mail delivery's mailer and mail.

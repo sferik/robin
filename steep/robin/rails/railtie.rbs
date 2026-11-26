@@ -8,7 +8,7 @@ module Robin
     # Wires Robin into a Rails app.
     class Railtie < ::Rails::Railtie
       # Configures Robin for the booted app.
-      def self.integrate: (::Rails::Application app, ?config: Config) -> void
+      def self.integrate: (::Rails::Application app, ?config: Config, ?rails: untyped) -> void
 
       # Runs each job inside the app's reloader (and so its executor).
       def self.job_wrapper: (::Rails::Application app) -> ^(job_hash payload) { () -> void } -> void

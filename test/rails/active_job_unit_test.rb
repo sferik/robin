@@ -143,6 +143,24 @@ class ActiveJobUnitTest < RobinTest
     assert_equal({}, klass.robin_options)
   end
 
+  # The adapter subclasses Active Job's AbstractAdapter, from Rails 7.2, or
+  # else Object.
+  def test_the_adapter_base_is_abstract_adapter_where_there_is_one
+    with = Module.new.tap { |m| m.const_set(:AbstractAdapter, Class.new) }
+    without = Module.new
+    inherited = Module.new.tap { |m| m.const_set(:AbstractAdapter, Class.new) }
+    stray = Module.new.tap { |m| m.include(inherited) } # its own, not one it inherits
+
+    assert_same with::AbstractAdapter, Robin::ActiveJob.adapter_base(with)
+    assert_same Object, Robin::ActiveJob.adapter_base(without)
+    assert_same Object, Robin::ActiveJob.adapter_base(stray)
+    assert_operator ActiveJob::QueueAdapters::RobinAdapter, :<, Robin::ActiveJob.adapter_base
+  end
+
+  # Whether Active Job counts +job+ enqueued: its successfully_enqueued?,
+  # from Rails 7.0, or else whether it has a jid.
+  def enqueued?(job) = job.respond_to?(:successfully_enqueued?) ? job.successfully_enqueued? : !job.provider_job_id.nil?
+
   def test_enqueue_payload
     job = OptionJob.new("ann")
     jid = adapter.enqueue(job)
@@ -150,7 +168,7 @@ class ActiveJobUnitTest < RobinTest
 
     assert_equal jid, job.provider_job_id
     refute_equal "x", jid # robin_options can't fix the jid
-    assert_predicate job, :successfully_enqueued?
+    assert_true enqueued?(job)
     assert_equal %w[args class created_at dead display_class enqueued_at jid queue retry tags wrapped], item.keys.sort
     assert_equal "Robin::ActiveJob::Wrapper", item["class"]
     assert_equal "AJUnit::OptionJob", item["wrapped"]
@@ -281,7 +299,7 @@ class ActiveJobUnitTest < RobinTest
     job = BaseJob.new(3)
 
     assert_nil adapter.enqueue(job)
-    refute_predicate job, :successfully_enqueued?
+    assert_false enqueued?(job)
     assert_nil job.provider_job_id
   end
 
@@ -304,7 +322,7 @@ class ActiveJobUnitTest < RobinTest
     jobs = [BaseJob.new(1), OptionJob.new(2), BaseJob.new(3), BaseJob.new(4).tap { |j| j.scheduled_at = later }]
 
     assert_equal 4, assert_roundtrips(1) { adapter.enqueue_all(jobs) }
-    assert(jobs.all?(&:successfully_enqueued?))
+    assert(jobs.all? { |job| enqueued?(job) })
     assert_equal [1, 3], items.map { |j| j.args[0]["arguments"][0] }
     assert_equal [2], items("mail").map { |j| j.args[0]["arguments"][0] }
     scheduled = Robin::ScheduledSet.new.first
@@ -333,7 +351,7 @@ class ActiveJobUnitTest < RobinTest
     jobs = [BaseJob.new(1), BaseJob.new(2)]
 
     assert_equal 0, adapter.enqueue_all(jobs)
-    refute(jobs.any?(&:successfully_enqueued?))
+    refute(jobs.any? { |job| enqueued?(job) })
     assert_nil jobs.first.provider_job_id
   end
 

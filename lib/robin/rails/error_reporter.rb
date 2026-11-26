@@ -8,13 +8,15 @@ module Robin
     # own errors (e.g. Redis unreachable while fetching) as handled with
     # source "robin". The context names the job, never its arguments.
     #
-    # Rails.error reports an exception only once, so an app handler that
-    # also calls Rails.error.report doesn't double-report.
+    # From Rails 7.1, Rails.error reports an exception only once, so an app
+    # handler that also calls Rails.error.report doesn't double-report.
+    # Rails 7.0's takes no source, so it's reported without one there.
     class ErrorReporter
       JOB_FAILED = "job raised"
 
       def initialize(reporter)
         @reporter = reporter
+        @sources = reporter.public_method(:report).parameters.any? { |kind, name| kind == :keyrest || name == :source }
       end
 
       def call(exception, context, _config)
@@ -24,7 +26,11 @@ module Robin
           robin: context[:context], queue: context.fetch(:queue, job["queue"]), jid: job["jid"],
           job_class: Robin.display_class(job), retry_count: job["retry_count"], bid: job["bid"]
         }
-        @reporter.report(exception, handled: !failed, source: failed ? "robin.job" : "robin", context: details.compact)
+        if @sources
+          @reporter.report(exception, handled: !failed, source: failed ? "robin.job" : "robin", context: details.compact)
+        else
+          @reporter.report(exception, handled: !failed, context: details.compact)
+        end
       end
     end
   end

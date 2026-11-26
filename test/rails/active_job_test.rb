@@ -54,6 +54,7 @@ class ActiveJobAdapterTest < RobinTest
   end
 
   def test_enqueue_all
+    skip "ActiveJob.perform_all_later is from Rails 7.1" unless ActiveJob.respond_to?(:perform_all_later)
     jobs = [GreetJob.new("a"), GreetJob.new("b"), GreetJob.new("c")]
     ActiveJob.perform_all_later(jobs)
 

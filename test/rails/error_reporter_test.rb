@@ -53,17 +53,38 @@ class ErrorReporterTest < RobinTest
       @reporter.reports.map(&:last)
   end
 
+  # Rails 7.0's Rails.error takes no source.
+  def test_reports_to_a_reporter_without_sources
+    reports = []
+    reporter = Object.new
+    reporter.define_singleton_method(:report) { |error, handled:, context:| reports << [error.message, handled, context] }
+    handler = Robin::Rails::ErrorReporter.new(reporter)
+    handler.call(RuntimeError.new("job"), {context: "job raised", job: {"class" => "X", "jid" => "j"}}, config)
+    handler.call(RuntimeError.new("own"), {context: "fetch"}, config)
+
+    assert_equal [["job", false, {robin: "job raised", jid: "j", job_class: "X"}], ["own", true, {robin: "fetch"}]], reports
+    sourced = Object.new
+    sourced.define_singleton_method(:report) { |error, handled:, context:, source: nil| reports << source }
+    Robin::Rails::ErrorReporter.new(sourced).call(RuntimeError.new, {context: "fetch"}, config)
+
+    assert_equal "robin", reports.last
+  end
+
   def test_rails_error_reports_each_exception_once
+    skip "ActiveSupport::ErrorReporter is from Rails 7.0" unless defined?(ActiveSupport::ErrorReporter)
     rails_reporter = ActiveSupport::ErrorReporter.new
     seen = FakeReporter.new
     rails_reporter.subscribe(seen)
     handler = Robin::Rails::ErrorReporter.new(rails_reporter)
     error = RuntimeError.new("once")
     handler.call(error, {context: "job raised", job: {"class" => "X"}}, config)
-    rails_reporter.report(error)
+    rails_reporter.report(error, handled: false) # (Rails 7.0 needs handled:)
+    # From Rails 7.1, an exception is reported once, with its source; Rails
+    # 7.0 reports it again, and takes no source.
+    rails_7_1 = ActiveSupport::ErrorReporter.instance_method(:report).parameters.include?([:key, :source])
 
-    assert_equal 1, seen.reports.size
-    assert_equal ["robin.job", false, :error], seen.reports.first.last.values_at(:source, :handled, :severity)
+    assert_equal (rails_7_1 ? 1 : 2), seen.reports.size
+    assert_equal [("robin.job" if rails_7_1), false, :error], seen.reports.first.last.values_at(:source, :handled, :severity)
   end
 
   def test_reports_a_failing_job_from_the_server

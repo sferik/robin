@@ -1213,8 +1213,11 @@ a Rails app: Bundler loads robin after Rails, and robin then joins the
 app's boot. Elsewhere it stays off and loads nothing of Rails. If robin is
 required before Rails (or outside Bundler.require), add
 `require "robin/rails"` after Rails. It needs Rails (railties and Active
-Job) 7.2 or newer, and is tested in CI against the latest 7.2, 8.0 and 8.1
-releases.
+Job) 6.1 or newer, and is tested in CI against the latest 6.1, 7.0, 7.1,
+7.2, 8.0 and 8.1 releases. Older Rails lacks a few things Robin uses where
+they're there: before 7.2, `config.robin.transactional_push` pushes jobs
+at once (it needs `ActiveRecord.after_all_transactions_commit`), and
+before 7.0 errors aren't reported to `Rails.error`, which isn't there.
 
 ```ruby
 # Gemfile

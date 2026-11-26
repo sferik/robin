@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Rails 6.1, 7.0 and 7.1 support for the Rails integration (it needed
+  7.2), each tested in CI. The Active Job adapter subclasses Active Job's
+  `AbstractAdapter` where there is one (from 7.2). Errors are reported to
+  `Rails.error` from 7.0, without a source on 7.0, whose reporter takes
+  none.
 - Ruby 3.3 support: Robin needs Ruby 3.3 or later (it needed 3.4), and
   CI runs every test and the type check on it. On Ruby 3.3, whose
   `Socket.tcp` (on macOS, at least) returns the socket of a refused

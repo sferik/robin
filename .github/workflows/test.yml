@@ -61,16 +61,16 @@ jobs:
         if: steps.redis.outcome == 'failure' || steps.ruby.outcome == 'failure' || steps.compile.outcome == 'failure' || steps.tests.outcome == 'failure'
         run: echo "::warning title=${{ matrix.ruby }} on ${{ matrix.os }} (advisory)::The tests failed on ${{ matrix.ruby }} on ${{ matrix.os }}, a development version"
 
-  # The Rails integration against every Rails release line still getting
-  # patches (gemfiles/rails_*/Gemfile pin each one's latest release). The
-  # coverage job measures it with the rest.
+  # The Rails integration against every Rails release line from 6.1
+  # (gemfiles/rails_*/Gemfile pin each one's latest release). The coverage
+  # job measures it with the rest.
   rails:
     name: Rails ${{ matrix.rails }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        rails: ["7.2", "8.0", "8.1"]
+        rails: ["6.1", "7.0", "7.1", "7.2", "8.0", "8.1"]
     env:
       BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/rails_${{ matrix.rails }}/Gemfile
       COVERAGE: "false"

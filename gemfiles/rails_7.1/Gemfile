@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+# The Rails integration against Rails 7.1 (the CI "rails" job runs each
+# of these): pinned before the main Gemfile adds its own.
+gem "activejob", "~> 7.1.0"
+gem "railties", "~> 7.1.0"
+# Default gems Ruby 3.4 no longer has, which this Rails needs.
+%w[base64 bigdecimal mutex_m drb].each { |name| gem name }
+
+eval_gemfile "../../Gemfile"

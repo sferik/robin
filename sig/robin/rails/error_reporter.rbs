@@ -6,12 +6,17 @@ module Robin
     class ErrorReporter
       # What it reports to: Rails.error (an ActiveSupport::ErrorReporter).
       interface _Reporter
-        def report: (Exception error, handled: bool, source: String, context: Hash[Symbol, untyped]) -> void
+        def report: (Exception error, handled: bool, ?source: String, context: Hash[Symbol, untyped]) -> void
+
+        def public_method: (Symbol name) -> Method
       end
 
       JOB_FAILED: String
 
       @reporter: _Reporter
+
+      # Whether the reporter takes a source (Rails 7.1's does).
+      @sources: bool
 
       def initialize: (_Reporter reporter) -> void
 

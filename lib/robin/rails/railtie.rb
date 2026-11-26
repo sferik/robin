@@ -44,14 +44,16 @@ module Robin
 
       config.after_initialize { |app| Railtie.integrate(app) }
 
-      def self.integrate(app, config: Robin.config)
+      # (+rails+ is the Rails module; tests pass a stand-in.)
+      def self.integrate(app, config: Robin.config, rails: ::Rails)
         options = app.config.robin
         config.job_wrapper ||= job_wrapper(app)
         # (lambda, not ->: Steep splats a -> lambda's one Array parameter.)
-        config.backtrace_cleaner ||= lambda { |lines| ::Rails.backtrace_cleaner.clean(lines) }
-        config.logger = ::Rails.logger if !Robin.server? && ::Rails.logger
-        if options.report_errors && config.error_handlers.none?(ErrorReporter)
-          config.error_handlers << ErrorReporter.new(::Rails.error)
+        config.backtrace_cleaner ||= lambda { |lines| rails.backtrace_cleaner.clean(lines) }
+        config.logger = rails.logger if !Robin.server? && rails.logger
+        # Rails.error is there from Rails 7.0.
+        if options.report_errors && rails.respond_to?(:error) && config.error_handlers.none?(ErrorReporter)
+          config.error_handlers << ErrorReporter.new(rails.error)
         end
         config.push_deferrer ||= TransactionalPush if options.transactional_push
         if options.notifications && !config.event_handlers.include?(Notifications)
