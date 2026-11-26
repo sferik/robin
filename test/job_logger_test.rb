@@ -83,7 +83,7 @@ class JobLoggerTest < RobinTest
       parsed = JSON.parse(f.call("ERROR", TIME.getlocal("-02:00"), nil, {a: 1}))
 
       assert_equal({"jid" => "j"}, parsed["ctx"])
-      assert_equal "{a: 1}", parsed["msg"]
+      assert_equal({a: 1}.inspect, parsed["msg"])
       assert_equal "2026-01-02T03:04:05.678Z", parsed["ts"]
     end
   end
@@ -110,8 +110,11 @@ class JobLoggerTest < RobinTest
 
     assert_equal :ok, result
     assert_equal 2, lines.size
-    assert_equal %(INFO {class: "Foo", jid: "j1", bid: "b1", tags: "a,b"} start\n), lines[0]
-    assert_match(/\AINFO \{class: "Foo", jid: "j1", bid: "b1", tags: "a,b", elapsed: "\d+\.\d{3}"\} done\n\z/, lines[1])
+    # (The context as Ruby inspects it: {class: "Foo", ...} from Ruby 3.4.)
+    assert_equal "INFO #{{class: "Foo", jid: "j1", bid: "b1", tags: "a,b"}.inspect} start\n", lines[0]
+    done = Regexp.escape({class: "Foo", jid: "j1", bid: "b1", tags: "a,b", elapsed: "E"}.inspect).sub('"E"', '"\d+\.\d{3}"')
+
+    assert_match(/\AINFO #{done} done\n\z/, lines[1])
     assert_empty Robin::Context.current
   end
 

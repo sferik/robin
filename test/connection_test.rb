@@ -657,6 +657,91 @@ class ConnectionTest < ConnectionTestCase
     assert_instance_of UNIXSocket, sock(@conn = Connection.new(path: path).tap { |c| c.call("PING") })
   end
 
+  # Ruby 3.3's Socket.tcp (on macOS, with a connect_timeout) returns a
+  # socket whose connect was refused: its pending error is raised, as Ruby
+  # 3.4's Socket.tcp raises it, and the socket closed.
+  def test_a_socket_whose_connect_failed_raises_its_error
+    socket = Struct.new(:error, :closed) do
+      def getsockopt(level, option) = (level == Socket::SOL_SOCKET && option == Socket::SO_ERROR) ? Struct.new(:int).new(error) : flunk
+
+      def close = self.closed = true
+    end
+    refused = socket.new(Errno::ECONNREFUSED::Errno)
+    error = assert_raises(Errno::ECONNREFUSED) { Robin::Redis::Connection.check_connected(refused, "db", 6379) }
+
+    assert_equal ["Connection refused - connect(2) for db:6379", true], [error.message, refused.closed]
+    connected = socket.new(0)
+
+    assert_nil Robin::Redis::Connection.check_connected(connected, "db", 6379)
+    assert_nil connected.closed
+  end
+
+  # A stand-in for a socket: its connect left +error+ pending.
+  PendingSocket = Struct.new(:error, :closed) do
+    def getsockopt(level, option) = (level == Socket::SOL_SOCKET && option == Socket::SO_ERROR) ? Struct.new(:int).new(error) : raise
+
+    def close = self.closed = true
+  end
+
+  # Connects as told: +refused+ addresses' sockets have ECONNREFUSED
+  # pending; every call is kept in +calls+.
+  def connector(calls, refused)
+    ->(address, port, timeout) { (calls << [address, port, timeout]) && PendingSocket.new(refused.include?(address) ? Errno::ECONNREFUSED::Errno : 0) }
+  end
+
+  # As Socket.tcp does from Ruby 3.4 (and connections do on Ruby 3.3): a
+  # refused address is passed over for the host's next one.
+  def test_each_address_is_tried_in_turn
+    calls = []
+    sock = Robin::Redis::Connection.connect_each(%w[::1 127.0.0.1 10.0.0.1], "db", 6379, 2, connector(calls, %w[::1]))
+
+    assert_equal [["::1", 6379, 2], ["127.0.0.1", 6379, 2]], calls
+    assert_equal 0, sock.error
+    calls.clear
+    error = assert_raises(Errno::ECONNREFUSED) { Robin::Redis::Connection.connect_each(%w[::1 127.0.0.1], "db", 6379, 2, connector(calls, %w[::1 127.0.0.1])) }
+
+    assert_equal ["Connection refused - connect(2) for db:6379", %w[::1 127.0.0.1]], [error.message, calls.map(&:first)]
+  end
+
+  # Where Socket.tcp tells a refused connect (Ruby 3.4), it's trusted;
+  # otherwise the host's addresses are tried in turn.
+  def test_tcp_resolves_the_host_only_where_socket_tcp_cant_tell
+    calls = []
+    direct = Robin::Redis::Connection.tcp("db", 6379, 2, checks: true, connect: connector(calls, %w[db]))
+
+    assert_equal [[["db", 6379, 2]], Errno::ECONNREFUSED::Errno], [calls, direct.error]
+    calls.clear
+    resolved = Robin::Redis::Connection.tcp("127.0.0.1", 6379, 2, checks: false, connect: connector(calls, []))
+
+    assert_equal [[["127.0.0.1", 6379, 2]], 0], [calls, resolved.error]
+    calls.clear
+    error = assert_raises(Errno::ECONNREFUSED) { Robin::Redis::Connection.tcp("127.0.0.1", 6379, 2, checks: false, connect: connector(calls, %w[127.0.0.1])) }
+
+    assert_equal ["Connection refused - connect(2) for 127.0.0.1:6379", [["127.0.0.1", 6379, 2]]], [error.message, calls]
+    calls.clear
+    default = -> { Robin::Redis::Connection.tcp("127.0.0.1", 6379, 2, connect: connector(calls, %w[127.0.0.1])) }
+
+    if Robin::Redis::Connection::SOCKET_TCP_CHECKS
+      assert_equal Errno::ECONNREFUSED::Errno, default.call.error
+    else
+      assert_raises(Errno::ECONNREFUSED) { default.call }
+    end
+
+    assert_equal RUBY_VERSION >= "3.4", Robin::Redis::Connection::SOCKET_TCP_CHECKS
+    assert_equal [["127.0.0.1", 6379, 2]], calls
+  end
+
+  # Connecting for real, the default way.
+  def test_connect_connects_a_socket
+    server = TCPServer.new("127.0.0.1", 0)
+    sock = Robin::Redis::Connection::CONNECT.call("127.0.0.1", server.addr[1], 1)
+
+    assert_equal "127.0.0.1", sock.remote_address.ip_address
+  ensure
+    sock&.close
+    server&.close
+  end
+
   def test_connection_errors_are_wrapped
     conn = Connection.new(host: "127.0.0.1", port: closed_port)
     error = assert_raises(Robin::Redis::ConnectionError) { conn.call("PING") }

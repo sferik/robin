@@ -31,11 +31,15 @@ gem "rubocop-minitest"
 gem "simplecov", ">= 1.3"
 gem "opentelemetry-sdk"
 
-# Duel (`rake perf`) and its plugins.
-gem "duel", "~> 0.3"
-gem "duel-redis", "~> 0.3"
-gem "duel-gvl", "~> 0.3"
-gem "duel-retained", "~> 0.3"
+# Duel (`rake perf`) and its plugins, which need Ruby 3.4: on Ruby 3.3
+# they stay in the lockfile but aren't installed, and `rake perf` isn't
+# there.
+install_if -> { RUBY_VERSION >= "3.4" } do
+  gem "duel", "~> 0.3"
+  gem "duel-redis", "~> 0.3"
+  gem "duel-gvl", "~> 0.3"
+  gem "duel-retained", "~> 0.3"
+end
 
 platforms :mri do
   gem "mutant-minitest"

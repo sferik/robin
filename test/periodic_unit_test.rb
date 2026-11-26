@@ -152,7 +152,7 @@ class PeriodicUnitTest < RobinTest
         PeriodicUnitTest::NotAJob: not a job class
         PeriodicUnitTest::Performs: not a job class
         PeriodicJob: args must be an Array
-        PeriodicJob: args [:sym, {a: 1}] change in JSON
+        PeriodicJob: args #{[:sym, {a: 1}].inspect} change in JSON
     MSG
     assert_kind_of Robin::Error, error
   end

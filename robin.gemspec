@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
     "Rails apps — all open source under the LGPL."
   spec.homepage = "https://github.com/sferik/robin"
   spec.license = "LGPL-3.0-only"
-  spec.required_ruby_version = ">= 3.4"
+  spec.required_ruby_version = ">= 3.3"
 
   spec.metadata = {
     "homepage_uri" => spec.homepage,

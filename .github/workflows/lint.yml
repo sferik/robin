@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["3.4", "4.0", "head"]
+        ruby: ["3.3", "3.4", "4.0", "head"]
     # Ruby's development version gets an early look, but can't fail the
     # build: its steps may fail (continue-on-error on each, not the job,
     # so the job still passes, with a warning, rather than showing as a

@@ -94,8 +94,8 @@ class WarmupTest < RobinTest
     round = [queue, ["LPUSH", "warm:queue:default", *[gist] * 100], *[queue, ["LPUSH", "warm:queue:default", gist]] * 100,
       *[["BLMOVE", "queue", "inflight", "RIGHT", "LEFT", 2], ["DEL", "inflight"]] * 100]
 
-    assert_equal round * 2, sent.map { |cmd| (cmd[0] == "LPUSH") ? [*cmd.first(2), *cmd.drop(2).map { gist(it) }] : cmd }
-    jids = sent.select { |cmd| cmd[0] == "LPUSH" }.flat_map { |cmd| cmd.drop(2).map { JSON.parse(it).fetch("jid") } }
+    assert_equal round * 2, sent.map { |cmd| (cmd[0] == "LPUSH") ? [*cmd.first(2), *cmd.drop(2).map { |raw| gist(raw) }] : cmd }
+    jids = sent.select { |cmd| cmd[0] == "LPUSH" }.flat_map { |cmd| cmd.drop(2).map { |raw| JSON.parse(raw).fetch("jid") } }
 
     assert_equal 400, jids.uniq.size, "every job its own jid"
     client, server = Spy.calls.partition { |args| args.size == 4 }

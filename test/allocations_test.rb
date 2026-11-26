@@ -10,6 +10,10 @@ require_relative "support/runtime"
 # extension and without (ROBIN_NO_EXT=1). Re-measure with
 # ROBIN_MEASURE_ALLOCATIONS=1, which prints each count instead.
 class AllocationsTest < RobinTest
+  # Ruby 3.3 allocates one more object pushing a job, and one more running
+  # one (natively or not).
+  RUBY_3_3 = RUBY_VERSION < "3.4"
+
   include RuntimeTestHelpers
 
   # (What it costs to skip work a pipeline usually doesn't need.)
@@ -69,7 +73,7 @@ class AllocationsTest < RobinTest
   def test_pushing_a_job
     # (Windows's Fixnums have 30 bits: each millisecond timestamp is a Bignum.)
     skip "the budget is for 62-bit Fixnums" if Gem.win_platform?
-    assert_budget(native: 30, ruby: 50) { Robin::Client.push("class" => NoopJob, "args" => [1]) }
+    assert_budget(native: RUBY_3_3 ? 31 : 30, ruby: RUBY_3_3 ? 51 : 50) { Robin::Client.push("class" => NoopJob, "args" => [1]) }
   end
 
   def test_taking_a_job_fetched_for_this_worker
@@ -83,7 +87,7 @@ class AllocationsTest < RobinTest
 
   def test_running_a_job
     units = Array.new(4) { unit_in_flight(@fetcher, raw_job, "q") }
-    assert_budget(native: 18, ruby: 18) { @processor.send(:process, units.shift) }
+    assert_budget(native: RUBY_3_3 ? 19 : 18, ruby: RUBY_3_3 ? 19 : 18) { @processor.send(:process, units.shift) }
   end
 
   def test_the_server_middleware_of_a_plain_job

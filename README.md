@@ -65,7 +65,7 @@ their queues 61x as fast, with an eighth of the Redis CPU per job
   only if its process dies while it runs (or within 2 ms of it finishing)
   or a shutdown interrupts it. [Unique jobs](#unique-debounced-expiring-and-encrypted-jobs)
   and idempotent jobs cover the rest.
-- **Tested to the hilt.** About 1,900 tests run on CRuby 3.4, 4.0 and
+- **Tested to the hilt.** About 1,900 tests run on CRuby 3.3, 3.4, 4.0 and
   JRuby. CI enforces 100% line, branch and method coverage of the Ruby, C,
   Java and TypeScript code, and 100% mutation coverage of the Ruby, Java
   and TypeScript code: every deliberate bug a mutation tester plants makes
@@ -121,8 +121,8 @@ their queues 61x as fast, with an eighth of the Redis CPU per job
 gem "robin"
 ```
 
-Robin needs Ruby 3.4+ (or JRuby 10) and Redis 6.2+, Valkey or Dragonfly.
-CI runs every test on Ruby 3.4 and 4.0 (and Ruby's development version),
+Robin needs Ruby 3.3+ (or JRuby 10) and Redis 6.2+, Valkey or Dragonfly.
+CI runs every test on Ruby 3.3, 3.4 and 4.0 (and Ruby's development version),
 JRuby 10.1, Redis 6.2, 7.2, 7.4, 8.2, 8.10 and 8.12, Valkey 9.1 and
 Dragonfly 2.0. CI runs them on TruffleRuby 40 too, where Robin uses pure
 Ruby, but TruffleRuby isn't supported yet: a few of its bugs fail tests

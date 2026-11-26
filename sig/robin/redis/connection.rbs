@@ -164,6 +164,19 @@ module Robin
 
       def connect: () -> void
 
+      SOCKET_TCP_CHECKS: bool
+
+      CONNECT: ^(String address, Integer port, untyped timeout) -> Socket
+
+      def self.tcp: (String host, Integer port, untyped timeout, ?checks: bool, ?connect: ^(String, Integer, untyped) -> untyped) -> Socket
+
+      # Tries each of the host's addresses in turn.
+      def self.connect_each: (Array[String] addresses, String host, Integer port, untyped timeout, ^(String, Integer, untyped) -> untyped connect) -> Socket
+
+      # Raises the error a socket's connect left pending.
+      # (A Socket, or a stand-in: RBS has no type for getsockopt's option.)
+      def self.check_connected: (untyped sock, String host, Integer port) -> void
+
       def open_socket: () -> (Socket | UNIXSocket | OpenSSL::SSL::SSLSocket)
 
       # The master's [host, port], as the Sentinel answered.

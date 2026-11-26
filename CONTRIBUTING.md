@@ -175,7 +175,7 @@ skipped until the baseline has it.
 Robin's [RBS](https://github.com/ruby/rbs) signatures are in `sig/`, laid out
 like `lib/`, and ship in the gem, so an application's
 [Steep](https://github.com/soutaro/steep) check sees Robin's API. CI
-checks them on CRuby 3.4 and 4.0 (Steep doesn't run on JRuby): they must
+checks them on CRuby 3.3, 3.4 and 4.0 (Steep doesn't run on JRuby): they must
 be valid RBS, and `lib/` must pass Steep's strict check against them
 (the Steepfile names the few diagnostics it relaxes, and why) with no
 errors or warnings.

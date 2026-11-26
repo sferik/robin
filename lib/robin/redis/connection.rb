@@ -71,6 +71,49 @@ module Robin
       # +url+ with any password (or user) replaced, fit for messages.
       # Everything up to the last "@" goes, as a password may itself
       # contain "@" or "/".
+      # Whether Socket.tcp tells a refused connect from one that worked.
+      # Ruby 3.3's (with a connect_timeout, on macOS at least) returns the
+      # socket of a refused connect, so it neither raises nor tries the
+      # host's next address (127.0.0.1 after a refused ::1); Ruby 3.4's
+      # does both.
+      SOCKET_TCP_CHECKS = RUBY_VERSION >= "3.4"
+
+      # Connects a socket to one address.
+      CONNECT = ->(address, port, timeout) { Socket.tcp(address, port, connect_timeout: timeout) }
+
+      # A socket connected to +host+ (within +timeout+ seconds an address):
+      # +connect+'s, where Socket.tcp can tell a refused connect (+checks+),
+      # or else connect_each's.
+      def self.tcp(host, port, timeout, checks: SOCKET_TCP_CHECKS, connect: CONNECT)
+        return connect.call(host, port, timeout) if checks
+
+        # (Each TCP address once; the port is the caller's.)
+        addresses = Addrinfo.getaddrinfo(host, nil, nil, :STREAM).map(&:ip_address)
+        connect_each(addresses, host, port, timeout, connect)
+      end
+
+      # Tries each of +addresses+ (+host+'s) in turn, as Socket.tcp does
+      # from Ruby 3.4, raising the last one's error if none connects.
+      def self.connect_each(addresses, host, port, timeout, connect)
+        sock = connect.call(addresses.fetch(0), port, timeout)
+        check_connected(sock, host, port)
+        sock
+      rescue SystemCallError
+        raise if addresses.one?
+
+        connect_each(addresses.drop(1), host, port, timeout, connect)
+      end
+
+      # Raises the error a socket's connect left pending (see
+      # SOCKET_TCP_CHECKS), closing the socket.
+      def self.check_connected(sock, host, port)
+        error = sock.getsockopt(Socket::SOL_SOCKET, Socket::SO_ERROR).int
+        return if error.zero?
+
+        sock.close
+        raise SystemCallError.new("connect(2) for #{host}:#{port}", error)
+      end
+
       def self.redact(url) = url.to_s.sub(%r{//.+@}m, "//REDACTED@")
 
       def self.parse_url(url)
@@ -412,7 +455,7 @@ module Robin
         return UNIXSocket.new(@options.fetch(:path)) if @options.fetch(:path)
 
         host, port = @sentinels ? sentinel_master : @options.fetch_values(:host, :port)
-        sock = Socket.tcp(host, port, connect_timeout: @options.fetch(:connect_timeout)).tap do |s|
+        sock = Connection.tcp(host, port, @options.fetch(:connect_timeout)).tap do |s|
           s.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, true)
           s.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
         end

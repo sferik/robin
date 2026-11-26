@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Ruby 3.3 support: Robin needs Ruby 3.3 or later (it needed 3.4), and
+  CI runs every test and the type check on it. On Ruby 3.3, whose
+  `Socket.tcp` (on macOS, at least) returns the socket of a refused
+  connect rather than raising, Robin tries each of a Redis host's
+  addresses in turn and raises the last one's error, as `Socket.tcp`
+  does from Ruby 3.4. `rake perf` needs Ruby 3.4, as Duel does.
 - `Robin::Middleware::Entry#args`, the arguments a middleware is built
   with, beside `#klass`, so a chain can be rebuilt from its `#entries`.
   Both are in the extension API now.

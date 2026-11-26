@@ -57,12 +57,15 @@ task :test do
 end
 
 # `rake duel`: fail if this tree is slower than its baseline at any
-# benchmark (DUEL_BASE, DUEL_FILTER and DUEL_FORCE pass through).
-require "duel/rake_task"
-Duel::RakeTask.new
+# benchmark (DUEL_BASE, DUEL_FILTER and DUEL_FORCE pass through). Duel
+# needs Ruby 3.4 (see the Gemfile).
+if RUBY_VERSION >= "3.4"
+  require "duel/rake_task"
+  Duel::RakeTask.new
 
-desc "The same as rake duel"
-task perf: :duel
+  desc "The same as rake duel"
+  task perf: :duel
+end
 
 desc "Mutation-test every subject with mutant (slow: CI shards it)"
 task :mutant do
