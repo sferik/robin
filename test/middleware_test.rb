@@ -166,6 +166,16 @@ class MiddlewareTest < Minitest::Test
     refute ran
   end
 
+  # A chain can be rebuilt from its entries (Discourse's specs restore
+  # Sidekiq's server chain so).
+  def test_entries_keep_their_class_and_arguments
+    @chain.add(A, @log).prepend(B, @log, 2)
+    rebuilt = Robin::Middleware::Chain.new(@config)
+    @chain.entries.each { |entry| rebuilt.add(entry.klass, *entry.args) }
+
+    assert_equal [[B, [@log, 2]], [A, [@log]]], rebuilt.entries.map { |entry| [entry.klass, entry.args] }
+  end
+
   def test_add_replaces_existing_entry_at_end
     @chain.add(A, @log).add(B, @log).add(A, @log)
 

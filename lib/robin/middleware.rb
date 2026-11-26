@@ -52,7 +52,10 @@ module Robin
     module Stateless; end
 
     class Entry
-      attr_reader :klass
+      # The middleware's class and the arguments it's built with (its
+      # chain's add or prepend took them after the class), so a chain can
+      # be rebuilt from its entries.
+      attr_reader :klass, :args
 
       def initialize(config, klass, args)
         @config = config

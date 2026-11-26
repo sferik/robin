@@ -51,6 +51,9 @@ module Robin
       # taking +call+'s arguments) is skipped for jobs it returns false for.
       def klass: () -> Class
 
+      # The arguments the middleware is built with.
+      def args: () -> Array[untyped]
+
       def initialize: (Config config, Class klass, Array[untyped] args) -> void
 
       def applies?: (Array[untyped] args) -> bool

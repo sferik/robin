@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Robin::Middleware::Entry#args`, the arguments a middleware is built
+  with, beside `#klass`, so a chain can be rebuilt from its `#entries`.
+  Both are in the extension API now.
 - `config.queue_filter`: a callable run with each fetch's capsule and
   its queues, in the order they'd be checked, that returns the queues to
   fetch from. An app can leave a queue out for a while with it (holding

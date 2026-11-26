@@ -157,8 +157,9 @@ the API (to subclass, rescue, include or pass to Robin).
 - `Robin::Leader` (class): `.leader?(config = …)`
 - `Robin::Limiter` (module): `.bucket(name, count, interval, **options)`, `.concurrent(name, size, wait_timeout: …, lock_timeout: …, **options)`, `.leaky(name, size, interval, **options)`, `.points(name, points, interval, **options)`, `.unlimited(name = …)`, `.via(pool)`, `.window(name, count, interval, **options)`
 - `Robin::Limiter::OverLimit` (class): `.new(limiter, retry_after = …)`
-- `Robin::Middleware::Chain` (class): `.new(config)`, `#add(klass, *args)`, `#clear`, `#insert_after(target, klass, *args)`, `#insert_before(target, klass, *args)`, `#invoke(*args) { … }`, `#prepend(klass, *args)`, `#remove(klass)`
+- `Robin::Middleware::Chain` (class): `.new(config)`, `#add(klass, *args)`, `#clear`, `#entries`, `#insert_after(target, klass, *args)`, `#insert_before(target, klass, *args)`, `#invoke(*args) { … }`, `#prepend(klass, *args)`, `#remove(klass)`
 - `Robin::Middleware::ConfigAware` (module)
+- `Robin::Middleware::Entry` (class): `#args`, `#klass`
 - `Robin::Middleware::Stateless` (module)
 - `Robin::Periodic` (module): `.list(config: …, history: …)`, `.verify!(config = …) { … }`
 - `Robin::Periodic::Invalid` (class)
