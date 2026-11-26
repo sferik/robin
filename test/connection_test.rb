@@ -669,12 +669,16 @@ class ConnectionTest < ConnectionTestCase
     refused = socket.new(Errno::ECONNREFUSED::Errno)
     error = assert_raises(Errno::ECONNREFUSED) { Robin::Redis::Connection.check_connected(refused, "db", 6379) }
 
-    assert_equal ["Connection refused - connect(2) for db:6379", true], [error.message, refused.closed]
+    assert_equal [refused_message("db:6379"), true], [error.message, refused.closed]
     connected = socket.new(0)
 
     assert_nil Robin::Redis::Connection.check_connected(connected, "db", 6379)
     assert_nil connected.closed
   end
+
+  # A refused connect's message, as this platform words it ("Connection
+  # refused" on Unix, "No connection could be made..." on Windows).
+  def refused_message(address) = Errno::ECONNREFUSED.new("connect(2) for #{address}").message
 
   # A stand-in for a socket: its connect left +error+ pending.
   PendingSocket = Struct.new(:error, :closed) do
@@ -700,7 +704,7 @@ class ConnectionTest < ConnectionTestCase
     calls.clear
     error = assert_raises(Errno::ECONNREFUSED) { Robin::Redis::Connection.connect_each(%w[::1 127.0.0.1], "db", 6379, 2, connector(calls, %w[::1 127.0.0.1])) }
 
-    assert_equal ["Connection refused - connect(2) for db:6379", %w[::1 127.0.0.1]], [error.message, calls.map(&:first)]
+    assert_equal [refused_message("db:6379"), %w[::1 127.0.0.1]], [error.message, calls.map(&:first)]
   end
 
   # Where Socket.tcp tells a refused connect (Ruby 3.4), it's trusted;
@@ -717,7 +721,7 @@ class ConnectionTest < ConnectionTestCase
     calls.clear
     error = assert_raises(Errno::ECONNREFUSED) { Robin::Redis::Connection.tcp("127.0.0.1", 6379, 2, checks: false, connect: connector(calls, %w[127.0.0.1])) }
 
-    assert_equal ["Connection refused - connect(2) for 127.0.0.1:6379", [["127.0.0.1", 6379, 2]]], [error.message, calls]
+    assert_equal [refused_message("127.0.0.1:6379"), [["127.0.0.1", 6379, 2]]], [error.message, calls]
     calls.clear
     default = -> { Robin::Redis::Connection.tcp("127.0.0.1", 6379, 2, connect: connector(calls, %w[127.0.0.1])) }
 
